@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="./src/script/injectComponent.js" defer></script>
+    <link rel="stylesheet" href="./style/style.css" />
+</head>
+<body>
+    <header id="top-navbar"></header>
+    <main class="flex justify-center items-center pb-16">
+        <div class="flex flex-col items-center space-y-2">
+            <form class="space-y-2">
+                <div class="justify-between">
+                    <label for="username">username:</label><br/>
+                    <input type="username" id="username" name="username" class="w-50 border rounded">
+                </div>
+                <div class="justify-between">
+                    <label for="password">password:</label><br/>
+                    <input type="password" id="password" name="password" class="w-50 border rounded">
+                </div>
+                <input type="submit" value="Login" class="border bg-gray-200 mt-2 px-2">
+            </form>
+            <h1 class="mt-2 font-bold text-xl">are you new here?</h1>
+            <a href="#" class="text-blue-500 underline">create new account</a>
+        </div>
+    </main>
+    <nav id="bottom-navbar"></nav>
+</body>
+</html>
