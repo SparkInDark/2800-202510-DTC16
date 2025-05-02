@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="./src/script/injectComponent.js" defer></script>
+</head>
+
+<body>
+    <header id="top-navbar"></header>
+    <div class="relative w-64 mx-auto mt-20 mb-6">
+        <input type="text" placeholder="Search ..." class="w-full rounded-full px-4 py-2 shadow focus:outline-none" />
+        <button type="submit"
+            class="absolute right-0 top-0 bottom-0 px-4 bg-gradient-to-r from-teal-400 to-green-400 rounded-r-full text-white">
+            🔍
+        </button>
+    </div>
+
+    <div class="flex flex-col items-center gap-3">
+        <button id="top1" class="bg-gray-300 px-6 py-2 font-semibold rounded">Featured Product1</button>
+        <button id="top2" class="bg-gray-300 px-6 py-2 font-semibold rounded">Featured Product2</button>
+        <button id="top3" class="bg-gray-300 px-6 py-2 font-semibold rounded">Featured Product3</button>
+    </div>
+    <nav id="bottom-navbar"></nav>
+</body>
+
+</html>
