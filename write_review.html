@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="./src/script/injectComponent.js" defer></script>
+</head>
+
+<body>
+    <header id="top-navbar"></header>
+    <div class="bg-gray-400 p-4 mt-4 flex justify-between items-center font-semibold text-lg">
+        <span>iPhone 16</span>
+        <div class="text-xl">☆ ☆ ☆</div>
+    </div>
+
+    <!-- Write Review Form -->
+    <div class="bg-gray-300 p-6 mt-6 rounded space-y-4">
+        <h2 class="text-lg font-semibold">Write Review Form</h2>
+
+        <input type="text" placeholder="Overall Review"
+            class="w-full px-4 py-2 rounded border border-black font-medium">
+        <input type="text" placeholder="Pros" class="w-full px-4 py-2 rounded border border-black font-medium">
+        <input type="text" placeholder="Cons" class="w-full px-4 py-2 rounded border border-black font-medium">
+
+        <div class="flex justify-center gap-2 text-xl">
+            <span>☆</span>
+            <span>☆</span>
+            <span>☆</span>
+        </div>
+
+        <button class="w-full bg-gray-500 text-white font-semibold py-2 rounded">Submit</button>
+    </div>
+    <nav id="bottom-navbar"></nav>
+</body>
+
+</html>
