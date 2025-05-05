@@ -14,16 +14,96 @@ const userSchema = new mongoose.Schema({
 });
 const usersModel = mongoose.model('users', userSchema);
 */
+
 const userSchema = new mongoose.Schema({
-    username: String,
-    password: String,
-    role: {
-        type: String,
-        enum: ['admin', 'user'],
-        default: 'user'
-    }
+    email: String,
+    password_hash: String,
+    role: String,
+    profile: {
+        first_name: String,
+        last_name: String,
+        city: String,
+        country: String,
+        bio: String,
+        profile_photo_url: String
+    },
+    created_at: Date
 });
+
 const usersModel = mongoose.model('users', userSchema);
+
+
+const reviewSchema = new mongoose.Schema({
+    product_name: String,
+    user_email: String,
+    review_text: {
+        overall: String,
+        pros: [String],
+        cons: [String]
+    },
+    review_images: [String],
+    votes: {
+        upvotes: [String],
+        downvotes: [String]
+    },
+    moderation: {
+        status: String,
+        flags: [mongoose.Schema.Types.Mixed],
+        rejection_reason: mongoose.Schema.Types.Mixed // can be String or null
+    },
+    created_at: Date
+});
+
+const reviewsModel = mongoose.model('reviews', reviewSchema);
+
+
+const ratingSchema = new mongoose.Schema({
+    product_name: String,
+    user_email: String,
+    rating: Number,
+    rated_at: Date
+});
+
+const ratingsModel = mongoose.model('ratings', ratingSchema);
+
+
+const productSchema = new mongoose.Schema({
+    name: String,
+    category_slug: String,
+    specs: {
+        brand: String,
+        storage: String,
+        ram: String,
+        screen_size: String,
+        processor: String // present for some products (e.g., laptops)
+    },
+    images: [String],
+    rating_summary: {
+        average: Number,
+        total_ratings: Number,
+        star_counts: {
+            "1": Number,
+            "2": Number,
+            "3": Number,
+            "4": Number,
+            "5": Number
+        }
+    },
+    created_at: Date
+});
+
+const productsModel = mongoose.model('products', productSchema);
+
+
+const categorySchema = new mongoose.Schema({
+    name: String,
+    slug: String,
+    description: String
+});
+
+const categoriesModel = mongoose.model('categories', categorySchema);
+
+
 
 main().catch(err => console.log(err));
 async function main() {
