@@ -2,6 +2,8 @@ const express = require("express");
 var session = require('express-session')
 const mongoose = require('mongoose');
 const path = require('path');
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 const userSchema = new mongoose.Schema({
     email: String,
@@ -91,7 +93,16 @@ const categorySchema = new mongoose.Schema({
 
 const categoriesModel = mongoose.model('categories', categorySchema);
 
-
+const user_authSchema = new mongoose.Schema({
+    username: String,
+    password: String,
+    role: {
+        type: String,
+        enum: ['admin', 'user'],
+        default: 'user'
+    }
+});
+const userAuthModel = mongoose.model('users_auth', user_authSchema);
 
 main().catch(err => console.log(err));
 async function main() {
@@ -121,40 +132,85 @@ async function main() {
         res.redirect('/home');
     })
 
-    app.get('/home', (req, res) => {
-        res.render('index.ejs');
+    app.get('/login', (req, res) => {
+        res.render('login.ejs', { error: null });
     })
 
-    // app.get('/login', (req, res) => {
-    //     res.sendFile(__dirname + '/login.html');
-    // })
+    app.get('/register', (req, res) => {
+        res.render('register.ejs', { error: null });
+    })
 
-    // app.post('/login', async (req, res) => {
-    //     const { username, password } = req.body;
-    //     const user = await usersModel.findOne({ username: username, password: password });
+    app.post('/register', async (req, res) => {
+        const { username, password } = req.body;
 
-    //     if (user) {
-    //         req.session.user = user;
-    //         res.redirect('/home');
-    //     } else {
-    //         res.status(401).send('Invalid credentials');
-    //     }
-    // })
+        // Check if the user already exists in MongoDB
+        const userExists = await userAuthModel.findOne({ username: username });
+        if (userExists) {
+            return res.status(400).send('User already exists');
+        }
 
-    // const isAuthenticated = (req, res, next) => {
-    //     if (req.session && req.session.user) {
-    //         return next();
-    //     } else {
-    //         res.redirect('/login');
-    //     }
-    // }
-    // app.use(isAuthenticated);
+        try {
+            // Hash the password
+            const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // app.get('/home', (req, res) => {
-    //     console.log(req.session.user);
-    //     res.render('index.ejs', { username: req.session.user.username, role: req.session.user.role });
-    // })
+            // Save the new user
+            const newUser = await userAuthModel.create({
+                username: username,
+                password: hashedPassword
+            });
 
+            // Set session
+            req.session.user = newUser;
+
+            // Redirect
+            res.redirect('/home');
+        } catch (err) {
+            console.error(err);
+            res.status(500).send('Error registering user');
+        }
+    });
+
+    app.get('/logout', (req, res) => {
+        req.session.destroy(err => {
+            if (err) {
+                return res.redirect('/home');
+            }
+            res.clearCookie('connect.sid'); // replace with the name of your session cookie
+            res.redirect('/home');
+        });
+    })
+
+    app.post('/login', async (req, res) => {
+        const { username, password, rememberMe } = req.body;
+
+        // Find the user by username
+        const user = await userAuthModel.findOne({ username: username });
+
+        // Check if user exists
+        if (!user) {
+            return res.status(401).send('Invalid credentials');
+        }
+
+        // Compare password using bcrypt
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            return res.status(401).send('Invalid credentials');
+        }
+
+        // Set session data
+        req.session.user = user;
+
+        // Redirect to the home page
+        res.redirect('/home');
+    });
+
+    app.use(isAuthenticated);
+
+    app.get('/home', (req, res) => {
+        console.log(req.session.user);
+        res.render('index.ejs', { username: req.session.user.username});
+    })
+//, role: req.session.user.role 
     // const isAdmin = (req, res, next) => {
     //     if (req.session && req.session.user && req.session.user.role === 'admin') {
     //         return next();

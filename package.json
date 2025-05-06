@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/SparkInDark/2800-202510-DTC16#readme",
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "express-session": "^1.18.1",
