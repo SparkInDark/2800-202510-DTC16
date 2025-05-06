@@ -6,13 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="./src/script/injectComponent.js" defer></script>
-    <link rel="stylesheet" href="./style/style.css" />
-    <script src="./src/script/weather.js" defer></script>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/script/weather.js" defer></script>
 </head>
 
 <body>
-    <header id="top-navbar"></header>
+    <%- include('component/top-navbar.ejs') %>
 
     <!-- Trustpilot Hero Title -->
     <div class="hero-title">
@@ -127,7 +126,7 @@
         <button class="cta-button">Write a review</button>
     </section>
 
-    <nav id="bottom-navbar"></nav>
+    <%- include('component/bottom-navbar.ejs') %>
 
     <div id="location-info"
         class="absolute bg-gray-300 bg-opacity-70 text-black p-3 rounded-lg shadow z-50 w-44 text-sm top-[72px] right-2 lg:top-[80px] lg:right-4">

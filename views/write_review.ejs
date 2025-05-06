@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="./src/script/injectComponent.js" defer></script>
+    <link rel="stylesheet" href="./style/style.css" />
 </head>
 
 <body>
-    <header id="top-navbar"></header>
+    <%- include('component/top-navbar.ejs') %>
     <div class="bg-gray-400 p-4 mt-4 flex justify-between items-center font-semibold text-lg">
         <span>iPhone 16</span>
         <div class="text-xl">☆ ☆ ☆</div>
@@ -33,7 +33,7 @@
 
         <button class="w-full bg-gray-500 text-white font-semibold py-2 rounded">Submit</button>
     </div>
-    <nav id="bottom-navbar"></nav>
+    <%- include('component/bottom-navbar.ejs') %>
 </body>
 
 </html>

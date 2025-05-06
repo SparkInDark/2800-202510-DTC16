@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="./src/script/injectComponent.js" defer></script>
+    <link rel="stylesheet" href="./style/style.css" />
 </head>
 
 <body>
-    <header id="top-navbar"></header>
+    <%- include('component/top-navbar.ejs') %>
     <div class="flex flex-col gap-4 mt-20">
         <button class="flex justify-between items-center bg-gray-400 text-black font-semibold px-6 py-3 rounded">
             Phones <span>&gt;</span>
@@ -37,7 +37,7 @@
             Car tech and GPS <span>&gt;</span>
         </button>
     </div>
-    <nav id="bottom-navbar"></nav>
+    <%- include('component/bottom-navbar.ejs') %>
 </body>
 
 </html>

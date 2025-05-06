@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="./src/script/injectComponent.js" defer></script>
     <link rel="stylesheet" href="./style/style.css" />
 </head>
 <body>
-    <header id="top-navbar"></header>
+    <%- include('component/top-navbar.ejs') %>
     <main class="flex justify-center items-center pb-16">
         <div class="flex flex-col items-center space-y-2">
             <form class="space-y-2">
@@ -27,6 +26,6 @@
             <a href="#" class="text-blue-500 underline">create new account</a>
         </div>
     </main>
-    <nav id="bottom-navbar"></nav>
+    <%- include('component/bottom-navbar.ejs') %>
 </body>
 </html>
