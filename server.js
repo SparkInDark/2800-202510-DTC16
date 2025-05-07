@@ -125,7 +125,7 @@ async function main() {
     app.set('view engine', 'ejs')
 
     app.listen(port, () => {
-        console.log(Server is running on http://localhost:${port});
+        console.log(`Server is running on http://localhost:${port}`);
     })
 
     app.get('/', (req, res) => {
