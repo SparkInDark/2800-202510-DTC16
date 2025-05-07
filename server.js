@@ -140,6 +140,10 @@ async function main() {
         res.render('register.ejs', { error: null });
     })
 
+    app.get('/home', (req, res) => {
+        console.log(req.session.user);
+        res.render('index.ejs');
+        //,{ username: req.session.user.username}
     app.post('/register', async (req, res) => {
         const { username, password } = req.body;
 
@@ -206,9 +210,7 @@ async function main() {
 
     app.use(isAuthenticated);
 
-    app.get('/home', (req, res) => {
-        console.log(req.session.user);
-        res.render('index.ejs', { username: req.session.user.username});
+
     })
 //, role: req.session.user.role 
     // const isAdmin = (req, res, next) => {
