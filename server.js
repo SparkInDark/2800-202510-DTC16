@@ -149,6 +149,24 @@ async function main() {
         console.log(req.session.user);
         res.render('index.ejs');
     })
+
+    app.get('/write-review', (req, res) => {
+        res.render('write_review.ejs');
+    })
+
+    app.get('/product', (req, res) => {
+        res.render('product.ejs');
+    })
+
+    app.get('/category', (req, res) => {
+        res.render('category.ejs');
+    })
+
+    app.get('/product/:productName', (req, res) => {
+        const productName = req.params.productName;
+        res.render('productdetail.ejs', { productName });
+    })
+    
     //,{ username: req.session.user.username}
     app.post('/register', async (req, res) => {
         const { username, password } = req.body;
