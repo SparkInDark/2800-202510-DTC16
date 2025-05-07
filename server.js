@@ -128,16 +128,21 @@ async function main() {
         console.log(`Server is running on http://localhost:${port}`);
     })
 
+    app.use((req, res, next) => {
+        res.locals.user = req.session.user || null;
+        next();
+    });
+    
     app.get('/', (req, res) => {
         res.redirect('/home');
     })
 
     app.get('/login', (req, res) => {
-        res.render('login.ejs', { error: null });
+        res.render('login.ejs');
     })
 
     app.get('/register', (req, res) => {
-        res.render('register.ejs', { error: null });
+        res.render('register.ejs');
     })
 
     app.get('/home', (req, res) => {
@@ -209,10 +214,6 @@ async function main() {
         res.redirect('/home');
     });
 
-    app.use(isAuthenticated);
-
-
-}
 //, role: req.session.user.role 
     // const isAdmin = (req, res, next) => {
     //     if (req.session && req.session.user && req.session.user.role === 'admin') {
