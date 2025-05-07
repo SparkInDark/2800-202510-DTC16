@@ -70,8 +70,14 @@ async function main() {
 
 
     app.get('/register', (req, res) => {
+<<<<<<< HEAD
         res.render('register.ejs', { error: null });
     });
+=======
+        res.render('register.ejs', { error: null, user: req.session.user });
+    });
+
+>>>>>>> derek_login2
 
     app.post('/register', async (req, res) => {
         const { username, password } = req.body;
