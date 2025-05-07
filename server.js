@@ -144,6 +144,8 @@ async function main() {
         console.log(req.session.user);
         res.render('index.ejs');
         //,{ username: req.session.user.username}
+    })
+
     app.post('/register', async (req, res) => {
         const { username, password } = req.body;
 
@@ -209,9 +211,6 @@ async function main() {
     });
 
     app.use(isAuthenticated);
-
-
-    })
 //, role: req.session.user.role 
     // const isAdmin = (req, res, next) => {
     //     if (req.session && req.session.user && req.session.user.role === 'admin') {
