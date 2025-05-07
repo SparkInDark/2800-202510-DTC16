@@ -133,17 +133,16 @@ async function main() {
     })
 
     app.get('/login', (req, res) => {
-        res.render('login.ejs', { error: null });
+        res.render('login.ejs', { username: req.session.user.username});
     })
 
     app.get('/register', (req, res) => {
-        res.render('register.ejs', { error: null });
+        res.render('register.ejs', { username: req.session.user.username});
     })
 
     app.get('/home', (req, res) => {
         console.log(req.session.user);
-        res.render('index.ejs');
-        //,{ username: req.session.user.username}
+        res.render('index.ejs',{ username: req.session.user.username});
     })
 
     app.post('/register', async (req, res) => {
@@ -213,12 +212,6 @@ async function main() {
     app.get('/', (req, res) => {
         res.render('index', { user: req.session.user });
     });
-
-    // 登录成功示例
-    req.session.user = {
-        email: user.email,
-        first_name: user.profile.first_name
-    };
 
     app.get('/logout', (req, res) => {
         req.session.destroy();
