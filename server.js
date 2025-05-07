@@ -1,4 +1,4 @@
-express = require("express");
+const express = require("express");
 var session = require('express-session')
 const mongoose = require('mongoose');
 const path = require('path');
@@ -125,7 +125,7 @@ async function main() {
     app.set('view engine', 'ejs')
 
     app.listen(port, () => {
-        console.log(`Server is running on http://localhost:${port}`);
+        console.log(Server is running on http://localhost:${port});
     })
 
     app.get('/', (req, res) => {
@@ -144,8 +144,6 @@ async function main() {
         console.log(req.session.user);
         res.render('index.ejs');
         //,{ username: req.session.user.username}
-    })
-
     app.post('/register', async (req, res) => {
         const { username, password } = req.body;
 
@@ -210,23 +208,11 @@ async function main() {
         res.redirect('/home');
     });
 
-    app.get('/', (req, res) => {
-        res.render('index', { user: req.session.user });
-    });
-
-    // 登录成功示例
-    req.session.user = {
-        email: user.email,
-        first_name: user.profile.first_name
-    };
-
-    app.get('/logout', (req, res) => {
-        req.session.destroy();
-        res.redirect('/');
-    });
-
     app.use(isAuthenticated);
-    //, role: req.session.user.role 
+
+
+    })
+//, role: req.session.user.role 
     // const isAdmin = (req, res, next) => {
     //     if (req.session && req.session.user && req.session.user.role === 'admin') {
     //         return next();
