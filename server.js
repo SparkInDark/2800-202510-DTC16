@@ -132,7 +132,7 @@ async function main() {
 
     // main-3. middleware (app.use)
     app.use(express.urlencoded({ extended: true }));
-    const port = 3000;
+
     app.use(session({
         secret: process.env.SESSION_SECRET,
         resave: true,
