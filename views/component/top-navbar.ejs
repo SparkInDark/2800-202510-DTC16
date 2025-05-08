@@ -1,21 +1,26 @@
-<nav class="fixed top-0 left-0 w-full bg-gray-200 flex justify-between items-center px-4 h-18 shadow z-50">
-    <div>
-        <a href="#" class="text-5xl flex">
-            <span class="scale-x-[-1]">R</span>
-            <span>R</span>
-        </a>
-    </div>
-    <div>
-        <% if (user) { %>
-            <a href="/profile">
-                <img src="/img/user-icon.png" class="w-12 h-auto">
+<nav class="fixed top-0 left-0 w-full bg-gray-200 shadow z-50">
+    <div class="max-w-screen-xl mx-auto flex justify-between items-center px-2 sm:px-6 lg:px-8 h-20">
+
+        <div class="flex items-center space-x-2">
+            <a href="/" class="flex items-center">
+                <img src="img/rockstar.png" alt="Logo" class="h-10 sm:h-12 object-contain">
+                <span class="ml-1 brand-name text-2xl sm:text-3xl pt-1">RatingRebels</span>
             </a>
-            <% } else { %>
-                <a href="/login">
-                    <button
-                        class="bg-indigo-200 text-black font-semibold px-4 py-2 rounded-full hover:bg-indigo-300 transition">LOG
-                        IN</button>
+        </div>
+
+
+        <div class="flex items-center gap-x-2 sm:gap-x-4 pr-2 sm:pr-8">
+            <% if (user) { %>
+                <a href="/profile">
+                    <img src="/img/user-icon.png" class="w-10 sm:w-12 h-auto">
                 </a>
-                <% } %>
-    </div>
+                <% } else { %>
+                    <a href="/login">
+                        <button
+                            class="bg-indigo-200 text-black font-semibold px-4 py-2 rounded-full hover:bg-indigo-300 transition">
+                            LOG IN
+                        </button>
+                    </a>
+                    <% } %>
+        </div>
 </nav>
