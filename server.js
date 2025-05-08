@@ -220,10 +220,10 @@ async function main() {
     })
 
     app.post('/login', async (req, res) => {
-        const { username, password, rememberMe } = req.body;
+        const { email, password } = req.body;
 
         // Find the user by username
-        const user = await userAuthModel.findOne({ username: username });
+        const user = await userModel.findOne({ email: email });
 
         // Check if user exists
         if (!user) {
@@ -231,13 +231,16 @@ async function main() {
         }
 
         // Compare password using bcrypt
-        const passwordMatch = await bcrypt.compare(password, user.password);
+        const passwordMatch = await bcrypt.compare(password, user.password_hash);
         if (!passwordMatch) {
             return res.status(401).send('Invalid credentials');
         }
 
         // Set session data
-        req.session.user = user;
+        req.session.user = {
+            email: user.email,
+            role: user.role
+        };
 
         // Redirect to the home page
         res.redirect('/home');
