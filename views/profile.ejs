@@ -20,6 +20,13 @@
             <p><strong>City:</strong> <%= user.profile.city || '' %></p>
             <p><strong>Country:</strong> <%= user.profile.country || '' %></p>
             <p><strong>Bio:</strong> <%= user.profile.bio || '' %></p>
+
+            <form id="profile-pic-form" action="/profile/upload-photo" method="POST" enctype="multipart/form-data">
+                <label for="profile_photo">Upload Profile Picture:</label>
+                <input type="file" name="profile_photo" id="profile_photo" accept="image/*" required>
+                <button type="submit">Upload</button>
+            </form>
+
             <% if (user.profile.profile_photo_url) { %>
                 <img src="<%= user.profile.profile_photo_url %>" alt="Profile Photo" style="max-width:150px;">
             <% } %>
