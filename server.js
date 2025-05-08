@@ -125,7 +125,7 @@ main().catch(err => console.log(err));
 async function main() {
     // main-1. setup constants
     const app = express();
-    await mongoose.connect('mongodb+srv://learnmongodbrcmrv:BpgT7k079N7U9kgL@cluster0.zznebjg.mongodb.net');
+    await mongoose.connect(process.env.MONGODB_URI);
 
     // main-2. config app setting
     app.set('view engine', 'ejs')
@@ -134,7 +134,7 @@ async function main() {
     app.use(express.urlencoded({ extended: true }));
     const port = 3000;
     app.use(session({
-        secret: 'keyboard cat',
+        secret: process.env.SESSION_SECRET,
         resave: true,
         saveUninitialized: true,
         cookie: { secure: false }
@@ -211,7 +211,7 @@ async function main() {
         const { email, password } = req.body;
 
         // Find the user by username
-        const user = await userModel.findOne({ email: email });
+        const user = await usersModel.findOne({ email: email });
 
         // Check if user exists
         if (!user) {
