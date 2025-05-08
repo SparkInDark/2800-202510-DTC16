@@ -150,6 +150,14 @@ async function main() {
         res.render('register.ejs');
     })
 
+    app.get('/profile', async (req, res) => {
+        if (!req.session.user) {
+            return res.redirect('/login');
+        }
+        const user = await usersModel.findOne({ email: req.session.user.email });
+        res.render('profile.ejs', { user });
+    });
+
     app.get('/home', (req, res) => {
         console.log(req.session.user);
         res.render('index.ejs');
@@ -172,7 +180,7 @@ async function main() {
         res.render('productdetail.ejs', { productName });
     })
     
-    //,{ username: req.session.user.username}
+    //,{ email: req.session.user.email}
     app.post('/register', async (req, res) => {
         const { email, password } = req.body;
 
