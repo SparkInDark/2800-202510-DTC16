@@ -15,11 +15,11 @@
         <p><strong>Email:</strong> <%= user.email %></p>
         <p><strong>Role:</strong> <%= user.role %></p>
         <% if (user.profile) { %>
-            <p><strong>First Name:</strong> <%= user.profile.first_name || 'Not set' %></p>
-            <p><strong>Last Name:</strong> <%= user.profile.last_name || 'Not set' %></p>
-            <p><strong>City:</strong> <%= user.profile.city || 'Not set' %></p>
-            <p><strong>Country:</strong> <%= user.profile.country || 'Not set' %></p>
-            <p><strong>Bio:</strong> <%= user.profile.bio || 'Not set' %></p>
+            <p><strong>First Name:</strong> <%= user.profile.first_name || '' %></p>
+            <p><strong>Last Name:</strong> <%= user.profile.last_name || '' %></p>
+            <p><strong>City:</strong> <%= user.profile.city || '' %></p>
+            <p><strong>Country:</strong> <%= user.profile.country || '' %></p>
+            <p><strong>Bio:</strong> <%= user.profile.bio || '' %></p>
             <% if (user.profile.profile_photo_url) { %>
                 <img src="<%= user.profile.profile_photo_url %>" alt="Profile Photo" style="max-width:150px;">
             <% } %>
