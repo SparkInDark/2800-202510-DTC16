@@ -1,13 +1,21 @@
+// 1. Load environment variables FIRST
+require('dotenv').config();
+
+// 2. Then require other modules
 const express = require("express");
-var session = require('express-session')
+const session = require('express-session')
 const mongoose = require('mongoose');
 const path = require('path');
 const bcrypt = require('bcrypt');
+const multer = require("multer");
+const axios = require('axios');
+const upload = multer({ storage: multer.memoryStorage() }); // Store file in memory
+
+// 3. Define constants
+const port = 3000;
 const saltRounds = 10;
 
-// Add environment file link for secret keys
-require('dotenv').config();
-
+// 4. Define schema
 const userSchema = new mongoose.Schema({
     email: String,
     password_hash: String,
@@ -112,78 +120,52 @@ const categoriesModel = mongoose.model('categories', categorySchema);
 // });
 // const userAuthModel = mongoose.model('users_auth', user_authSchema);
 
+// 5. Define main
 main().catch(err => console.log(err));
 async function main() {
+    // main-1. setup constants
     const app = express();
-
     await mongoose.connect('mongodb+srv://learnmongodbrcmrv:BpgT7k079N7U9kgL@cluster0.zznebjg.mongodb.net');
 
+    // main-2. config app setting
+    app.set('view engine', 'ejs')
+
+    // main-3. middleware (app.use)
+    app.use(express.urlencoded({ extended: true }));
+    const port = 3000;
     app.use(session({
         secret: 'keyboard cat',
         resave: true,
         saveUninitialized: true,
         cookie: { secure: false }
     }))
-
-    app.use(express.urlencoded({ extended: true }));
-    const port = 3000;
-
     app.use(express.static(path.join(__dirname, 'style')));
     app.use(express.static(path.join(__dirname, 'src')));
-    app.set('view engine', 'ejs')
 
-    app.listen(port, () => {
-        console.log(`Server is running on http://localhost:${port}`);
-    })
-
+    // main-4. locals
     app.use((req, res, next) => {
         res.locals.user = req.session.user || null;
         next();
     });
-    
+
+    // main-5. routes organized by feature with pairs of (app.get, app.post)
+
+    // home routes
     app.get('/', (req, res) => {
         res.redirect('/home');
     })
-
-    app.get('/login', (req, res) => {
-        res.render('login.ejs');
-    })
-
-    app.get('/register', (req, res) => {
-        res.render('register.ejs');
-    })
-
-    app.get('/profile', async (req, res) => {
-        if (!req.session.user) {
-            return res.redirect('/login');
-        }
-        const user = await usersModel.findOne({ email: req.session.user.email });
-        res.render('profile.ejs', { user });
-    });
 
     app.get('/home', (req, res) => {
         console.log(req.session.user);
         res.render('index.ejs');
     })
 
-    app.get('/write-review', (req, res) => {
-        res.render('write_review.ejs');
+    // register routes
+    app.get('/register', (req, res) => {
+        res.render('register.ejs');
     })
 
-    app.get('/product', (req, res) => {
-        res.render('product.ejs');
-    })
-
-    app.get('/category', (req, res) => {
-        res.render('category.ejs');
-    })
-
-    app.get('/product/:productName', (req, res) => {
-        const productName = req.params.productName;
-        res.render('productdetail.ejs', { productName });
-    })
-    
-    //,{ email: req.session.user.email}
+    // use { email: req.session.user.email}, but not username
     app.post('/register', async (req, res) => {
         const { email, password } = req.body;
 
@@ -220,14 +202,9 @@ async function main() {
         }
     });
 
-    app.get('/logout', (req, res) => {
-        req.session.destroy(err => {
-            if (err) {
-                return res.redirect('/home');
-            }
-            res.clearCookie('connect.sid'); // replace with the name of your session cookie
-            res.redirect('/home');
-        });
+    // login routes
+    app.get('/login', (req, res) => {
+        res.render('login.ejs');
     })
 
     app.post('/login', async (req, res) => {
@@ -257,6 +234,82 @@ async function main() {
         res.redirect('/home');
     });
 
+    // logout routes
+    app.get('/logout', (req, res) => {
+        req.session.destroy(err => {
+            if (err) {
+                return res.redirect('/home');
+            }
+            res.clearCookie('connect.sid'); // replace with the name of your session cookie
+            res.redirect('/home');
+        });
+    })
+
+    // profile routes
+    app.get('/profile', async (req, res) => {
+        if (!req.session.user) {
+            return res.redirect('/login');
+        }
+        const user = await usersModel.findOne({ email: req.session.user.email });
+        res.render('profile.ejs', { user });
+    });
+
+    app.post('/profile/upload-photo', upload.single('profile_photo'), async (req, res) => {
+        if (!req.session.user) return res.redirect('/login');
+        if (!req.file) return res.status(400).send('No file uploaded');
+
+        try {
+            // Convert buffer to base64
+            const imageBase64 = req.file.buffer.toString('base64');
+
+            // Upload to imgbb
+            const response = await axios.post('https://api.imgbb.com/1/upload', null, {
+                params: {
+                    key: process.env.IMGBB_API_KEY,
+                    image: imageBase64
+                }
+            });
+
+            const imageUrl = response.data.data.url;
+
+            // Update user profile in DB
+            await usersModel.updateOne(
+                { email: req.session.user.email },
+                { $set: { 'profile.profile_photo_url': imageUrl } }
+            );
+
+            res.redirect('/profile');
+        } catch (err) {
+            console.error(err);
+            res.status(500).send('Image upload failed');
+        }
+    });
+
+    // category routes
+    app.get('/category', (req, res) => {
+        res.render('category.ejs');
+    })
+
+    // product routes
+    app.get('/product', (req, res) => {
+        res.render('product.ejs');
+    })
+
+    app.get('/product/:productName', (req, res) => {
+        const productName = req.params.productName;
+        res.render('productdetail.ejs', { productName });
+    })
+
+    // write-review routes
+    app.get('/write-review', (req, res) => {
+        res.render('write_review.ejs');
+    })
+
+    // app.listen at the bottom of the main function
+    app.listen(port, () => {
+        console.log(`Server is running on http://localhost:${port}`);
+    })
+
 //, role: req.session.user.role 
     // const isAdmin = (req, res, next) => {
     //     if (req.session && req.session.user && req.session.user.role === 'admin') {
@@ -268,39 +321,4 @@ async function main() {
 
     // app.use(isAdmin);
 }
-
-const multer = require('multer');
-const axios = require('axios');
-const upload = multer({ storage: multer.memoryStorage() }); // Store file in memory
-
-app.post('/profile/upload-photo', upload.single('profile_photo'), async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-    if (!req.file) return res.status(400).send('No file uploaded');
-
-    try {
-        // Convert buffer to base64
-        const imageBase64 = req.file.buffer.toString('base64');
-
-        // Upload to imgbb
-        const response = await axios.post('https://api.imgbb.com/1/upload', null, {
-            params: {
-                key: process.env.IMGBB_API_KEY,
-                image: imageBase64
-            }
-        });
-
-        const imageUrl = response.data.data.url;
-
-        // Update user profile in DB
-        await usersModel.updateOne(
-            { email: req.session.user.email },
-            { $set: { 'profile.profile_photo_url': imageUrl } }
-        );
-
-        res.redirect('/profile');
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Image upload failed');
-    }
-});
 
