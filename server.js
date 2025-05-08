@@ -8,7 +8,11 @@ const saltRounds = 10;
 const userSchema = new mongoose.Schema({
     email: String,
     password_hash: String,
-    role: String,
+    role: {
+        type: String,
+        enum: ['admin', 'user'],
+        default: 'user'
+    },
     profile: {
         first_name: String,
         last_name: String,
@@ -93,16 +97,17 @@ const categorySchema = new mongoose.Schema({
 
 const categoriesModel = mongoose.model('categories', categorySchema);
 
-const user_authSchema = new mongoose.Schema({
-    username: String,
-    password: String,
-    role: {
-        type: String,
-        enum: ['admin', 'user'],
-        default: 'user'
-    }
-});
-const userAuthModel = mongoose.model('users_auth', user_authSchema);
+// Comment by jun, the section is to be deleted after userSchema test.
+// const user_authSchema = new mongoose.Schema({
+//     username: String,
+//     password: String,
+//     role: {
+//         type: String,
+//         enum: ['admin', 'user'],
+//         default: 'user'
+//     }
+// });
+// const userAuthModel = mongoose.model('users_auth', user_authSchema);
 
 main().catch(err => console.log(err));
 async function main() {
@@ -169,12 +174,12 @@ async function main() {
     
     //,{ username: req.session.user.username}
     app.post('/register', async (req, res) => {
-        const { username, password } = req.body;
+        const { email, password } = req.body;
 
-        // Check if the user already exists in MongoDB
-        const userExists = await userAuthModel.findOne({ username: username });
+        // Check if the email already exists in MongoDB
+        const userExists = await usersModel.findOne({ email: email });
         if (userExists) {
-            return res.status(400).send('User already exists');
+            return res.status(400).send('Email already exists');
         }
 
         try {
@@ -182,13 +187,19 @@ async function main() {
             const hashedPassword = await bcrypt.hash(password, saltRounds);
 
             // Save the new user
-            const newUser = await userAuthModel.create({
-                username: username,
-                password: hashedPassword
+            const newUser = await usersModel.create({
+                email: email,
+                password_hash: hashedPassword,
+                role: 'user',
+                created_at: new Date(),
+                profile: {}
             });
 
             // Set session
-            req.session.user = newUser;
+            req.session.user = {
+                email: newUser.email,
+                role: newUser.role
+            };
 
             // Redirect
             res.redirect('/home');
