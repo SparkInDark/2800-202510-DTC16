@@ -5,6 +5,9 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
+// Add environment file link for secret keys
+require('dotenv').config();
+
 const userSchema = new mongoose.Schema({
     email: String,
     password_hash: String,
@@ -265,3 +268,39 @@ async function main() {
 
     // app.use(isAdmin);
 }
+
+const multer = require('multer');
+const axios = require('axios');
+const upload = multer({ storage: multer.memoryStorage() }); // Store file in memory
+
+app.post('/profile/upload-photo', upload.single('profile_photo'), async (req, res) => {
+    if (!req.session.user) return res.redirect('/login');
+    if (!req.file) return res.status(400).send('No file uploaded');
+
+    try {
+        // Convert buffer to base64
+        const imageBase64 = req.file.buffer.toString('base64');
+
+        // Upload to imgbb
+        const response = await axios.post('https://api.imgbb.com/1/upload', null, {
+            params: {
+                key: process.env.IMGBB_API_KEY,
+                image: imageBase64
+            }
+        });
+
+        const imageUrl = response.data.data.url;
+
+        // Update user profile in DB
+        await usersModel.updateOne(
+            { email: req.session.user.email },
+            { $set: { 'profile.profile_photo_url': imageUrl } }
+        );
+
+        res.redirect('/profile');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Image upload failed');
+    }
+});
+
