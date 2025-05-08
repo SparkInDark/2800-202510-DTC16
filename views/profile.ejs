@@ -9,6 +9,25 @@
 </head>
 <body>
     <%- include('component/top-navbar.ejs') %>
+
+    <div class="profile-container">
+        <h2>My Profile</h2>
+        <p><strong>Email:</strong> <%= user.email %></p>
+        <p><strong>Role:</strong> <%= user.role %></p>
+        <% if (user.profile) { %>
+            <p><strong>First Name:</strong> <%= user.profile.first_name || 'Not set' %></p>
+            <p><strong>Last Name:</strong> <%= user.profile.last_name || 'Not set' %></p>
+            <p><strong>City:</strong> <%= user.profile.city || 'Not set' %></p>
+            <p><strong>Country:</strong> <%= user.profile.country || 'Not set' %></p>
+            <p><strong>Bio:</strong> <%= user.profile.bio || 'Not set' %></p>
+            <% if (user.profile.profile_photo_url) { %>
+                <img src="<%= user.profile.profile_photo_url %>" alt="Profile Photo" style="max-width:150px;">
+            <% } %>
+        <% } else { %>
+            <p>No profile information available.</p>
+        <% } %>
+    </div>
+
     <%- include('component/bottom-navbar.ejs') %>
 </body>
 </html>
