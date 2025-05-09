@@ -2,8 +2,8 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Write Review</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="/style.css" />
@@ -12,18 +12,11 @@
 <body class="bg-gray-100 text-gray-800">
     <%- include('component/top-navbar.ejs') %>
 
-        <!-- Product Title and Overall Stars -->
-        <div
-            class="bg-white p-4 mt-6 mx-auto max-w-2xl shadow rounded flex justify-between items-center font-semibold text-lg">
-            <span>iPhone 16</span>
-            <div class="text-green-500 text-xl">★ ★ ★ ★ ☆</div>
-        </div>
+        <!-- 表单区域 -->
+        <form action="/submit-review" method="POST" enctype="multipart/form-data"
+            class="bg-white p-6 mt-24 mx-auto max-w-2xl rounded-lg shadow space-y-5">
 
-        <!-- Write Review Form -->
-        <div class="bg-white p-6 mt-6 mx-auto max-w-2xl rounded-lg shadow space-y-5">
-            <h2 class="text-xl font-semibold">Rate your recent experience</h2>
-
-            <!-- 评分星星 -->
+            <!-- 星级评分 -->
             <div class="flex items-center space-x-1 text-2xl text-gray-300" id="star-rating">
                 <% for (let i=1; i <=5; i++) { %>
                     <button type="button" data-rating="<%= i %>" class="star hover:scale-110 transition">
@@ -33,25 +26,36 @@
             </div>
             <input type="hidden" name="rating" id="rating-value" value="0" />
 
-
-            <!-- Overall Experience -->
-            <textarea rows="4" placeholder="What made your experience great? What is this company doing well?"
-                class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-400"></textarea>
-
             <!-- Title -->
-            <input type="text" placeholder="What's important for people to know?"
+            <input type="text" name="title" placeholder="Add a title for your review"
                 class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-400" />
 
-            <!-- Date of Experience -->
-            <input type="date"
-                class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-400" />
+            <!-- Pros -->
+            <input type="text" name="pros" placeholder="Pros"
+                class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-300" />
+
+            <!-- Cons -->
+            <input type="text" name="cons" placeholder="Cons"
+                class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-300" />
+
+            <!-- Detailed Review -->
+            <textarea name="detailedReview" rows="5" placeholder="Write your detailed review here..."
+                class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+
+            <!-- 上传图片 -->
+            <div class="space-y-2">
+                <label class="block font-medium">Upload Photos</label>
+                <input type="file" name="reviewImages" multiple
+                    class="w-full border border-dashed border-gray-400 rounded p-3 text-sm bg-gray-50 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100" />
+                <p class="text-sm text-gray-500">You can select multiple images (jpg, png).</p>
+            </div>
 
             <!-- Submit -->
-            <button
+            <button type="submit"
                 class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded transition duration-200">
                 Submit Review
             </button>
-        </div>
+        </form>
 
         <%- include('component/bottom-navbar.ejs') %>
 </body>
@@ -61,18 +65,11 @@
 <script>
     const stars = document.querySelectorAll('.star');
     const ratingInput = document.getElementById('rating-value');
-
     let selectedRating = 0;
 
     stars.forEach((star, index) => {
-        star.addEventListener('mouseover', () => {
-            highlightStars(index + 1);
-        });
-
-        star.addEventListener('mouseout', () => {
-            highlightStars(selectedRating);
-        });
-
+        star.addEventListener('mouseover', () => highlightStars(index + 1));
+        star.addEventListener('mouseout', () => highlightStars(selectedRating));
         star.addEventListener('click', () => {
             selectedRating = index + 1;
             ratingInput.value = selectedRating;
@@ -81,7 +78,7 @@
 
     function highlightStars(rating) {
         stars.forEach((star, index) => {
-            star.style.color = index < rating ? '#22c55e' : '#d1d5db'; // green-500 vs gray-300
+            star.style.color = index < rating ? '#22c55e' : '#d1d5db';
         });
     }
 </script>
