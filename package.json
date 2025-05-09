@@ -1,0 +1,32 @@
+{
+  "name": "2800-202510-dtc16",
+  "version": "1.0.0",
+  "description": "Team Name: DTC-16\r Team Members:\r - Anderson Lai\r - Jun Z\r - Xiang Xu\r ## More details to come\r TBA",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SparkInDark/2800-202510-DTC16.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SparkInDark/2800-202510-DTC16/issues"
+  },
+  "homepage": "https://github.com/SparkInDark/2800-202510-DTC16#readme",
+  "dependencies": {
+    "axios": "^1.9.0",
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.5.0",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "mongodb": "^6.16.0",
+    "mongoose": "^8.14.1",
+    "multer": "^1.4.5-lts.2",
+    "nodemon": "^3.1.10"
+  }
+}

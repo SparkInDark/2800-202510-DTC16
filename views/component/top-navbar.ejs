@@ -1,0 +1,25 @@
+<nav class="fixed top-0 left-0 w-full bg-gray-200 shadow z-50">
+    <div class="max-w-screen-xl mx-auto flex justify-between items-center px-2 sm:px-6 lg:px-8 h-20">
+
+        <div class="flex items-center space-x-2">
+            <a href="/" class="flex items-center">
+                <span class="ml-1 brand-name text-2xl sm:text-3xl pt-1">RatingRebels</span>
+            </a>
+        </div>
+
+
+        <div class="flex items-center gap-x-2 sm:gap-x-4 pr-2 sm:pr-8">
+            <% if (user) { %>
+                <a href="/profile">
+                    <img src="/img/user-icon.png" class="w-10 sm:w-12 h-auto">
+                </a>
+                <% } else { %>
+                    <a href="/login">
+                        <button
+                            class="bg-indigo-200 text-black font-semibold px-4 py-2 rounded-full hover:bg-indigo-300 transition">
+                            LOG IN
+                        </button>
+                    </a>
+                    <% } %>
+        </div>
+</nav>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="./style/style.css" />
+</head>
+<body>
+    <%- include('component/top-navbar.ejs') %>
+
+    <div class="profile-container">
+        <h2>My Profile</h2>
+        <p><strong>Email:</strong> <%= user.email %></p>
+        <p><strong>Role:</strong> <%= user.role %></p>
+        <% if (user.profile) { %>
+            <p><strong>First Name:</strong> <%= user.profile.first_name || '' %></p>
+            <p><strong>Last Name:</strong> <%= user.profile.last_name || '' %></p>
+            <p><strong>City:</strong> <%= user.profile.city || '' %></p>
+            <p><strong>Country:</strong> <%= user.profile.country || '' %></p>
+            <p><strong>Bio:</strong> <%= user.profile.bio || '' %></p>
+
+            <form id="profile-pic-form" action="/profile/upload-photo" method="POST" enctype="multipart/form-data">
+                <label for="profile_photo">Upload Profile Picture:</label>
+                <input type="file" name="profile_photo" id="profile_photo" accept="image/*" required>
+                <button type="submit">Upload</button>
+            </form>
+
+            <% if (user.profile.profile_photo_url) { %>
+                <img src="<%= user.profile.profile_photo_url %>" alt="Profile Photo" style="max-width:150px;">
+            <% } %>
+        <% } else { %>
+            <p>No profile information available.</p>
+        <% } %>
+    </div>
+
+    <%- include('component/bottom-navbar.ejs') %>
+</body>
+</html>

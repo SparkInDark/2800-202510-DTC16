@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= item %>
+    </title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+    <%- include('component/top-navbar.ejs') %>
+
+        <div class="mt-24 px-6 sm:px-20">
+            <% if (item==='iphone-16-pro-max' ) { %>
+                <div class="flex justify-between items-center bg-gray-300 p-4 rounded mb-4">
+                    <span class="font-semibold text-lg">iPhone 16 Pro Max</span>
+                    <div class="flex items-center gap-2 text-xl">
+                        <span class="border-2 border-purple-500 px-1 rounded">☆</span>
+                        <span>☆</span>
+                        <span>☆</span>
+                        <span>&gt;</span>
+                    </div>
+                </div>
+
+                <% } else if (item==='iphone-15-pro' ) { %>
+                    <div class="flex justify-between items-center bg-gray-300 p-4 rounded mb-4">
+                        <span class="font-semibold text-lg">iPhone 15 Pro</span>
+                        <div class="flex items-center gap-2 text-xl">
+                            <span>☆</span>
+                            <span>☆</span>
+                            <span>&gt;</span>
+                        </div>
+                    </div>
+
+                    <% } else if (item==='iphone-14' ) { %>
+                        <div class="flex justify-between items-center bg-gray-300 p-4 rounded mb-4">
+                            <span class="font-semibold text-lg">iPhone 14</span>
+                            <div class="flex items-center gap-2 text-xl">
+                                <span>☆</span>
+                                <span>&gt;</span>
+                            </div>
+                        </div>
+
+                        <% } else if (item==='iphone-13' ) { %>
+                            <div class="flex justify-between items-center bg-gray-300 p-4 rounded mb-4">
+                                <span class="font-semibold text-lg">iPhone 13</span>
+                                <div class="text-xl">&gt;</div>
+                            </div>
+
+                            <% } else if (item==='iphone-12' ) { %>
+                                <div class="flex justify-between items-center bg-gray-300 p-4 rounded mb-4">
+                                    <span class="font-semibold text-lg">iPhone 12</span>
+                                    <div class="text-xl">&gt;</div>
+                                </div>
+
+                                <% } else { %>
+                                    <div class="bg-yellow-100 text-center p-6 rounded">
+                                        <p class="text-lg font-semibold text-gray-800">No product found for: <%= item %>
+                                        </p>
+                                    </div>
+                                    <% } %>
+        </div>
+
+        <%- include('component/bottom-navbar.ejs') %>
+</body>
+
+</html>
