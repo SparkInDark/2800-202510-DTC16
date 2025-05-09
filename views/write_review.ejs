@@ -2,38 +2,83 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Write Review</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="/style.css" />
 </head>
 
-<body>
+<body class="bg-gray-100 text-gray-800">
     <%- include('component/top-navbar.ejs') %>
-    <div class="bg-gray-400 p-4 mt-4 flex justify-between items-center font-semibold text-lg">
-        <span>iPhone 16</span>
-        <div class="text-xl">☆ ☆ ☆</div>
-    </div>
 
-    <!-- Write Review Form -->
-    <div class="bg-gray-300 p-6 mt-6 rounded space-y-4">
-        <h2 class="text-lg font-semibold">Write Review Form</h2>
+        <!-- 表单区域 -->
+        <form action="/submit-review" method="POST" enctype="multipart/form-data"
+            class="bg-white p-6 mt-24 mx-auto max-w-2xl rounded-lg shadow space-y-5">
 
-        <input type="text" placeholder="Overall Review"
-            class="w-full px-4 py-2 rounded border border-black font-medium">
-        <input type="text" placeholder="Pros" class="w-full px-4 py-2 rounded border border-black font-medium">
-        <input type="text" placeholder="Cons" class="w-full px-4 py-2 rounded border border-black font-medium">
+            <!-- 星级评分 -->
+            <div class="flex items-center space-x-1 text-2xl text-gray-300" id="star-rating">
+                <% for (let i=1; i <=5; i++) { %>
+                    <button type="button" data-rating="<%= i %>" class="star hover:scale-110 transition">
+                        ★
+                    </button>
+                    <% } %>
+            </div>
+            <input type="hidden" name="rating" id="rating-value" value="0" />
 
-        <div class="flex justify-center gap-2 text-xl">
-            <span>☆</span>
-            <span>☆</span>
-            <span>☆</span>
-        </div>
+            <!-- Title -->
+            <input type="text" name="title" placeholder="Add a title for your review"
+                class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-400" />
 
-        <button class="w-full bg-gray-500 text-white font-semibold py-2 rounded">Submit</button>
-    </div>
-    <%- include('component/bottom-navbar.ejs') %>
+            <!-- Pros -->
+            <input type="text" name="pros" placeholder="Pros"
+                class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-300" />
+
+            <!-- Cons -->
+            <input type="text" name="cons" placeholder="Cons"
+                class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-300" />
+
+            <!-- Detailed Review -->
+            <textarea name="detailedReview" rows="5" placeholder="Write your detailed review here..."
+                class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+
+            <!-- 上传图片 -->
+            <div class="space-y-2">
+                <label class="block font-medium">Upload Photos</label>
+                <input type="file" name="reviewImages" multiple
+                    class="w-full border border-dashed border-gray-400 rounded p-3 text-sm bg-gray-50 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100" />
+                <p class="text-sm text-gray-500">You can select multiple images (jpg, png).</p>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit"
+                class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded transition duration-200">
+                Submit Review
+            </button>
+        </form>
+
+        <%- include('component/bottom-navbar.ejs') %>
 </body>
 
 </html>
+
+<script>
+    const stars = document.querySelectorAll('.star');
+    const ratingInput = document.getElementById('rating-value');
+    let selectedRating = 0;
+
+    stars.forEach((star, index) => {
+        star.addEventListener('mouseover', () => highlightStars(index + 1));
+        star.addEventListener('mouseout', () => highlightStars(selectedRating));
+        star.addEventListener('click', () => {
+            selectedRating = index + 1;
+            ratingInput.value = selectedRating;
+        });
+    });
+
+    function highlightStars(rating) {
+        stars.forEach((star, index) => {
+            star.style.color = index < rating ? '#22c55e' : '#d1d5db';
+        });
+    }
+</script>
