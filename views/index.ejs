@@ -87,8 +87,6 @@
         </div>
 
 
-
-
         <!-- Category Cards -->
         <div class="category-grid">
             <a href="/category" class="category-card">
@@ -131,8 +129,13 @@
         <section class="cta-section">
             <h2>Ready to get started?</h2>
             <p>Join millions who use RatingRebels to make better choices.</p>
-            <a href="/write-review" class="cta-button">Write a review</a>
+            <% if (user) { %>
+                <a href="/write-review" class="cta-button">Write a review</a>
+                <% } else { %>
+                    <a href="/login" class="cta-button">Write a review</a>
+                    <% } %>
         </section>
+
 
 
         <%- include('component/bottom-navbar.ejs') %>

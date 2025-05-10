@@ -302,19 +302,22 @@ async function main() {
 
     // write-review routes
     app.get('/write-review', (req, res) => {
+        if (!req.session.user) {
+            return res.redirect('/login');
+        }
         res.render('write_review.ejs');
-    })
+    });
 
     app.get('/featureproduct', (req, res) => {
         res.render('featureproduct'); // 确保 views/featureproduct.ejs 存在
     });
-    
+
     // app.listen at the bottom of the main function
     app.listen(port, () => {
         console.log(`Server is running on http://localhost:${port}`);
     })
 
-//, role: req.session.user.role 
+    //, role: req.session.user.role 
     // const isAdmin = (req, res, next) => {
     //     if (req.session && req.session.user && req.session.user.role === 'admin') {
     //         return next();
