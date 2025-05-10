@@ -305,6 +305,10 @@ async function main() {
         res.render('write_review.ejs');
     })
 
+    app.get('/featureproduct', (req, res) => {
+        res.render('featureproduct'); // 确保 views/featureproduct.ejs 存在
+    });
+    
     // app.listen at the bottom of the main function
     app.listen(port, () => {
         console.log(`Server is running on http://localhost:${port}`);
