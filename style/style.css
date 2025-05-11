@@ -304,6 +304,12 @@ main {
     outline: none;
 }
 
+html,
+body {
+    background-color: #fdfcf4;
+    min-height: 100%;
+}
+
 .search-button {
     background: linear-gradient(to right, #1b8567, #00b67a);
     color: white;

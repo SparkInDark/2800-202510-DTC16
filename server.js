@@ -308,9 +308,12 @@ async function main() {
         res.render('write_review.ejs');
     });
 
-    app.get('/featureproduct', (req, res) => {
-        res.render('featureproduct'); // 确保 views/featureproduct.ejs 存在
+    const topProducts = require("./data/topproducts");
+
+    app.get("/featureproduct", (req, res) => {
+        res.render("featureproduct", { topProducts });
     });
+
 
     // app.listen at the bottom of the main function
     app.listen(port, () => {

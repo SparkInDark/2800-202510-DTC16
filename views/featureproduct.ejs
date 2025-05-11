@@ -1,15 +1,44 @@
-<!-- views/featureproduct.ejs -->
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Featured Product</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Top Rated Products</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/style.css" />
 </head>
 
-<body>
-    <h1>This is the Featured Product Page</h1>
-    <p>More product details will be displayed here.</p>
+<body class="bg-[#fdfcf4] text-gray-800 min-h-screen">
+    <%- include('component/top-navbar.ejs') %>
+
+        <main class="max-w-4xl mx-auto px-4 mt-32 pb-40">
+
+            <h1 class="text-3xl font-bold mb-8 text-center">Top 10 Highest Rated Products</h1>
+
+            <% topProducts.forEach(product=> { %>
+                <div class="bg-white rounded-xl p-4 mb-5 shadow flex gap-4 items-start">
+                    <img src="<%= product.image %>" alt="<%= product.name %>" class="w-24 h-24 object-cover rounded" />
+                    <div>
+                        <h2 class="text-lg font-bold mb-1">
+                            <%= product.name %>
+                        </h2>
+                        <div class="flex items-center mb-2">
+                            <% for (let i=0; i < 5; i++) { %>
+                                <% if (i < product.rating) { %>
+                                    <span class="text-yellow-500">★</span>
+                                    <% } else { %>
+                                        <span class="text-gray-300">★</span>
+                                        <% } %>
+                                            <% } %>
+                        </div>
+                        <p class="italic text-gray-600">"<%= product.review %>"</p>
+                    </div>
+                </div>
+                <% }); %>
+        </main>
 </body>
 
 </html>
+
+<%- include('component/bottom-navbar.ejs') %>
