@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Search Results</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/style/style.css" />
+
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+
+</head>
+
+<body class="bg-gray-50 text-gray-900">
+
+    <!-- Top Navbar -->
+    <%- include('component/top-navbar.ejs') %>
+
+        <!-- Search Bar Section -->
+        <div class="bg-gray-100 pt-32 pb-12 px-4">
+            <h2 class="text-2xl sm:text-3xl font-bold text-center mb-6">What are you looking for?</h2>
+
+            <form action="/search" method="GET"
+                class="max-w-md mx-auto flex rounded-full shadow-sm border border-blue-300 overflow-hidden bg-white">
+                <input type="text" name="q" value="<%= query %>" placeholder="Search"
+                    class="flex-grow px-4 py-2 text-sm sm:text-base focus:outline-none" />
+                <button type="submit"
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-5 py-2 text-sm sm:text-base transition">
+                    Search
+                </button>
+            </form>
+        </div>
+
+        <!-- Results Section -->
+        <section class="bg-[#fdfcf6] py-12 px-4">
+            <div class="max-w-screen-xl mx-auto bg-white rounded-xl shadow p-6">
+                <!-- Results Title -->
+                <h1 class="text-3xl font-bold mb-6 text-center">
+                    Results for "<span class="text-blue-600">
+                        <%= query %>
+                    </span>"
+                </h1>
+
+                <!-- Filter Buttons -->
+                <div class="flex justify-center gap-3 mb-6">
+                    <button class="px-4 py-2 border rounded-full text-sm font-medium hover:bg-gray-100">All
+                        filters</button>
+                    <button class="px-4 py-2 border rounded-full text-sm font-medium hover:bg-gray-100">Rating</button>
+                    <button
+                        class="px-4 py-2 border rounded-full text-sm font-medium hover:bg-gray-100">Location</button>
+                </div>
+
+                <!-- Grid Layout -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left: Product Results -->
+                    <div class="lg:col-span-2 space-y-4">
+                        <% if (results.length> 0) { %>
+                            <% results.forEach(product=> { %>
+                                <div class="flex items-start justify-between p-4 bg-white border rounded-lg shadow-sm">
+                                    <div class="flex items-start gap-4">
+                                        <img src="<%= product.image_url %>" alt="<%= product.name %>"
+                                            class="w-16 h-16 object-cover rounded" />
+                                        <div>
+                                            <h2 class="text-lg font-semibold text-black">
+                                                <a href="/product/<%= product._id %>" class="hover:underline">
+                                                    <%= product.name %>
+                                                </a>
+                                            </h2>
+                                            <p class="text-sm text-gray-500 mb-1">
+                                                <%= product.brand || '' %> — <%= product.category || '' %>
+                                            </p>
+                                            <p class="text-sm text-blue-600 underline">
+                                                <%= product.reviews ? product.reviews.length : 0 %> reviews
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-yellow-500 font-bold text-xl">
+                                            <%= typeof product.rating==='number' ? product.rating.toFixed(1) : '0.0' %>
+                                                ★
+                                        </div>
+                                    </div>
+                                </div>
+                                <% }) %>
+                                    <% } else { %>
+                                        <p class="text-center text-gray-500">No results found for "<%= query %>"</p>
+                                        <% } %>
+
+                                            <!-- Suggested Companies -->
+                                            <h2 class="text-xl font-semibold mt-8">You may also like</h2>
+                                            <div class="space-y-3">
+                                                <div class="p-4 bg-white border rounded shadow-sm">
+                                                    <h3 class="text-md font-medium">GadgetCo</h3>
+                                                    <p class="text-sm text-gray-600">4.3 ★ · 320 reviews</p>
+                                                </div>
+                                                <div class="p-4 bg-white border rounded shadow-sm">
+                                                    <h3 class="text-md font-medium">TechHive</h3>
+                                                    <p class="text-sm text-gray-600">4.5 ★ · 190 reviews</p>
+                                                </div>
+                                            </div>
+                    </div>
+
+                    <!-- Right: Categories -->
+                    <div class="space-y-3">
+                        <h3 class="text-lg font-semibold mb-2">Categories</h3>
+                        <% categories.forEach(cat=> { %>
+                            <a href="/category/<%= cat.slug %>"
+                                class="block px-4 py-2 rounded-lg hover:bg-gray-100 border text-sm text-gray-700">
+                                <%= cat.name %>
+                            </a>
+                            <% }) %>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom Navbar -->
+        <%- include('component/bottom-navbar.ejs') %>
+
+</body>
+
+</html>

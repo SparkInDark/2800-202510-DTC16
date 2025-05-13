@@ -14,30 +14,31 @@
     <%- include('component/top-navbar.ejs') %>
 
         <div id="location-info"
-             class="absolute bg-gray-300 bg-opacity-70 text-black p-3 rounded-lg shadow z-50 w-44 text-sm top-[72px] right-2 lg:top-[80px] lg:right-4">
+            class="absolute bg-gray-300 bg-opacity-70 text-black p-3 rounded-lg shadow z-50 w-44 text-sm top-[72px] right-2 lg:top-[80px] lg:right-4">
             <div id="weather-content">Loading weather...</div>
         </div>
 
-        <!-- Trustpilot Hero Title -->
+        <!-- Hero Title -->
         <div class="hero-title">
             <h1>Behind every review is an experience that matters</h1>
             <p>Read reviews. Write reviews. Find companies.</p>
         </div>
 
-        <!-- Trustpilot Search Section -->
-        <div class="search-container">
-            <form class="search-bar">
-                <input type="text" class="search-input" placeholder="Find company or category" />
+        <!-- Search Section -->
+        <div class="search-container mt-8">
+            <form action="/search" method="GET" class="search-bar">
+                <input type="text" name="q" placeholder="Find company or category" class="search-input" />
                 <button type="submit" class="search-button">Search</button>
             </form>
         </div>
+
 
 
         <!-- Featured Products Section -->
         <div class="w-full px-6 py-8 bg-[#fefcf6] flex flex-col items-center">
             <h2 class="text-2xl font-bold text-center w-full mb-8 text-[#191919]">Featured Products</h2>
             <div class="flex flex-col gap-6 w-full max-w-md">
-        
+
                 <!-- NVIDIA RTX 5090 -->
                 <a href="/featureproduct"
                     class="bg-white rounded-xl shadow-md overflow-hidden block hover:shadow-lg transition">
@@ -48,12 +49,13 @@
                             <p class="font-bold text-[#191919]">NVIDIA RTX 5090</p>
                             <p class="text-yellow-500 text-sm">★★★★★</p>
                             <p class="italic text-sm text-gray-600 mt-1">
-                                "the most powerful consumer GPU currently available, offering significant performance increases"
+                                "the most powerful consumer GPU currently available, offering significant performance
+                                increases"
                             </p>
                         </div>
                     </div>
                 </a>
-        
+
                 <!-- DJI Pocket 3 -->
                 <a href="/featureproduct"
                     class="bg-white rounded-xl shadow-md overflow-hidden block hover:shadow-lg transition">
@@ -69,7 +71,7 @@
                         </div>
                     </div>
                 </a>
-        
+
                 <!-- iPhone 16 Pro Max -->
                 <a href="/featureproduct"
                     class="bg-white rounded-xl shadow-md overflow-hidden block hover:shadow-lg transition">
@@ -80,14 +82,15 @@
                             <p class="font-bold text-[#191919]">iPhone 16 Pro Max</p>
                             <p class="text-yellow-500 text-sm">★★★★</p>
                             <p class="italic text-sm text-gray-600 mt-1">
-                                "I really do like Apple products, but buying this phone turned me a bit sour for buying a new
+                                "I really do like Apple products, but buying this phone turned me a bit sour for buying
+                                a new
                                 device
                                 from a reputable tech company"
                             </p>
                         </div>
                     </div>
                 </a>
-        
+
             </div>
         </div>
 

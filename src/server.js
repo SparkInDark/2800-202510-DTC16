@@ -9,7 +9,7 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const multer = require("multer");
 const axios = require('axios');
-const {getWeather} = require("./services/weather");
+const { getWeather } = require("./services/weather");
 const upload = multer({ storage: multer.memoryStorage() }); // Store file in memory
 
 // 3. Define constants
@@ -323,6 +323,33 @@ async function main() {
         }
         res.render('write_review.ejs');
     });
+
+    app.get('/search', async (req, res) => {
+        const query = req.query.q || '';
+
+        try {
+            // 模糊查找产品（根据名称）
+            const results = await productsModel.find({
+                name: { $regex: query, $options: 'i' }
+            });
+
+            // 获取分类列表（右侧使用）
+            const categories = await productsModel.distinct('category_slug');
+
+            res.render('search', {
+                query,
+                results,
+                categories: categories.map(cat => ({
+                    name: cat,
+                    slug: cat.toLowerCase().replace(/\s+/g, '-')
+                }))
+            });
+        } catch (err) {
+            console.error('Error during search:', err);
+            res.status(500).send('Search failed');
+        }
+    });
+
 
     app.get('/featureproduct', (req, res) => {
         res.render('featureproduct'); // 确保 views/featureproduct.ejs 存在

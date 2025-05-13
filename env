@@ -1,0 +1,20 @@
+# ===========================================
+# Rating Rebels Project - Environment Variables Example
+#
+# Copy this file to `.env` and fill in the real values.
+#
+# DO NOT commit your actual `.env` file to GitHub.
+# Share real secrets securely (not in version control).
+# ===========================================
+
+# MongoDB connection string
+MONGODB_URI=mongodb+srv://learnmongodbrcmrv:BpgT7k079N7U9kgL@cluster0.zznebjg.mongodb.net/rating_rebels_db
+
+# imgbb.com API key for image uploads
+IMGBB_API_KEY=e4e76cb53d7c8c6124af6b2bcc1c48c2
+
+# session secret
+SESSION_SECRET=5b!pGxJ8^d2^VqZz@L0w*R7k$Qn1!uT6
+
+# weather API key
+OPENWEATHER_API_KEY = 9dcc9fb97f488c1743e4627229a7ad6a

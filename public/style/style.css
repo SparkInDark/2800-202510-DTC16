@@ -1,12 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;600;700&display=swap');
 
-
+/* Brand Name (Navbar Title) */
 .brand-name {
     font-family: 'Pacifico', cursive;
-    font-size: 1.75rem;
-    /* or use Tailwind class in EJS */
+    font-size: 1.5rem;
 }
 
+@media (min-width: 640px) {
+    .brand-name {
+        font-size: 1.875rem;
+    }
+}
 
 html,
 body {
@@ -140,6 +144,7 @@ main {
     line-height: 1.4;
 }
 
+/* Star rating */
 .star-rating {
     color: var(--tp-green);
     font-size: 18px;
@@ -224,15 +229,12 @@ main {
 #location-info {
     position: absolute;
     top: 96px;
-    /* 确保不贴着 navbar */
     right: 1rem;
     background: #e2e8f0;
     color: black;
     padding: 4px 8px;
     font-size: 12px;
-    /* 更小字体 */
     width: 110px;
-    /* 更窄框体 */
     border-radius: 0.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     z-index: 40;
@@ -278,7 +280,7 @@ main {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* Search Bar Block */
+/* Search bar block */
 .search-container {
     max-width: 800px;
     width: 90%;
@@ -317,4 +319,8 @@ main {
 
 .search-button:hover {
     background: linear-gradient(to right, #00b67a, #1b8567);
+}
+
+.brand-name {
+    font-family: 'Pacifico', cursive;
 }
