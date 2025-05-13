@@ -1,45 +1,35 @@
-document.addEventListener("DOMContentLoaded", function () {
-    navigator.geolocation.getCurrentPosition(success, error);
-});
+// src/services/weather.js
+// changed weather.js from a frontend code to backend code
 
-function success(position) {
-    const lat = position.coords.latitude;
-    const lon = position.coords.longitude;
-    getWeather(lat, lon);
-}
+const axios = require('axios');
 
-function error() {
-    document.getElementById("location-info").textContent = "Location unavailable";
-}
-
-function getWeather(lat, lon) {
-    const apiKey = "9dcc9fb97f488c1743e4627229a7ad6a";
+/**
+ * Fetch weather data from OpenWeatherMap by latitude and longitude.
+ * Returns an object: { temp, weather, icon, city }
+ * Throws an error if the request fails.
+ */
+async function getWeather(lat, lon) {
+    const apiKey = process.env.OPENWEATHER_API_KEY; // Store your API key in .env as OPENWEATHER_API_KEY
+    if (!apiKey) {
+        throw new Error('Missing OPENWEATHER_API_KEY in environment variables');
+    }
+    if (!lat || !lon) {
+        throw new Error('Latitude and longitude are required');
+    }
     const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
-
-    fetch(url)
-        .then(res => res.json())
-        .then(data => {
-            const temp = Math.round(data.main.temp);
-            const weather = data.weather[0].main;
-            const icon = data.weather[0].icon;
-            const city = data.name;
-            displayWeather(temp, weather, icon, city);
-        })
-        .catch(() => {
-            document.getElementById("location-info").textContent = "Weather info not available";
-        });
+    try {
+        const response = await axios.get(url);
+        const data = response.data;
+        return {
+            temp: Math.round(data.main.temp),
+            weather: data.weather[0].main,
+            icon: data.weather[0].icon,
+            city: data.name
+        };
+    } catch (err) {
+        console.error('Error fetching weather:', err.message);
+        throw new Error('Unable to fetch weather data');
+    }
 }
 
-function displayWeather(temp, weather, icon, city) {
-    const iconUrl = `https://openweathermap.org/img/wn/${icon}.png`;
-    const infoDiv = document.getElementById("location-info");
-    infoDiv.innerHTML = `
-    <div class="flex items-center space-x-2">
-      <img src="${iconUrl}" alt="${weather}" class="w-6 h-6">
-      <div>
-        <div class="font-semibold">${temp}°C - ${weather}</div>
-        <div class="text-sm">${city}</div>
-      </div>
-    </div>
-  `;
-}
+module.exports = { getWeather };
