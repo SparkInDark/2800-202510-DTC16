@@ -139,8 +139,7 @@ async function main() {
         saveUninitialized: true,
         cookie: { secure: false }
     }))
-    app.use(express.static(path.join(__dirname, 'style')));
-    app.use(express.static(path.join(__dirname, 'src')));
+    app.use(express.static(path.join(__dirname, '..', 'public')));
 
     // main-4. locals
     app.use((req, res, next) => {
