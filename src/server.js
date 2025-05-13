@@ -9,6 +9,7 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const multer = require("multer");
 const axios = require('axios');
+const {getWeather} = require("./services/weather");
 const upload = multer({ storage: multer.memoryStorage() }); // Store file in memory
 
 // 3. Define constants
@@ -129,6 +130,7 @@ async function main() {
 
     // main-2. config app setting
     app.set('view engine', 'ejs')
+    app.set('views', path.join(__dirname, 'views'));
 
     // main-3. middleware (app.use)
     app.use(express.urlencoded({ extended: true }));
@@ -156,8 +158,23 @@ async function main() {
 
     app.get('/home', (req, res) => {
         console.log(req.session.user);
-        res.render('index.ejs');
-    })
+        res.render('index', { weather: null, user: req.session.user });
+    });
+
+    // endpoint for AJAX weather fetch
+    app.get('/weather', async (req, res) => {
+        const lat = req.query.lat;
+        const lon = req.query.lon;
+        if (!lat || !lon) {
+            return res.status(400).json({ error: 'Missing coordinates' });
+        }
+        try {
+            const weather = await getWeather(lat, lon);
+            res.json(weather);
+        } catch (e) {
+            res.status(500).json({ error: 'Unable to fetch weather data' });
+        }
+    });
 
     // register routes
     app.get('/register', (req, res) => {
