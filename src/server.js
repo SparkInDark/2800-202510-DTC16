@@ -8,6 +8,7 @@ const functions = require('firebase-functions');
 const express = require("express");
 const session = require('express-session')
 const mongoose = require('mongoose');
+const MongoStore = require('connect-mongo');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const multer = require("multer");
@@ -138,13 +139,19 @@ app.set('views', path.join(__dirname, 'views'));
 // Middleware to parse URL-encoded bodies (form submissions)
 app.use(express.urlencoded({ extended: true }));
 
+
 // Middleware to handle user sessions
 app.use(session({
     secret: process.env.SESSION_SECRET,
-    name: 'myapp.sid',
-    resave: true,
-    saveUninitialized: true,
-    cookie: { secure: false }
+    name: '__session',
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({ mongoUrl: process.env.MONGODB_URI }),  // Added for persist session using connect-mongo
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
+    }
 }))
 
 // Middleware to serve static files from the 'public' directory
@@ -280,7 +287,7 @@ app.get('/logout', (req, res) => {
         if (err) {
             return res.redirect('/home');
         }
-        res.clearCookie('myapp.sid'); // Learning: if not set in middleware, default name is connect.sid
+        res.clearCookie('__session'); // Learning: if not set in middleware, default name is connect.sid
         res.redirect('/home');
     });
 })
@@ -291,7 +298,7 @@ app.post('/logout', (req, res) => {
         if (err) {
             return res.redirect('/home');
         }
-        res.clearCookie('myapp.sid'); // Learning: if not set in middleware, default name is connect.sid
+        res.clearCookie('__session'); // Learning: if not set in middleware, default name is connect.sid
         // If the page is protected, redirect to home. Otherwise, redirect back to current page.
         if (isProtected(from)) {
             res.redirect('/home');
