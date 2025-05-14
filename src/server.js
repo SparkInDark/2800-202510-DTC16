@@ -145,9 +145,10 @@ app.use(express.static(path.join(__dirname, '..', 'public')));
 
 
 // ==== Section 7. Locals: Set res.locals for all views (user info) ====
-// Notes: Setting res.locals here ensures that every route and view has access to the user variable.
+// Notes: Setting res.locals here ensures that every route and view has access to the global user variable.
 app.use((req, res, next) => {
-    res.locals.user = req.session.user || null;
+    res.locals.user = req.session.user || null;            // get current user
+    res.locals.currentUrl = req.originalUrl;               // get current page
     next();
 });
 
