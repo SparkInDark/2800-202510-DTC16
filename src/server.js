@@ -392,10 +392,24 @@ app.get('/TopProducts/:limit', async (req, res) => {
 
 
 
+
+//, role: req.session.user.role
+// const isAdmin = (req, res, next) => {
+//     if (req.session && req.session.user && req.session.user.role === 'admin') {
+//         return next();
+//     } else {
+//         res.status(403).send('Forbidden');
+//     }
+// }
+
+// app.use(isAdmin);
+
+
+
 // Anything else should be putting above  ( before DB Connector and Start-Server)
 
-
 // ==== Section 9. Connect to MongoDB ====
+
 async function connectToMongoDB() {
     try {
         await mongoose.connect(process.env.MONGODB_URI);
@@ -406,37 +420,13 @@ async function connectToMongoDB() {
     }
 };
 
+connectToMongoDB()
+
+
 // ==== Section 10. Start the server
 // Keep app.listen ALWAYS at the bottom of the page
-// Connect to DB first, then start the server only after a successful DB connection.
 
-// Helper to detect Firebase environment
-function isFirebaseEnv() {
-    return !!(process.env.FUNCTION_NAME || process.env.K_SERVICE || process.env.GCLOUD_PROJECT);
-}
-
-// Main startup logic
-connectToMongoDB().then(() => {
-    if (isFirebaseEnv()) {
-        // Running in Firebase Cloud Functions if detects Firebase environment variables (set by Firebase runtime)
-        exports.app = functions.https.onRequest(app);
-    } else {
-        // Running locally if failed to detect Firebase environment variables
-        app.listen(port, () => {
-            console.log(`Server is running on http://localhost:${port}`);
-        });
-    }
-});
-
-
-//, role: req.session.user.role
-    // const isAdmin = (req, res, next) => {
-    //     if (req.session && req.session.user && req.session.user.role === 'admin') {
-    //         return next();
-    //     } else {
-    //         res.status(403).send('Forbidden');
-    //     }
-    // }
-
-    // app.use(isAdmin);
+app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+})
 
