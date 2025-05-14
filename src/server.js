@@ -269,12 +269,18 @@ app.get('/logout', (req, res) => {
 })
 
 app.post('/logout', (req, res) => {
+    const from = req.body.from || '/home';
     req.session.destroy(err => {
         if (err) {
             return res.redirect('/home');
         }
         res.clearCookie('myapp.sid'); // Learning: if not set in middleware, default name is connect.sid
-        res.redirect('/home');
+        // If the page is protected, redirect to home. Otherwise, redirect back to current page.
+        if (isProtected(from)) {
+            res.redirect('/home');
+        } else {
+            res.redirect(from);
+        }
     });
 });
 
