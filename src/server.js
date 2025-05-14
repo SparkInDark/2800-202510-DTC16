@@ -405,28 +405,14 @@ async function connectToMongoDB() {
         process.exit(1); // Exit with error code if connection fails
     }
 };
+connectToMongoDB();
 
 // ==== Section 10. Start the server
 // Keep app.listen ALWAYS at the bottom of the page
-// Connect to DB first, then start the server only after a successful DB connection.
 
-// Helper to detect Firebase environment
-function isFirebaseEnv() {
-    return !!(process.env.FUNCTION_NAME || process.env.K_SERVICE || process.env.GCLOUD_PROJECT);
-}
-
-// Main startup logic
-connectToMongoDB().then(() => {
-    if (isFirebaseEnv()) {
-        // Running in Firebase Cloud Functions if detects Firebase environment variables (set by Firebase runtime)
-        exports.app = functions.https.onRequest(app);
-    } else {
-        // Running locally if failed to detect Firebase environment variables
-        app.listen(port, () => {
-            console.log(`Server is running on http://localhost:${port}`);
-        });
-    }
-});
+app.listen(port, () => {
+    console.log(`Server is running on http://localhost:${port}`);
+})
 
 
 //, role: req.session.user.role
