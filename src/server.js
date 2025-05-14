@@ -15,10 +15,17 @@ const axios = require('axios');
 const { getWeather } = require("./services/weather");
 const upload = multer({ storage: multer.memoryStorage() }); // Store file in memory
 
-// ==== Section 3. Define constants ====
+// ==== Section 3. Define constants and helpers ====
 const app = express();
 const port = 3000;
 const saltRounds = 10;
+
+// Login protection list and isProtected helper
+const protectedRoutes = ['/profile', '/write-review', '/vote', '/rate', '/admin'];
+function isProtected(path) {
+    return protectedRoutes.includes(path.split('?')[0]);
+}
+
 
 // ==== Section 4. Define schema ====
 const userSchema = new mongoose.Schema({
@@ -134,6 +141,7 @@ app.use(express.urlencoded({ extended: true }));
 // Middleware to handle user sessions
 app.use(session({
     secret: process.env.SESSION_SECRET,
+    name: 'myapp.sid',
     resave: true,
     saveUninitialized: true,
     cookie: { secure: false }
@@ -142,11 +150,22 @@ app.use(session({
 // Middleware to serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
+// Middleware for page protection
+// AFTER session and static, BEFORE Locals and routes
+function requireLogin(req, res, next) {
+    if (isProtected(req.path) && !req.session.user) {
+        return res.redirect('/login');
+    }
+    next();
+}
+app.use(requireLogin);
+
 
 // ==== Section 7. Locals: Set res.locals for all views (user info) ====
-// Notes: Setting res.locals here ensures that every route and view has access to the user variable.
+// Notes: Setting res.locals here ensures that every route and view has access to the global user variable.
 app.use((req, res, next) => {
-    res.locals.user = req.session.user || null;
+    res.locals.user = req.session.user || null;            // get current user
+    res.locals.currentUrl = req.originalUrl;               // get current page
     next();
 });
 
@@ -161,7 +180,7 @@ app.get('/', (req, res) => {
 // Home route
 app.get('/home', (req, res) => {
     console.log(req.session.user);
-    res.render('index', { weather: null, user: req.session.user });
+    res.render('index', { weather: null });
 });
 
 // Weather route for AJAX weather fetch
@@ -261,10 +280,27 @@ app.get('/logout', (req, res) => {
         if (err) {
             return res.redirect('/home');
         }
-        res.clearCookie('connect.sid'); // replace with the name of your session cookie
+        res.clearCookie('myapp.sid'); // Learning: if not set in middleware, default name is connect.sid
         res.redirect('/home');
     });
 })
+
+app.post('/logout', (req, res) => {
+    const from = req.body.from || '/home';
+    req.session.destroy(err => {
+        if (err) {
+            return res.redirect('/home');
+        }
+        res.clearCookie('myapp.sid'); // Learning: if not set in middleware, default name is connect.sid
+        // If the page is protected, redirect to home. Otherwise, redirect back to current page.
+        if (isProtected(from)) {
+            res.redirect('/home');
+        } else {
+            res.redirect(from);
+        }
+    });
+});
+
 
 // profile route
 app.get('/profile', async (req, res) => {
@@ -420,13 +456,12 @@ async function connectToMongoDB() {
     }
 };
 
-connectToMongoDB()
-
 
 // ==== Section 10. Start the server
 // Keep app.listen ALWAYS at the bottom of the page
 
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-})
-
+connectToMongoDB().then(() => {
+    app.listen(port, () => {
+        console.log(`Server is running on http://localhost:${port}`);
+    });
+});
