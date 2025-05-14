@@ -13,7 +13,7 @@ const { getWeather } = require("./services/weather");
 const upload = multer({ storage: multer.memoryStorage() }); // Store file in memory
 
 // 3. Define constants
-const port = 3000;
+const PORT = 3000;
 const saltRounds = 10;
 
 // 4. Define schema
@@ -360,6 +360,32 @@ async function main() {
         console.log(`Server is running on http://localhost:${port}`);
     })
 
+    const getTopProducts = async (limit) => {
+        return productsModel.find().sort({ rating: -1 }).limit(limit)
+    }
+
+    app.get('/TopProducts/:limit', async (req, res) => {
+        const limit = parseInt(req.params.limit); // Convert string to number
+
+        if (isNaN(limit) || limit <= 0) {
+            return res.status(400).json({ error: 'Limit must be a positive number' });
+        }
+
+        try {
+            const topProducts = await productsModel.find()
+                .sort({ rating: -1 })
+                .limit(limit);
+
+            res.status(200).json(topProducts);
+        } catch (error) {
+            console.error('Database error:', error);
+            res.status(500).json({ error: 'Failed to fetch product details' });
+        }
+    });
+
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    })
     //, role: req.session.user.role 
     // const isAdmin = (req, res, next) => {
     //     if (req.session && req.session.user && req.session.user.role === 'admin') {
