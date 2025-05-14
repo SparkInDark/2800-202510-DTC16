@@ -1,3 +1,5 @@
+// clickable action to show drop-down list
+
 document.addEventListener('DOMContentLoaded', function() {
     const btn = document.getElementById('profileDropdownBtn');
     const menu = document.getElementById('profileDropdownMenu');
