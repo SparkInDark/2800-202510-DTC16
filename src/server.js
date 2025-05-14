@@ -15,10 +15,17 @@ const axios = require('axios');
 const { getWeather } = require("./services/weather");
 const upload = multer({ storage: multer.memoryStorage() }); // Store file in memory
 
-// ==== Section 3. Define constants ====
+// ==== Section 3. Define constants and helpers ====
 const app = express();
 const port = 3000;
 const saltRounds = 10;
+
+// Login protection list and isProtected helper
+const protectedRoutes = ['/profile', '/write-review', '/vote', '/rate', '/admin'];
+function isProtected(path) {
+    return protectedRoutes.includes(path.split('?')[0]);
+}
+
 
 // ==== Section 4. Define schema ====
 const userSchema = new mongoose.Schema({
@@ -142,6 +149,16 @@ app.use(session({
 
 // Middleware to serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, '..', 'public')));
+
+// Middleware for page protection
+// AFTER session and static, BEFORE Locals and routes
+function requireLogin(req, res, next) {
+    if (isProtected(req.path) && !req.session.user) {
+        return res.redirect('/login');
+    }
+    next();
+}
+app.use(requireLogin);
 
 
 // ==== Section 7. Locals: Set res.locals for all views (user info) ====
