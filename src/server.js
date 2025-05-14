@@ -139,6 +139,10 @@ app.set('views', path.join(__dirname, 'views'));
 // Middleware to parse URL-encoded bodies (form submissions)
 app.use(express.urlencoded({ extended: true }));
 
+// This is required for hosting (firebase, render.com, Heroku, etc)
+// Reason: In next section, https for cookie is enforced, however the internal traffic
+// between hosting frontend to backend is still http, therefore proxy has to enable.
+app.set('trust proxy', 1);
 
 // Middleware to handle user sessions
 app.use(session({
