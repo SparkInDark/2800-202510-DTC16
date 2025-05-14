@@ -134,6 +134,7 @@ app.use(express.urlencoded({ extended: true }));
 // Middleware to handle user sessions
 app.use(session({
     secret: process.env.SESSION_SECRET,
+    name: 'myapp.sid',
     resave: true,
     saveUninitialized: true,
     cookie: { secure: false }
@@ -161,7 +162,7 @@ app.get('/', (req, res) => {
 // Home route
 app.get('/home', (req, res) => {
     console.log(req.session.user);
-    res.render('index', { weather: null, user: req.session.user });
+    res.render('index', { weather: null });
 });
 
 // Weather route for AJAX weather fetch
@@ -261,10 +262,21 @@ app.get('/logout', (req, res) => {
         if (err) {
             return res.redirect('/home');
         }
-        res.clearCookie('connect.sid'); // replace with the name of your session cookie
+        res.clearCookie('myapp.sid'); // Learning: if not set in middleware, default name is connect.sid
         res.redirect('/home');
     });
 })
+
+app.post('/logout', (req, res) => {
+    req.session.destroy(err => {
+        if (err) {
+            return res.redirect('/home');
+        }
+        res.clearCookie('myapp.sid'); // Learning: if not set in middleware, default name is connect.sid
+        res.redirect('/home');
+    });
+});
+
 
 // profile route
 app.get('/profile', async (req, res) => {
@@ -420,13 +432,12 @@ async function connectToMongoDB() {
     }
 };
 
-connectToMongoDB()
-
 
 // ==== Section 10. Start the server
 // Keep app.listen ALWAYS at the bottom of the page
 
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-})
-
+connectToMongoDB().then(() => {
+    app.listen(port, () => {
+        console.log(`Server is running on http://localhost:${port}`);
+    });
+});
