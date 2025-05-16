@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-[#fefcf6]"> <!-- ✅ 设置 html 背景 -->
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Top 10 Products</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/style/style.css" />
+</head>
+
+<body class="bg-[#fefcf6] min-h-screen"> <!-- ✅ 设置 body 背景，并确保高度覆盖整个页面 -->
+    <%- include('component/top-navbar.ejs', { user: user }) %>
+
+        <main class="main-container">
+            <h2 class="section-title mt-16">Top 10 Products</h2>
+            <div class="featured-products-list">
+                <% products.forEach((product, idx)=> { %>
+                    <div class="featured-product-card">
+                        <img src="<%= product.image %>" alt="<%= product.name %>" class="featured-product-image">
+                        <div class="featured-product-info">
+                            <div class="featured-product-title">
+                                <span class="featured-product-rank">
+                                    <%= idx + 1 %>.
+                                </span>
+                                <b>
+                                    <%= product.name %>
+                                </b>
+                            </div>
+                            <div class="star-rating">
+                                <% for(let i=0; i < product.rating; i++) { %>
+                                    <span>★</span>
+                                    <% } %>
+                                        <span class="rating-number">&nbsp; <%= product.rating %>/5</span>
+                            </div>
+                            <div class="featured-product-review">
+                                "<%= product.review %>"
+                            </div>
+                        </div>
+                    </div>
+                    <% }) %>
+            </div>
+        </main>
+
+        <%- include('component/bottom-navbar.ejs') %>
+</body>
+
+</html>

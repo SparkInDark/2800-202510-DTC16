@@ -327,3 +327,89 @@ main {
 .brand-name {
     font-family: 'Pacifico', cursive;
 }
+
+body.bg-main {
+    background: #434362;
+}
+
+.main-container {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: 32px 0 80px 0;
+}
+
+.section-title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    color: #22223b;
+    text-align: center;
+}
+
+.featured-products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.featured-product-card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 16px 0 rgba(80, 80, 120, 0.06);
+    padding: 20px 18px 18px 18px;
+    display: flex;
+    gap: 18px;
+    align-items: center;
+}
+
+.featured-product-image {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 14px;
+    background: #f6f6fa;
+}
+
+.featured-product-info {
+    flex: 1;
+}
+
+.featured-product-title {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 6px;
+    color: #38385a;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+
+.featured-product-rank {
+    font-size: 1.15em;
+    color: #7c5dfa;
+    font-weight: 800;
+}
+
+.featured-product-rating {
+    color: #ffb700;
+    font-size: 1em;
+    margin-bottom: 6px;
+}
+
+.star {
+    color: #ffb700;
+    font-size: 1em;
+}
+
+.rating-number {
+    color: #6d6d85;
+    font-size: 0.96em;
+    margin-left: 5px;
+    font-weight: 500;
+}
+
+.featured-product-review {
+    color: #747493;
+    font-size: 0.96em;
+    margin-top: 3px;
+}

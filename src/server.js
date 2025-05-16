@@ -17,6 +17,9 @@ const { getWeather } = require("./services/weather");
 const upload = multer({ storage: multer.memoryStorage() }); // Store file in memory
 const { OpenAI } = require('openai');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const top10products = require('../data/top10product'); // 注意路径
+
+
 
 
 // ==== Section 3. Define constants and helpers ====
@@ -53,15 +56,15 @@ const userSchema = new mongoose.Schema({
 const usersModel = mongoose.model('users', userSchema);
 
 const ReviewSchema = new mongoose.Schema({
-  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  stars: { type: Number, min: 1, max: 5, required: true },
-  title: { type: String, required: true },
-  pros: String,
-  cons: String,
-  details: { type: String, required: true },
-  images: [String], // Store image URLs or file paths
-  createdAt: { type: Date, default: Date.now }
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    stars: { type: Number, min: 1, max: 5, required: true },
+    title: { type: String, required: true },
+    pros: String,
+    cons: String,
+    details: { type: String, required: true },
+    images: [String], // Store image URLs or file paths
+    createdAt: { type: Date, default: Date.now }
 });
 
 const reviewModel = mongoose.model('Review', ReviewSchema);
@@ -397,37 +400,9 @@ app.get('/write-review', (req, res) => {
 // });
 
 
-// feature product route
 
 
 
-const getTopProducts = async (limit) => {
-    return productsModel.find().sort({ rating: -1 }).limit(limit)
-}
-
-app.get('/featureproduct', (req, res) => {
-    res.render('featureproduct'); // 确保 views/featureproduct.ejs 存在
-});
-
-
-app.get('/TopProducts/:limit', async (req, res) => {
-    const limit = parseInt(req.params.limit); // Convert string to number
-
-    if (isNaN(limit) || limit <= 0) {
-        return res.status(400).json({ error: 'Limit must be a positive number' });
-    }
-
-    try {
-        const topProducts = await productsModel.find()
-            .sort({ rating: -1 })
-            .limit(limit);
-
-        res.status(200).json(topProducts);
-    } catch (error) {
-        console.error('Database error:', error);
-        res.status(500).json({ error: 'Failed to fetch product details' });
-    }
-});
 ///search function
 app.get('/products/search', async (req, res) => {
     const { query } = req.query;
@@ -437,6 +412,13 @@ app.get('/products/search', async (req, res) => {
     res.json(products);
 });
 
+//
+app.get('/top10products', (req, res) => {
+    res.render('top10products', { products: top10products, user: req.session.user });
+});
+
+
+// AI MAGIC
 app.post('/ai-welcome', express.json(), async (req, res) => {
     const prompt = `Give a short, interesting, and slightly playful product insight or review tip related to modern tech gadgets like graphics cards, smartphones, or camera gear.`;
     try {
@@ -452,67 +434,32 @@ app.post('/ai-welcome', express.json(), async (req, res) => {
         res.status(500).json({ message: 'AI is having a coffee break ☕️' });
     }
 });
-
-
-app.post('/ai-welcome', express.json(), async (req, res) => {
-    const prompt = `Give a short, interesting, and slightly playful product insight or review tip related to modern tech gadgets like graphics cards, smartphones, or camera gear.`;
-    try {
-        const response = await openai.chat.completions.create({
-            model: 'gpt-3.5-turbo',
-            messages: [{ role: 'user', content: prompt }],
-            max_tokens: 80
-        });
-        const message = response.choices[0].message.content;
-        res.json({ message });
-    } catch (err) {
-        console.error('🔥 OpenAI API Error:', err);
-        res.status(500).json({ message: 'AI is having a coffee break ☕️' });
-    }
-});
-
-
-app.post('/ai-welcome', express.json(), async (req, res) => {
-    const prompt = `Give a short, interesting, and slightly playful product insight or review tip related to modern tech gadgets like graphics cards, smartphones, or camera gear.`;
-    try {
-        const response = await openai.chat.completions.create({
-            model: 'gpt-3.5-turbo',
-            messages: [{ role: 'user', content: prompt }],
-            max_tokens: 80
-        });
-        const message = response.choices[0].message.content;
-        res.json({ message });
-    } catch (err) {
-        console.error('🔥 OpenAI API Error:', err);
-        res.status(500).json({ message: 'AI is having a coffee break ☕️' });
-    }
-});
-
 
 ///write review function
 app.post('/reviews', async (req, res) => {
-  const { productId, userId, stars, title, pros, cons, details } = req.body;
+    const { productId, userId, stars, title, pros, cons, details } = req.body;
 
-  if (!stars || !title || !details || !productId || !userId) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
+    if (!stars || !title || !details || !productId || !userId) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
 
-  try {
-    const review = new reviewModel({
-      productId,
-      userId,
-      stars,
-      title,
-      pros,
-      cons,
-      details,
-      images: [] // Add handling if you're including images
-    });
+    try {
+        const review = new reviewModel({
+            productId,
+            userId,
+            stars,
+            title,
+            pros,
+            cons,
+            details,
+            images: [] // Add handling if you're including images
+        });
 
-    await reviewModel.save();
-    res.status(201).json({ message: 'Review submitted successfully', review });
-  } catch (err) {
-    res.status(500).json({ error: 'Server error', details: err.message });
-  }
+        await reviewModel.save();
+        res.status(201).json({ message: 'Review submitted successfully', review });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error', details: err.message });
+    }
 });
 
 // const isAdmin = (req, res, next) => {
