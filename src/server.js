@@ -460,6 +460,85 @@ app.post('/reviews', async (req, res) => {
     }
 });
 
+
+
+
+/*
+This admin routes are being tested.
+ */
+
+// ======= ADMIN ROUTES (dedicated) =======
+
+
+// === ADMIN REVIEW ===
+
+app.get('/admin/review', async (req, res) => {
+    const reviews = await reviewsModel.aggregate([
+        { $sort: { created_at: -1 } },
+        { $limit: 100 },
+        {
+            $lookup: {
+                from: 'ratings',
+                let: { product_name: '$product_name', user_email: '$user_email' },
+                pipeline: [
+                    { $match: { $expr: { $and: [
+                                    { $eq: ['$product_name', '$$product_name'] },
+                                    { $eq: ['$user_email', '$$user_email'] }
+                                ] } } }
+                ],
+                as: 'ratingInfo'
+            }
+        },
+        {
+            $addFields: {
+                rating: { $ifNull: [ { $arrayElemAt: ['$ratingInfo.rating', 0] }, 0 ] }
+            }
+        }
+    ]);
+    res.render('admin-review', { reviews });
+});
+
+app.get('/admin/review/:id', async (req, res) => {
+    const review = await reviewsModel.findById(req.params.id).lean();
+    const user = await usersModel.findOne({ email: review.user_email }).lean();
+    const rating = await ratingsModel.findOne({ product_name: review.product_name, user_email: review.user_email });
+    res.render('admin-review-detail', {
+        review: {
+            ...review,
+            rating: rating ? rating.rating : 0,
+            user_first_name: user?.profile?.first_name || '',
+            user_last_name: user?.profile?.last_name || '',
+            pros: review.review_text.pros || [],
+            cons: review.review_text.cons || []
+        }
+    });
+});
+
+app.post('/admin/review/:id/delete', async (req, res) => {
+    await reviewsModel.findByIdAndDelete(req.params.id);
+    res.redirect('/admin/review');
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // const isAdmin = (req, res, next) => {
 //     if (req.session && req.session.user && req.session.user.role === 'admin') {
 //         return next();
