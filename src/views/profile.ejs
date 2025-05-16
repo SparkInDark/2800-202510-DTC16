@@ -74,11 +74,12 @@
                             </div>
                             <div>
                                 <label class="block text-gray-700">New Password</label>
-                                <input type="password" name="password" placeholder="********" class="w-full border rounded px-3 py-2" autocomplete="new-password" />
+                                <input type="password" id="password" name="password" placeholder="********" class="w-full border rounded px-3 py-2" autocomplete="new-password" />
                             </div>
                             <div>
                                 <label class="block text-gray-700">Confirm New Password</label>
-                                <input type="password" name="confirm_password" placeholder="********" class="w-full border rounded px-3 py-2" autocomplete="new-password" />
+                                <input type="password" id="confirm_password" name="confirm_password" placeholder="********" class="w-full border rounded px-3 py-2" autocomplete="new-password" />
+                                <p id="password-error" class="text-red-600 text-sm mt-1 hidden">Passwords do not match</p>
                             </div>
                         </div>
 
@@ -153,6 +154,26 @@
                 reader.readAsDataURL(file)
             }
         })
+
+        // Improve visual of password-matching check to use in-page notification
+        document.addEventListener('DOMContentLoaded', function() {
+            const password = document.getElementById('password');
+            const confirm = document.getElementById('confirm_password');
+            const errorMsg = document.getElementById('password-error');
+
+            function checkMatch() {
+                if (confirm.value.length > 0 && password.value !== confirm.value) {
+                    confirm.classList.add('border-red-500', 'ring-2', 'ring-red-300');
+                    errorMsg.classList.remove('hidden');
+                } else {
+                    confirm.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
+                    errorMsg.classList.add('hidden');
+                }
+            }
+
+            password.addEventListener('input', checkMatch);
+            confirm.addEventListener('input', checkMatch);
+        });
     </script>
 </body>
 </html>
