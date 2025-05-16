@@ -448,6 +448,51 @@ app.post('/profile/upload-photo', upload.single('profile_photo'), async (req, re
     }
 );
 
+app.post('/profile/edit', async (req, res) => {
+    if (!req.session.user) return res.redirect('/login');
+
+    const { email, first_name, last_name, city, country, bio, password, confirm_password } = req.body;
+    let updateData = {
+        'profile.first_name': first_name,
+        'profile.last_name': last_name,
+        'profile.city': city,
+        'profile.country': country,
+        'profile.bio': bio
+    };
+
+    // Handle email change (check for duplicates)
+    if (email !== req.session.user.email) {
+        const emailExists = await usersModel.findOne({ email });
+        if (emailExists) {
+            return res.status(400).send('Email already in use by another account.');
+        }
+        updateData.email = email;
+    }
+
+    // Handle password change
+    if (password && password.length > 0) {
+        if (password !== confirm_password) {
+            return res.status(400).send('Passwords do not match.');
+        }
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        updateData.password_hash = hashedPassword;
+    }
+
+    try {
+        await usersModel.updateOne(
+            { email: req.session.user.email },
+            { $set: updateData }
+        );
+        // Update session with new email if changed
+        req.session.user.email = email;
+        res.redirect('/profile');
+    } catch (err) {
+        console.error('Profile update error:', err);
+        res.status(500).send('Profile update failed');
+    }
+});
+
+
 // category route
 app.get('/category', (req, res) => {
     res.render('category.ejs');
