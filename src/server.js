@@ -599,6 +599,30 @@ app.post('/admin/product/:id/edit',
     });
 
 
+// === ADMIN CATEGORY ===
+
+// Admin CAT Central Page
+app.get('/admin/cat', (req, res) => {
+    res.render('admin-cat');
+});
+
+app.get('/admin/cat/category', async (req, res) => {
+    const categories = await categoriesModel.aggregate([
+        {
+            $lookup: {
+                from: 'products',
+                localField: 'slug',
+                foreignField: 'category_slug',
+                as: 'products'
+            }
+        },
+        {
+            $addFields: { product_count: { $size: '$products' } }
+        }
+    ]);
+    res.render('admin-cat-category', { categories });
+});
+
 
 
 
