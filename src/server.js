@@ -377,31 +377,31 @@ app.get('/write-review', (req, res) => {
 });
 
 // search route
-app.get('/search', async (req, res) => {
-    const query = req.query.q || '';
+// app.get('/search', async (req, res) => {
+//     const query = req.query.q || '';
 
-    try {
-        // 模糊查找产品（根据名称）
-        const results = await productsModel.find({
-            name: { $regex: query, $options: 'i' }
-        });
+//     try {
+//         // 模糊查找产品（根据名称）
+//         const results = await productsModel.find({
+//             name: { $regex: query, $options: 'i' }
+//         });
 
-        // 获取分类列表（右侧使用）
-        const categories = await productsModel.distinct('category_slug');
+//         // 获取分类列表（右侧使用）
+//         const categories = await productsModel.distinct('category_slug');
 
-        res.render('search', {
-            query,
-            results,
-            categories: categories.map(cat => ({
-                name: cat,
-                slug: cat.toLowerCase().replace(/\s+/g, '-')
-            }))
-        });
-    } catch (err) {
-        console.error('Error during search:', err);
-        res.status(500).send('Search failed');
-    }
-});
+//         res.render('search', {
+//             query,
+//             results,
+//             categories: categories.map(cat => ({
+//                 name: cat,
+//                 slug: cat.toLowerCase().replace(/\s+/g, '-')
+//             }))
+//         });
+//     } catch (err) {
+//         console.error('Error during search:', err);
+//         res.status(500).send('Search failed');
+//     }
+// });
 
 
 // feature product route
@@ -434,10 +434,13 @@ app.get('/TopProducts/:limit', async (req, res) => {
     }
 });
 
-
-
-
-
+app.get('/products/search', async (req, res) => {
+  const { query } = req.query;
+  const products = await productsModel.find({
+    productname: { $regex: query, $options: 'i' }
+  });
+  res.json(products);
+});
 
 
 //, role: req.session.user.role
