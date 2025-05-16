@@ -11,15 +11,13 @@ const mongoose = require('mongoose');
 const MongoStore = require('connect-mongo');
 const path = require('path');
 const bcrypt = require('bcrypt');
-const multer = require("multer");
-const axios = require('axios');
-const { getWeather } = require("./services/weather");
-const upload = multer({ storage: multer.memoryStorage() }); // Store file in memory
+
 const { OpenAI } = require('openai');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const top10products = require('../data/top10product'); // 注意路径
 
-
+const { getWeather } = require("./services/weather");
+const { upload, uploadImageToImgbb } = require('./services/imgupload');
 
 
 // ==== Section 3. Define constants and helpers ====
