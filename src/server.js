@@ -14,7 +14,7 @@ const bcrypt = require('bcrypt');
 
 const { OpenAI } = require('openai');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const top10products = require('../data/top10product'); // 注意路径
+const top10products = require('./services/top10product'); // 注意路径
 
 const { getWeather } = require("./services/weather");
 const { upload, uploadImageToImgbb } = require('./services/imgupload');
