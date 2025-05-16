@@ -792,14 +792,44 @@ app.post('/admin/cat/product-detail',
 );
 
 
+// === ADMIN USER ===
 
+app.get('/admin/user', async (req, res) => {
+    const users = await usersModel.find().lean();
+    res.render('admin-user', { users });
+});
 
+app.get('/admin/user/:id', async (req, res) => {
+    const user = await usersModel.findById(req.params.id).lean();
+    res.render('admin-user-profile', { user });
+});
 
-
-
-
-
-
+app.post('/admin/user/:id/edit', upload.single('profile_pic'), async (req, res) => {
+    const user = await usersModel.findById(req.params.id);
+    if (req.body.delete) {
+        await user.deleteOne();
+        return res.redirect('/admin/user');
+    }
+    if (req.body.delete_pic) {
+        user.profile.profile_photo_url = '';
+        await user.save();
+        return res.redirect(`/admin/user/${user._id}`);
+    }
+    if (req.file) {
+        const url = await uploadImageToImgbb(req.file.buffer, req.file.originalname);
+        user.profile.profile_photo_url = url;
+    }
+    user.profile.first_name = req.body.first_name;
+    user.profile.last_name = req.body.last_name;
+    user.profile.city = req.body.city;
+    user.profile.country = req.body.country;
+    user.profile.bio = req.body.bio;
+    if (req.body.password && req.body.password !== '****') {
+        user.password_hash = await bcrypt.hash(req.body.password, 10);
+    }
+    await user.save();
+    res.redirect(`/admin/user/${user._id}`);
+});
 
 
 
