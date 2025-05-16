@@ -52,29 +52,19 @@ const userSchema = new mongoose.Schema({
 
 const usersModel = mongoose.model('users', userSchema);
 
+const ReviewSchema = new mongoose.Schema({
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  stars: { type: Number, min: 1, max: 5, required: true },
+  title: { type: String, required: true },
+  pros: String,
+  cons: String,
+  details: { type: String, required: true },
+  images: [String], // Store image URLs or file paths
+  createdAt: { type: Date, default: Date.now }
+});
 
-const reviewSchema = new mongoose.Schema({
-    product_name: String,
-    user_email: String,
-    review_text: {
-        overall: String,
-        pros: [String],
-        cons: [String]
-    },
-    review_images: [String],
-    votes: {
-        upvotes: [String],
-        downvotes: [String]
-    },
-    moderation: {
-        status: String,
-        flags: [mongoose.Schema.Types.Mixed],
-        rejection_reason: mongoose.Schema.Types.Mixed // can be String or null
-    }
-}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
-
-const reviewsModel = mongoose.model('reviews', reviewSchema);
-
+const reviewModel = mongoose.model('Review', ReviewSchema);
 
 const ratingSchema = new mongoose.Schema({
     product_name: String,
@@ -438,7 +428,7 @@ app.get('/TopProducts/:limit', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch product details' });
     }
 });
-
+///search function
 app.get('/products/search', async (req, res) => {
     const { query } = req.query;
     const products = await productsModel.find({
@@ -464,8 +454,67 @@ app.post('/ai-welcome', express.json(), async (req, res) => {
 });
 
 
+app.post('/ai-welcome', express.json(), async (req, res) => {
+    const prompt = `Give a short, interesting, and slightly playful product insight or review tip related to modern tech gadgets like graphics cards, smartphones, or camera gear.`;
+    try {
+        const response = await openai.chat.completions.create({
+            model: 'gpt-3.5-turbo',
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 80
+        });
+        const message = response.choices[0].message.content;
+        res.json({ message });
+    } catch (err) {
+        console.error('🔥 OpenAI API Error:', err);
+        res.status(500).json({ message: 'AI is having a coffee break ☕️' });
+    }
+});
 
-//, role: req.session.user.role
+
+app.post('/ai-welcome', express.json(), async (req, res) => {
+    const prompt = `Give a short, interesting, and slightly playful product insight or review tip related to modern tech gadgets like graphics cards, smartphones, or camera gear.`;
+    try {
+        const response = await openai.chat.completions.create({
+            model: 'gpt-3.5-turbo',
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 80
+        });
+        const message = response.choices[0].message.content;
+        res.json({ message });
+    } catch (err) {
+        console.error('🔥 OpenAI API Error:', err);
+        res.status(500).json({ message: 'AI is having a coffee break ☕️' });
+    }
+});
+
+
+///write review function
+app.post('/reviews', async (req, res) => {
+  const { productId, userId, stars, title, pros, cons, details } = req.body;
+
+  if (!stars || !title || !details || !productId || !userId) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const review = new reviewModel({
+      productId,
+      userId,
+      stars,
+      title,
+      pros,
+      cons,
+      details,
+      images: [] // Add handling if you're including images
+    });
+
+    await reviewModel.save();
+    res.status(201).json({ message: 'Review submitted successfully', review });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error', details: err.message });
+  }
+});
+
 // const isAdmin = (req, res, next) => {
 //     if (req.session && req.session.user && req.session.user.role === 'admin') {
 //         return next();
