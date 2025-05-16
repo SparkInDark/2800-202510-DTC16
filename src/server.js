@@ -666,6 +666,38 @@ app.post('/admin/cat/category/:id/edit', async (req, res) => {
 
 
 
+// === ADMIN CAT PRODUCT ===
+
+app.get('/admin/cat/product', async (req, res) => {
+    const categories = await categoriesModel.find().lean();
+    const products = await productsModel.find().lean();
+    res.render('admin-cat-product', { categories, products });
+});
+
+app.post('/admin/cat/product/add', async (req, res) => {
+    const slug = slugify(req.body.name);
+    await productsModel.create({
+        name: req.body.name,
+        slug: slug,
+        category_slug: req.body.category_slug,
+        specs: {},
+        images: []
+    });
+    res.redirect('/admin/cat/product');
+});
+
+app.post('/admin/cat/product/:id/edit', async (req, res) => {
+    if (req.body.delete === "1") {
+        await productsModel.deleteOne({ _id: req.params.id });
+        return res.redirect('/admin/cat/product');
+    }
+    const product = await productsModel.findById(req.params.id);
+    product.name = req.body.name;
+    product.category_slug = req.body.category_slug;
+    await product.save();
+    res.redirect('/admin/cat/product');
+});
+
 
 
 
