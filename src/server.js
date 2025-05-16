@@ -520,6 +520,84 @@ app.post('/admin/review/:id/delete', async (req, res) => {
 });
 
 
+// === ADMIN PRODUCT ===
+
+app.get('/admin/product', async (req, res) => {
+    const products = await productsModel.aggregate([
+        { $sort: { created_at: -1 } },
+        {
+            $lookup: {
+                from: 'categories',
+                localField: 'category_slug',
+                foreignField: 'slug',
+                as: 'cat'
+            }
+        },
+        {
+            $addFields: {
+                category_name: { $arrayElemAt: ['$cat.name', 0] }
+            }
+        }
+    ]);
+    res.render('admin-product', { products });
+});
+
+app.get('/admin/product/:id', async (req, res) => {
+    const product = await productsModel.findById(req.params.id).lean();
+    const categories = await categoriesModel.find().lean();
+
+    if (!product) {
+        // Product not found, show error or redirect
+        return res.status(404).render('error-no-proudct-found', { message: 'Product not found' });
+        // Or: return res.redirect('/admin/product');
+    }
+
+    const cat = categories.find(c => c.slug === product.category_slug);
+    const productSpecs = cat ? cat.specs : [];
+    res.render('admin-product-detail', { product, categories, productSpecs });
+});
+
+app.post('/admin/product/:id/edit',
+    upload.fields([
+        { name: 'new_image_0', maxCount: 1 },
+        { name: 'new_image_1', maxCount: 1 },
+        { name: 'new_image_2', maxCount: 1 },
+        { name: 'new_image_3', maxCount: 1 }
+    ]),
+    async (req, res) => {
+        const product = await productsModel.findById(req.params.id);
+        if (req.body.delete) {
+            await product.deleteOne();
+            return res.redirect('/admin/product');
+        }
+        product.name = req.body.name;
+        product.category_slug = req.body.category_slug;
+        product.specs = req.body.specs || {};
+
+        // NEW: Handle multiple image deletions from images_to_delete
+        if (req.body.images_to_delete) {
+            const indices = req.body.images_to_delete
+                .split(',')
+                .map(s => parseInt(s, 10))
+                .filter(n => !isNaN(n));
+            for (const idx of indices) {
+                product.images[idx] = null;
+            }
+        }
+
+        // Handle any new images
+        for (let i = 0; i < 4; i++) {
+            const field = `new_image_${i}`;
+            if (req.files && req.files[field] && req.files[field][0]) {
+                const file = req.files[field][0];
+                const url = await uploadImageToImgbb(file.buffer, file.originalname);
+                product.images[i] = url;
+            }
+        }
+        await product.save();
+        res.redirect(`/admin/product/${product._id}`);
+    });
+
 
 
 
