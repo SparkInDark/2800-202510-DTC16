@@ -14,11 +14,12 @@
                     <button id="profileDropdownBtn" class="focus:outline-none">
                         <img src="/img/user-icon.png" class="w-10 sm:w-12 h-auto rounded-full" />
                     </button>
-                    <div id="profileDropdownMenu" class="hidden absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg z-50">
-                        <a href="/profile" class="block px-4 py-2 text-gray-800 hover:bg-gray-100">Profile</a>
+                    <div id="profileDropdownMenu" class="hidden absolute right-0 mt-2 w-40 !bg-white rounded-md shadow-lg z-50">
+                        <a href="/profile" class="block px-4 py-2 text-gray-800 hover:!bg-gray-200">Profile</a>
+                        <a href="/admin/review" class="block px-4 py-2 text-gray-800 hover:!bg-gray-200">Admin</a>
                         <form action="/logout" method="POST">
                             <input type="hidden" name="from" value="<%= currentUrl %>">
-                            <button type="submit" class="w-full text-left px-4 py-2 text-gray-800 hover:bg-gray-100">Logout</button>
+                            <button type="submit" class="w-full text-left px-4 py-2 text-gray-800 !bg-white hover:!bg-gray-200">Logout</button>
                         </form>
                     </div>
                 </div>
