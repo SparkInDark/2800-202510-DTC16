@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/style/style.css" />
+    <link rel="stylesheet" href="/style/admin.css" />
+</head>
+<body>
+    <%- include('component/top-navbar.ejs') %>
+
+    <div class="container py-3">
+        <h2>Manage Categories</h2>
+        <form method="POST" action="/admin/cat/category/add" class="mb-3">
+            <div class="input-group">
+                <input name="name" placeholder="Category Name" class="form-control" required />
+                <input name="description" placeholder="Description" class="form-control" />
+                <button type="submit" class="btn btn-success">Add</button>
+            </div>
+        </form>
+        <ul class="list-group">
+            <% categories.forEach(cat => { %>
+                <li class="list-group-item d-flex justify-content-between align-items-center" id="cat-<%= cat._id %>">
+                    <form method="POST" action="/admin/cat/category/<%= cat._id %>/edit" class="d-flex flex-grow-1 align-items-center" onsubmit="return handleCategoryConfirm('<%= cat._id %>', event)">
+                        <input name="name" value="<%= cat.name %>" class="form-control form-control-sm" id="name-<%= cat._id %>" />
+                        <input name="slug" value="<%= cat.slug %>" class="form-control form-control-sm mx-1" id="slug-<%= cat._id %>" />
+                        <input name="description" value="<%= cat.description %>" class="form-control form-control-sm mx-1" id="desc-<%= cat._id %>" />
+                        <% if(cat.product_count === 0) { %>
+                            <button type="button" class="btn btn-danger btn-sm ms-2" id="delbtn-<%= cat._id %>" onclick="markCategoryDeleted('<%= cat._id %>')">Delete</button>
+                        <% } else { %>
+                            <button type="button" class="btn btn-outline-secondary btn-sm ms-2" disabled title="Category has products">
+                                Delete
+                            </button>
+                        <% } %>
+                        <button type="submit" class="btn btn-primary btn-sm ms-2" id="confbtn-<%= cat._id %>">Confirm</button>
+                        <input type="hidden" name="delete" value="0" id="deleteflag-<%= cat._id %>">
+                    </form>
+                </li>
+            <% }) %>
+        </ul>
+    </div>
+
+
+    <%- include('component/bottom-navbar-admin.ejs') %>
+    <script src="/script/profile-dropdown.js"></script>
+
+    <script>
+        function markCategoryDeleted(catId) {
+            // Mark as pending deletion visually
+            document.getElementById('cat-' + catId).classList.add('bg-warning-subtle', 'text-muted');
+            document.getElementById('name-' + catId).setAttribute('readonly', true);
+            document.getElementById('slug-' + catId).setAttribute('readonly', true);
+            document.getElementById('desc-' + catId).setAttribute('readonly', true);
+
+            // Change Delete button appearance/text and disable it
+            var delBtn = document.getElementById('delbtn-' + catId);
+            delBtn.innerText = 'Pending';
+            delBtn.classList.remove('btn-danger');
+            delBtn.classList.add('btn-warning');
+            delBtn.disabled = true;
+
+            // Enable Confirm button, set delete flag
+            document.getElementById('confbtn-' + catId).disabled = false;
+            document.getElementById('deleteflag-' + catId).value = "1";
+        }
+
+        // Prevent accidental submit unless confirming deletion or editing
+        function handleCategoryConfirm(catId, event) {
+            // If delete flag is set to 1, allow submit (for deletion)
+            if (document.getElementById('deleteflag-' + catId).value === "1") {
+                return true;
+            }
+            // Otherwise, allow normal edit submit
+            return true;
+        }
+    </script>
+
+</body>
+</html>

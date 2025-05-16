@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/style/style.css" />
+    <link rel="stylesheet" href="/style/admin.css" />
+</head>
+<body>
+    <%- include('component/top-navbar.ejs') %>
+
+    <div class="container py-3">
+        <h2>Products</h2>
+        <div class="mb-2">
+            <input type="text" id="catFilter" placeholder="Filter by category..." class="form-control form-control-sm d-inline w-auto" />
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th scope="col"><a href="?sort=category">Category</a></th>
+                    <th scope="col"><a href="?sort=product">Product</a></th>
+                </tr>
+                </thead>
+                <tbody id="productTableBody">
+                <% products.forEach(p => { %>
+                    <tr class="clickable-row" onclick="location.href='/admin/product/<%= p._id %>'">
+                        <td><%= p.category_name %></td>
+                        <td><%= p.name %></td>
+                        <td><span class="right-arrow">&#8594;</span></td>
+                    </tr>
+                <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        document.getElementById('catFilter').addEventListener('input', function() {
+            const val = this.value.toLowerCase();
+            document.querySelectorAll('#productTableBody tr').forEach(tr => {
+                tr.style.display = tr.children[0].textContent.toLowerCase().includes(val) ? '' : 'none';
+            });
+        });
+    </script>
+
+
+    <%- include('component/bottom-navbar-admin.ejs') %>
+    <script src="/script/profile-dropdown.js"></script>
+</body>
+</html>
