@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/style/style.css" />
+    <link rel="stylesheet" href="/style/admin.css" />
+</head>
+<body>
+    <%- include('component/top-navbar.ejs') %>
+
+    <div class="container py-3">
+        <h2>Reviews</h2>
+        <div class="mb-2">
+            <input type="text" id="productFilter" placeholder="Filter by product..." class="form-control form-control-sm d-inline w-auto" />
+            <select id="ratingFilter" class="form-select form-select-sm d-inline w-auto">
+                <option value="">All Ratings</option>
+                <% [5,4,3,2,1].forEach(r => { %>
+                    <option value="<%= r %>"><%= r %> Stars</option>
+                <% }) %>
+            </select>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th scope="col"><a href="?sort=date">Date</a></th>
+                    <th scope="col"><a href="?sort=product">Product</a></th>
+                    <th scope="col"><a href="?sort=rating">Rating</a></th>
+                </tr>
+                </thead>
+                <tbody id="reviewTableBody">
+                <% reviews.forEach(r => { %>
+                    <tr class="clickable-row" onclick="location.href='/admin/review/<%= r._id %>'">
+                        <td><%= r.created_at.toISOString().slice(0,10).replace(/-/g,'/') %></td>
+                        <td><%= r.product_name %></td>
+                        <td>
+                            <% for(let i=0; i<r.rating; i++) { %>
+                                <span style="color:gold;">&#9733;</span>
+                            <% } %>
+                            <% for(let i=r.rating; i<5; i++) { %>
+                                <span style="color:#ccc;">&#9733;</span>
+                            <% } %>
+                        </td>
+                        <td><span class="right-arrow">&#8594;</span></td>
+                    </tr>
+                <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        // Simple filter
+        document.getElementById('productFilter').addEventListener('input', function() {
+            const val = this.value.toLowerCase();
+            document.querySelectorAll('#reviewTableBody tr').forEach(tr => {
+                tr.style.display = tr.children[1].textContent.toLowerCase().includes(val) ? '' : 'none';
+            });
+        });
+        document.getElementById('ratingFilter').addEventListener('change', function() {
+            const val = this.value;
+            document.querySelectorAll('#reviewTableBody tr').forEach(tr => {
+                tr.style.display = (!val || tr.children[2].textContent.includes(val)) ? '' : 'none';
+            });
+        });
+    </script>
+
+    <%- include('component/bottom-navbar-admin.ejs') %>
+    <script src="/script/profile-dropdown.js"></script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/style/style.css" />
+    <link rel="stylesheet" href="/style/admin.css" />
+</head>
+<body>
+    <%- include('component/top-navbar.ejs') %>
+
+    <div class="container py-3">
+        <h2>Spec Key Management</h2>
+        <form method="POST" action="/admin/cat/spec/add" class="mb-3">
+            <div class="input-group">
+                <select name="category_slug" class="form-select" required>
+                    <% categories.forEach(cat => { %>
+                        <option value="<%= cat.slug %>"><%= cat.name %></option>
+                    <% }) %>
+                </select>
+                <input name="spec_key" placeholder="Spec Key" class="form-control" required />
+                <button type="submit" class="btn btn-success">Add</button>
+            </div>
+        </form>
+        <% categories.forEach(cat => { %>
+            <div class="mb-3">
+                <h5><%= cat.name %></h5>
+                <ul class="list-group">
+                    <% (cat.specs || []).forEach((key, idx) => { %>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <form method="POST" action="/admin/cat/spec/<%= cat.slug %>/edit" class="d-flex flex-grow-1">
+                                <input name="spec_key" value="<%= key %>" class="form-control form-control-sm" />
+                                <button type="submit" name="delete" value="<%= idx %>" class="btn btn-danger btn-sm">Delete</button>
+                                <button type="submit" class="btn btn-primary btn-sm ms-2">Confirm</button>
+                            </form>
+                        </li>
+                    <% }) %>
+                </ul>
+            </div>
+        <% }) %>
+    </div>
+
+    <%- include('component/bottom-navbar-admin.ejs') %>
+    <script src="/script/profile-dropdown.js"></script>
+</body>
+</html>

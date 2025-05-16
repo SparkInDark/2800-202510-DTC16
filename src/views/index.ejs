@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/style/style.css" />
+    <script src="/script/geo.js" defer></script>-->
+</head>
+
+<body>
+    <%- include('component/top-navbar.ejs') %>
+
+        <div id="location-info"
+            class="absolute bg-gray-300 bg-opacity-70 text-black p-3 rounded-lg shadow z-50 w-44 text-sm top-[72px] right-2 lg:top-[80px] lg:right-4">
+            <div id="weather-content">Loading weather...</div>
+        </div>
+
+        <!-- Hero Title -->
+        <div class="hero-title">
+            <h1>Behind every review is an experience that matters</h1>
+            <p>Read reviews. Write reviews. Find companies.</p>
+        </div>
+
+        <div class="mt-6 flex flex-col items-center">
+            <button type="button" id="magic-btn"
+                class="bg-yellow-400 text-black px-6 py-2 rounded font-semibold hover:bg-yellow-500 transition">
+                🔮 Try Click Me
+            </button>
+            <p id="ai-message" class="mt-3 text-center text-gray-800 font-medium text-sm max-w-md"></p>
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-container mt-8">
+            <form action="/search" method="GET" class="search-bar">
+                <input type="text" name="q" placeholder="Find company or category" class="search-input" />
+                <button type="submit" class="search-button">Search</button>
+            </form>
+        </div>
+
+
+        <!-- Featured Products Section -->
+        <div class="w-full px-6 py-8 bg-[#fefcf6] flex flex-col items-center">
+            <h2 class="text-2xl font-bold text-center w-full mb-8 text-[#191919]">Featured Products</h2>
+            <div class="flex flex-col gap-6 w-full max-w-md">
+
+                <!-- NVIDIA RTX 5090 -->
+                <a href="/top10products"
+                    class="bg-white rounded-xl shadow-md overflow-hidden block hover:shadow-lg transition">
+                    <div class="flex gap-4 items-center p-4">
+                        <img src="https://cdn.mos.cms.futurecdn.net/hAcZNwUpeQQAsWfS7LZ4DC.jpg" alt="RTX 5090"
+                            class="w-20 h-20 object-cover rounded-md" />
+                        <div class="flex-1">
+                            <p class="font-bold text-[#191919]">NVIDIA RTX 5090</p>
+                            <p class="text-yellow-500 text-sm">★★★★★</p>
+                            <p class="italic text-sm text-gray-600 mt-1">
+                                "the most powerful consumer GPU currently available, offering significant performance
+                                increases"
+                            </p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- DJI Pocket 3 -->
+                <a href="/top10products"
+                    class="bg-white rounded-xl shadow-md overflow-hidden block hover:shadow-lg transition">
+                    <div class="flex gap-4 items-center p-4">
+                        <img src="https://www.cined.com/content/uploads/2023/10/DJI-osmo-Pocket-3-vertical.jpg"
+                            alt="DJI Pocket 3" class="w-20 h-20 object-cover rounded-md" />
+                        <div class="flex-1">
+                            <p class="font-bold text-[#191919]">DJI OSMO Pocket 3</p>
+                            <p class="text-yellow-500 text-sm">★★★★★</p>
+                            <p class="italic text-sm text-gray-600 mt-1">
+                                "compact gimbal camera praised for its portability, image quality, and ease of use"
+                            </p>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- iPhone 16 Pro Max -->
+                <a href="/top10products"
+                    class="bg-white rounded-xl shadow-md overflow-hidden block hover:shadow-lg transition">
+                    <div class="flex gap-4 items-center p-4">
+                        <img src="https://curved.de/media/cache/article_head/cms/2024/09/iphone-16-pro-cut-1920-1080-article-head-5534.jpg?v=2025042420"
+                            alt="iPhone 16" class="w-20 h-20 object-cover rounded-md" />
+                        <div class="flex-1">
+                            <p class="font-bold text-[#191919]">iPhone 16 Pro Max</p>
+                            <p class="text-yellow-500 text-sm">★★★★</p>
+                            <p class="italic text-sm text-gray-600 mt-1">
+                                "I really do like Apple products, but buying this phone turned me a bit sour for buying
+                                a new
+                                device
+                                from a reputable tech company"
+                            </p>
+                        </div>
+                    </div>
+                </a>
+
+            </div>
+        </div>
+
+        <!-- Category Cards -->
+        <div class="category-grid">
+            <a href="/category" class="category-card">
+                <div class="category-icon">📱</div>
+                <p>Phones</p>
+            </a>
+            <a href="/category" class="category-card">
+                <div class="category-icon">💻</div>
+                <p>Computers</p>
+            </a>
+            <a href="/category" class="category-card">
+                <div class="category-icon">📷</div>
+                <p>Photography</p>
+            </a>
+            <a href="/category" class="category-card">
+                <div class="category-icon">📺</div>
+                <p>TV&Home Theatre</p>
+            </a>
+        </div>
+
+        <!-- Benefits Section -->
+        <section class="benefits-section">
+            <h2>Rating Rebels for everyone</h2>
+            <div class="benefits-grid">
+                <div class="benefit-card">
+                    <div class="star-rating">★★★★★</div>
+                    <h3>For consumers</h3>
+                    <p>Discover brands you can trust. Read reviews from real people.</p>
+                </div>
+                <div class="benefit-card">
+                    <div class="star-rating">★★★★★</div>
+                    <h3>For businesses</h3>
+                    <p>Build trust and increase sales with customer reviews.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <h2>Ready to get started?</h2>
+            <p>Join millions who use RatingRebels to make better choices.</p>
+            <% if (user) { %>
+                <a href="/write-review" class="cta-button">Write a review</a>
+                <% } else { %>
+                    <a href="/login" class="cta-button">Write a review</a>
+                    <% } %>
+        </section>
+
+
+        <%- include('component/bottom-navbar.ejs') %>
+            <script src="/script/profile-dropdown.js"></script>
+            <script>
+                document.getElementById('magic-btn').addEventListener('click', async () => {
+                    const res = await fetch('/ai-welcome', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    const data = await res.json();
+                    document.getElementById('ai-message').textContent = data.message;
+                });
+            </script>
+
+</body>
+
+</html>

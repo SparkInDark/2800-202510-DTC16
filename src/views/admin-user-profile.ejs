@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/style/style.css" />
+    <link rel="stylesheet" href="/style/admin.css" />
+</head>
+<body>
+    <%- include('component/top-navbar.ejs') %>
+
+<div class="container py-3">
+    <form method="POST" enctype="multipart/form-data" action="/admin/user/<%= user._id %>/edit">
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <span><%= user.profile && user.profile.first_name ? user.profile.first_name : 'N/A' %></span>
+                <button type="submit" name="delete" value="1" class="btn btn-danger btn-sm">Delete User</button>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <label>Profile Picture:</label>
+                    <% if(user.profile && user.profile.profile_photo_url) { %>
+                        <img src="<%= user.profile.profile_photo_url %>" style="width:64px;height:64px;border-radius:50%;">
+                        <button type="submit" name="delete_pic" value="1" class="btn btn-danger btn-sm ms-2">Delete</button>
+                    <% } else { %>
+                        <input type="file" name="profile_pic" accept="image/*" class="form-control form-control-sm" />
+                    <% } %>
+                </div>
+                <div class="mb-2">
+                    <label>First Name</label>
+                    <input name="first_name" value="<%= user.profile && user.profile.first_name ? user.profile.first_name : '' %>" class="form-control form-control-sm" />
+                </div>
+                <div class="mb-2">
+                    <label>Last Name</label>
+                    <input name="last_name" value="<%= user.profile && user.profile.last_name ? user.profile.last_name : '' %>" class="form-control form-control-sm" />
+                </div>
+                <div class="mb-2">
+                    <label>Email</label>
+                    <input name="email" value="<%= user.email %>" class="form-control form-control-sm" readonly />
+                </div>
+                <div class="mb-2">
+                    <label>Password</label>
+                    <input name="password" value="****" class="form-control form-control-sm" />
+                </div>
+                <div class="mb-2">
+                    <label>City</label>
+                    <input name="city" value="<%= user.profile && user.profile.city ? user.profile.city : '' %>" class="form-control form-control-sm" />
+                </div>
+                <div class="mb-2">
+                    <label>Country</label>
+                    <input name="country" value="<%= user.profile && user.profile.country ? user.profile.country : '' %>" class="form-control form-control-sm" />
+                </div>
+                <div class="mb-2">
+                    <label>Bio</label>
+                    <textarea name="bio" class="form-control form-control-sm"><%= user.profile && user.profile.bio ? user.profile.bio : '' %></textarea>
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Confirm Changes</button>
+    </form>
+</div>
+
+
+
+    <%- include('component/bottom-navbar-admin.ejs') %>
+    <script src="/script/profile-dropdown.js"></script>
+</body>
+</html>

@@ -1,12 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;600;700&display=swap');
 
-
+/* Brand Name (Navbar Title) */
 .brand-name {
     font-family: 'Pacifico', cursive;
-    font-size: 1.75rem;
-    /* or use Tailwind class in EJS */
+    font-size: 1.5rem;
 }
 
+@media (min-width: 640px) {
+    .brand-name {
+        font-size: 1.875rem;
+    }
+}
 
 html,
 body {
@@ -140,6 +144,7 @@ main {
     line-height: 1.4;
 }
 
+/* Star rating */
 .star-rating {
     color: var(--tp-green);
     font-size: 18px;
@@ -224,15 +229,12 @@ main {
 #location-info {
     position: absolute;
     top: 96px;
-    /* 确保不贴着 navbar */
     right: 1rem;
     background: #e2e8f0;
     color: black;
     padding: 4px 8px;
     font-size: 12px;
-    /* 更小字体 */
     width: 110px;
-    /* 更窄框体 */
     border-radius: 0.5rem;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     z-index: 40;
@@ -278,7 +280,7 @@ main {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* Search Bar Block */
+/* Search bar block */
 .search-container {
     max-width: 800px;
     width: 90%;
@@ -305,16 +307,109 @@ main {
 }
 
 .search-button {
-    background: linear-gradient(to right, #1b8567, #00b67a);
+    background-color: #7c3aed;
+    /* 紫蓝色，接近 LOG IN/➕ 中间色 */
     color: white;
     border: none;
     padding: 0.9rem 1.5rem;
     cursor: pointer;
     font-weight: bold;
     font-size: 1rem;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease;
+    border-radius: 9999px;
 }
 
 .search-button:hover {
-    background: linear-gradient(to right, #00b67a, #1b8567);
+    background-color: #6d28d9;
+    /* 深一阶 hover 效果 */
+}
+
+.brand-name {
+    font-family: 'Pacifico', cursive;
+}
+
+body.bg-main {
+    background: #434362;
+}
+
+.main-container {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: 32px 0 80px 0;
+}
+
+.section-title {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 1.5rem;
+    color: #22223b;
+    text-align: center;
+}
+
+.featured-products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.featured-product-card {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 4px 16px 0 rgba(80, 80, 120, 0.06);
+    padding: 20px 18px 18px 18px;
+    display: flex;
+    gap: 18px;
+    align-items: center;
+}
+
+.featured-product-image {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 14px;
+    background: #f6f6fa;
+}
+
+.featured-product-info {
+    flex: 1;
+}
+
+.featured-product-title {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 6px;
+    color: #38385a;
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+
+.featured-product-rank {
+    font-size: 1.15em;
+    color: #7c5dfa;
+    font-weight: 800;
+}
+
+.featured-product-rating {
+    color: #ffb700;
+    font-size: 1em;
+    margin-bottom: 6px;
+}
+
+.star {
+    color: #ffb700;
+    font-size: 1em;
+}
+
+.rating-number {
+    color: #6d6d85;
+    font-size: 0.96em;
+    margin-left: 5px;
+    font-weight: 500;
+}
+
+.featured-product-review {
+    color: #747493;
+    font-size: 0.96em;
+    margin-top: 3px;
 }

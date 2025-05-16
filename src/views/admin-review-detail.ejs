@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/style/style.css" />
+    <link rel="stylesheet" href="/style/admin.css" />
+</head>
+<body>
+    <%- include('component/top-navbar.ejs') %>
+
+    <div class="container py-3">
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <span><%= review.product_name %></span>
+                <form method="POST" action="/admin/review/<%= review._id %>/delete" style="display:inline;">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete Review</button>
+                </form>
+            </div>
+            <div class="card-body">
+                <p><strong>Reviewer:</strong> <%= review.user_first_name %> <%= review.user_last_name %></p>
+                <p><strong>Date:</strong> <%= review.created_at.toISOString().slice(0,10) %></p>
+                <p>
+                    <strong>Rating:</strong>
+                    <% for(let i=0; i<review.rating; i++) { %>
+                        <span style="color:gold;">&#9733;</span>
+                    <% } %>
+                    <% for(let i=review.rating; i<5; i++) { %>
+                        <span style="color:#ccc;">&#9733;</span>
+                    <% } %>
+                </p>
+                <p><strong>Pros:</strong> <%= review.pros.join(', ') %></p>
+                <p><strong>Cons:</strong> <%= review.cons.join(', ') %></p>
+            </div>
+        </div>
+    </div>
+
+    <%- include('component/bottom-navbar-admin.ejs') %>
+    <script src="/script/profile-dropdown.js"></script>
+</body>
+</html>

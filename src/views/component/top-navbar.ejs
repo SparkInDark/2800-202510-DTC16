@@ -1,0 +1,36 @@
+<nav class="fixed top-0 left-0 w-full bg-gray-200 shadow z-50">
+    <div class="max-w-screen-xl mx-auto flex justify-between items-center px-2 sm:px-6 lg:px-8 h-20">
+
+        <div class="flex items-center space-x-2">
+            <a href="/" class="flex items-center">
+                <span class="ml-1 brand-name text-2xl sm:text-3xl pt-1">RatingRebels</span>
+            </a>
+        </div>
+
+
+        <div class="flex items-center gap-x-2 sm:gap-x-4 pr-2 sm:pr-8">
+            <% if (user) { %>
+                <div class="relative">
+                    <button id="profileDropdownBtn" class="focus:outline-none">
+                        <img src="/img/user-icon.png" class="w-10 sm:w-12 h-auto rounded-full" />
+                    </button>
+                    <div id="profileDropdownMenu" class="hidden absolute right-0 mt-2 w-40 !bg-white rounded-md shadow-lg z-50">
+                        <a href="/profile" class="block px-4 py-2 text-gray-800 hover:!bg-gray-200">Profile</a>
+                        <a href="/admin/review" class="block px-4 py-2 text-gray-800 hover:!bg-gray-200">Admin</a>
+                        <form action="/logout" method="POST">
+                            <input type="hidden" name="from" value="<%= currentUrl %>">
+                            <button type="submit" class="w-full text-left px-4 py-2 text-gray-800 !bg-white hover:!bg-gray-200">Logout</button>
+                        </form>
+                    </div>
+                </div>
+            <% } else { %>
+                <a href="/login">
+                    <button
+                        class="bg-indigo-200 text-black font-semibold px-4 py-2 rounded-full hover:bg-indigo-300 transition">
+                        LOG IN
+                    </button>
+                </a>
+                <% } %>
+        </div>
+    </div>
+</nav>
