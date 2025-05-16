@@ -699,6 +699,33 @@ app.post('/admin/cat/product/:id/edit', async (req, res) => {
 });
 
 
+// === ADMIN CAT SPEC ===
+
+app.get('/admin/cat/spec', async (req, res) => {
+    const categories = await categoriesModel.find().lean();
+    res.render('admin-cat-spec', { categories });
+});
+
+app.post('/admin/cat/spec/add', async (req, res) => {
+    await categoriesModel.updateOne(
+        { slug: req.body.category_slug },
+        { $addToSet: { specs: req.body.spec_key } }
+    );
+    res.redirect('/admin/cat/spec');
+});
+
+app.post('/admin/cat/spec/:slug/edit', async (req, res) => {
+    const cat = await categoriesModel.findOne({ slug: req.params.slug });
+    if (req.body.delete !== undefined && req.body.delete !== "") {
+        cat.specs.splice(Number(req.body.delete), 1);
+    } else if (req.body.spec_key !== undefined) {
+        // for optionally handle spec key editing - might use - keep it for now
+        cat.specs[Number(req.body.idx)] = req.body.spec_key;
+    }
+    await cat.save();
+    res.redirect('/admin/cat/spec');
+});
+
 
 
 
