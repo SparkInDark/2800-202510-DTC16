@@ -625,6 +625,45 @@ app.get('/admin/cat/category', async (req, res) => {
 
 
 
+// Admin CAT CATEGORY
+
+// Auto-generate slug while adding category
+function slugify(str) {
+    return str
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
+app.post('/admin/cat/category/add', async (req, res) => {
+    const slug = slugify(req.body.name);
+    await categoriesModel.create({
+        name: req.body.name,
+        slug: slug,
+        description: req.body.description,
+        specs: []
+    });
+    res.redirect('/admin/cat/category');
+});
+
+app.post('/admin/cat/category/:id/edit', async (req, res) => {
+    if (req.body.delete === "1") {
+        // Actually delete the category from the database
+        await categoriesModel.deleteOne({ _id: req.params.id });
+        return res.redirect('/admin/cat/category');
+    }
+    // Otherwise, just update the category
+    const category = await categoriesModel.findById(req.params.id);
+    category.name = req.body.name;
+    category.slug = req.body.slug;
+    category.description = req.body.description;
+    await category.save();
+    res.redirect('/admin/cat/category');
+});
+
 
 
 
