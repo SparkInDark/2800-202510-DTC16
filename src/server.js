@@ -11,15 +11,13 @@ const mongoose = require('mongoose');
 const MongoStore = require('connect-mongo');
 const path = require('path');
 const bcrypt = require('bcrypt');
-const multer = require("multer");
-const axios = require('axios');
-const { getWeather } = require("./services/weather");
-const upload = multer({ storage: multer.memoryStorage() }); // Store file in memory
+
 const { OpenAI } = require('openai');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const top10products = require('../data/top10product'); // 注意路径
 
-
+const { getWeather } = require("./services/weather");
+const { upload, uploadImageToImgbb } = require('./services/imgupload');
 
 
 // ==== Section 3. Define constants and helpers ====
@@ -461,6 +459,381 @@ app.post('/reviews', async (req, res) => {
         res.status(500).json({ error: 'Server error', details: err.message });
     }
 });
+
+
+
+
+/*
+This admin routes are being tested.
+ */
+
+// ======= ADMIN ROUTES (dedicated) =======
+
+
+// === ADMIN REVIEW ===
+
+app.get('/admin/review', async (req, res) => {
+    const reviews = await reviewsModel.aggregate([
+        { $sort: { created_at: -1 } },
+        { $limit: 100 },
+        {
+            $lookup: {
+                from: 'ratings',
+                let: { product_name: '$product_name', user_email: '$user_email' },
+                pipeline: [
+                    { $match: { $expr: { $and: [
+                                    { $eq: ['$product_name', '$$product_name'] },
+                                    { $eq: ['$user_email', '$$user_email'] }
+                                ] } } }
+                ],
+                as: 'ratingInfo'
+            }
+        },
+        {
+            $addFields: {
+                rating: { $ifNull: [ { $arrayElemAt: ['$ratingInfo.rating', 0] }, 0 ] }
+            }
+        }
+    ]);
+    res.render('admin-review', { reviews });
+});
+
+app.get('/admin/review/:id', async (req, res) => {
+    const review = await reviewsModel.findById(req.params.id).lean();
+    const user = await usersModel.findOne({ email: review.user_email }).lean();
+    const rating = await ratingsModel.findOne({ product_name: review.product_name, user_email: review.user_email });
+    res.render('admin-review-detail', {
+        review: {
+            ...review,
+            rating: rating ? rating.rating : 0,
+            user_first_name: user?.profile?.first_name || '',
+            user_last_name: user?.profile?.last_name || '',
+            pros: review.review_text.pros || [],
+            cons: review.review_text.cons || []
+        }
+    });
+});
+
+app.post('/admin/review/:id/delete', async (req, res) => {
+    await reviewsModel.findByIdAndDelete(req.params.id);
+    res.redirect('/admin/review');
+});
+
+
+// === ADMIN PRODUCT ===
+
+app.get('/admin/product', async (req, res) => {
+    const products = await productsModel.aggregate([
+        { $sort: { created_at: -1 } },
+        {
+            $lookup: {
+                from: 'categories',
+                localField: 'category_slug',
+                foreignField: 'slug',
+                as: 'cat'
+            }
+        },
+        {
+            $addFields: {
+                category_name: { $arrayElemAt: ['$cat.name', 0] }
+            }
+        }
+    ]);
+    res.render('admin-product', { products });
+});
+
+app.get('/admin/product/:id', async (req, res) => {
+    const product = await productsModel.findById(req.params.id).lean();
+    const categories = await categoriesModel.find().lean();
+
+    if (!product) {
+        // Product not found, show error or redirect
+        return res.status(404).render('error-no-proudct-found', { message: 'Product not found' });
+        // Or: return res.redirect('/admin/product');
+    }
+
+    const cat = categories.find(c => c.slug === product.category_slug);
+    const productSpecs = cat ? cat.specs : [];
+    res.render('admin-product-detail', { product, categories, productSpecs });
+});
+
+app.post('/admin/product/:id/edit',
+    upload.fields([
+        { name: 'new_image_0', maxCount: 1 },
+        { name: 'new_image_1', maxCount: 1 },
+        { name: 'new_image_2', maxCount: 1 },
+        { name: 'new_image_3', maxCount: 1 }
+    ]),
+    async (req, res) => {
+        const product = await productsModel.findById(req.params.id);
+        if (req.body.delete) {
+            await product.deleteOne();
+            return res.redirect('/admin/product');
+        }
+        product.name = req.body.name;
+        product.category_slug = req.body.category_slug;
+        product.specs = req.body.specs || {};
+
+        // NEW: Handle multiple image deletions from images_to_delete
+        if (req.body.images_to_delete) {
+            const indices = req.body.images_to_delete
+                .split(',')
+                .map(s => parseInt(s, 10))
+                .filter(n => !isNaN(n));
+            for (const idx of indices) {
+                product.images[idx] = null;
+            }
+        }
+
+        // Handle any new images
+        for (let i = 0; i < 4; i++) {
+            const field = `new_image_${i}`;
+            if (req.files && req.files[field] && req.files[field][0]) {
+                const file = req.files[field][0];
+                const url = await uploadImageToImgbb(file.buffer, file.originalname);
+                product.images[i] = url;
+            }
+        }
+        await product.save();
+        res.redirect(`/admin/product/${product._id}`);
+    });
+
+
+// === ADMIN CATEGORY ===
+
+// Admin CAT Central Page
+app.get('/admin/cat', (req, res) => {
+    res.render('admin-cat');
+});
+
+app.get('/admin/cat/category', async (req, res) => {
+    const categories = await categoriesModel.aggregate([
+        {
+            $lookup: {
+                from: 'products',
+                localField: 'slug',
+                foreignField: 'category_slug',
+                as: 'products'
+            }
+        },
+        {
+            $addFields: { product_count: { $size: '$products' } }
+        }
+    ]);
+    res.render('admin-cat-category', { categories });
+});
+
+
+
+// Admin CAT CATEGORY
+
+// Auto-generate slug while adding category
+function slugify(str) {
+    return str
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
+app.post('/admin/cat/category/add', async (req, res) => {
+    const slug = slugify(req.body.name);
+    await categoriesModel.create({
+        name: req.body.name,
+        slug: slug,
+        description: req.body.description,
+        specs: []
+    });
+    res.redirect('/admin/cat/category');
+});
+
+app.post('/admin/cat/category/:id/edit', async (req, res) => {
+    if (req.body.delete === "1") {
+        // Actually delete the category from the database
+        await categoriesModel.deleteOne({ _id: req.params.id });
+        return res.redirect('/admin/cat/category');
+    }
+    // Otherwise, just update the category
+    const category = await categoriesModel.findById(req.params.id);
+    category.name = req.body.name;
+    category.slug = req.body.slug;
+    category.description = req.body.description;
+    await category.save();
+    res.redirect('/admin/cat/category');
+});
+
+
+
+// === ADMIN CAT PRODUCT ===
+
+app.get('/admin/cat/product', async (req, res) => {
+    const categories = await categoriesModel.find().lean();
+    const products = await productsModel.find().lean();
+    res.render('admin-cat-product', { categories, products });
+});
+
+app.post('/admin/cat/product/add', async (req, res) => {
+    const slug = slugify(req.body.name);
+    await productsModel.create({
+        name: req.body.name,
+        slug: slug,
+        category_slug: req.body.category_slug,
+        specs: {},
+        images: []
+    });
+    res.redirect('/admin/cat/product');
+});
+
+app.post('/admin/cat/product/:id/edit', async (req, res) => {
+    if (req.body.delete === "1") {
+        await productsModel.deleteOne({ _id: req.params.id });
+        return res.redirect('/admin/cat/product');
+    }
+    const product = await productsModel.findById(req.params.id);
+    product.name = req.body.name;
+    product.category_slug = req.body.category_slug;
+    await product.save();
+    res.redirect('/admin/cat/product');
+});
+
+
+// === ADMIN CAT SPEC ===
+
+app.get('/admin/cat/spec', async (req, res) => {
+    const categories = await categoriesModel.find().lean();
+    res.render('admin-cat-spec', { categories });
+});
+
+app.post('/admin/cat/spec/add', async (req, res) => {
+    await categoriesModel.updateOne(
+        { slug: req.body.category_slug },
+        { $addToSet: { specs: req.body.spec_key } }
+    );
+    res.redirect('/admin/cat/spec');
+});
+
+app.post('/admin/cat/spec/:slug/edit', async (req, res) => {
+    const cat = await categoriesModel.findOne({ slug: req.params.slug });
+    if (req.body.delete !== undefined && req.body.delete !== "") {
+        cat.specs.splice(Number(req.body.delete), 1);
+    } else if (req.body.spec_key !== undefined) {
+        // for optionally handle spec key editing - might use - keep it for now
+        cat.specs[Number(req.body.idx)] = req.body.spec_key;
+    }
+    await cat.save();
+    res.redirect('/admin/cat/spec');
+});
+
+
+// === ADMIN CAT PRODUCT DETAIL ===
+
+app.get('/admin/cat/product-detail', async (req, res) => {
+    const products = await productsModel.find().lean();
+    const categories = await categoriesModel.find().lean();
+    let selectedProduct = products[0];
+
+    if (req.query.product_id) {
+        selectedProduct = products.find(p => p._id.toString() === req.query.product_id);
+    }
+
+    if (!selectedProduct) {
+        // No valid product found, show error or redirect
+        return res.status(404).render('component/error-no-product-found', { message: 'Product database is empty' });
+        // Or: return res.redirect('/admin/cat/product-detail');
+    }
+
+    const cat = categories.find(c => c.slug === selectedProduct.category_slug);
+    const productSpecs = cat ? cat.specs : [];
+    res.render('admin-cat-product-detail', { products, categories, selectedProduct, productSpecs });
+});
+
+
+app.post('/admin/cat/product-detail',
+    upload.fields([
+        { name: 'new_image_0', maxCount: 1 },
+        { name: 'new_image_1', maxCount: 1 },
+        { name: 'new_image_2', maxCount: 1 },
+        { name: 'new_image_3', maxCount: 1 }
+    ]),
+    async (req, res) => {
+        const product = await productsModel.findById(req.body.product_id);
+        if (req.body.delete) {
+            await product.deleteOne();
+            return res.redirect('/admin/cat/product-detail');
+        }
+        product.category_slug = req.body.category_slug;
+        product.specs = req.body.specs || {};
+
+        // Handle multiple image deletions from images_to_delete
+        if (req.body.images_to_delete) {
+            const indices = req.body.images_to_delete
+                .split(',')
+                .map(s => parseInt(s, 10))
+                .filter(n => !isNaN(n));
+            for (const idx of indices) {
+                product.images[idx] = null;
+            }
+        }
+
+        // Handle any new images
+        for (let i = 0; i < 4; i++) {
+            const field = `new_image_${i}`;
+            if (req.files && req.files[field] && req.files[field][0]) {
+                const file = req.files[field][0];
+                const url = await uploadImageToImgbb(file.buffer, file.originalname);
+                product.images[i] = url;
+            }
+        }
+        await product.save();
+        res.redirect(`/admin/cat/product-detail?product_id=${product._id}`);
+    }
+);
+
+
+// === ADMIN USER ===
+
+app.get('/admin/user', async (req, res) => {
+    const users = await usersModel.find().lean();
+    res.render('admin-user', { users });
+});
+
+app.get('/admin/user/:id', async (req, res) => {
+    const user = await usersModel.findById(req.params.id).lean();
+    res.render('admin-user-profile', { user });
+});
+
+app.post('/admin/user/:id/edit', upload.single('profile_pic'), async (req, res) => {
+    const user = await usersModel.findById(req.params.id);
+    if (req.body.delete) {
+        await user.deleteOne();
+        return res.redirect('/admin/user');
+    }
+    if (req.body.delete_pic) {
+        user.profile.profile_photo_url = '';
+        await user.save();
+        return res.redirect(`/admin/user/${user._id}`);
+    }
+    if (req.file) {
+        const url = await uploadImageToImgbb(req.file.buffer, req.file.originalname);
+        user.profile.profile_photo_url = url;
+    }
+    user.profile.first_name = req.body.first_name;
+    user.profile.last_name = req.body.last_name;
+    user.profile.city = req.body.city;
+    user.profile.country = req.body.country;
+    user.profile.bio = req.body.bio;
+    if (req.body.password && req.body.password !== '****') {
+        user.password_hash = await bcrypt.hash(req.body.password, 10);
+    }
+    await user.save();
+    res.redirect(`/admin/user/${user._id}`);
+});
+
+
+
+
 
 // const isAdmin = (req, res, next) => {
 //     if (req.session && req.session.user && req.session.user.role === 'admin') {
