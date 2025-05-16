@@ -33,6 +33,8 @@ function isProtected(path) {
 
 
 // ==== Section 4. Define schema ====
+
+// ==== Section 4. Define schema ====
 const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password_hash: { type: String, required: true },
@@ -48,68 +50,164 @@ const userSchema = new mongoose.Schema({
         country: { type: String, default: '' },
         bio: { type: String, default: '' },
         profile_photo_url: { type: String, default: '' }
-    }
+    },
+    deleted: { type: Boolean, default: false }
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
 const usersModel = mongoose.model('users', userSchema);
 
-const ReviewSchema = new mongoose.Schema({
-    productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    stars: { type: Number, min: 1, max: 5, required: true },
-    title: { type: String, required: true },
-    pros: String,
-    cons: String,
-    details: { type: String, required: true },
-    images: [String], // Store image URLs or file paths
-    createdAt: { type: Date, default: Date.now }
-});
 
-const reviewModel = mongoose.model('Review', ReviewSchema);
+const reviewSchema = new mongoose.Schema({
+    product_name: { type: String, required: true },
+    user_email: { type: String, required: true },
+    review_text: {
+        overall: String,
+        pros: [String],
+        cons: [String]
+    },
+    review_images: [String], // URLs
+    rating: { type: Number, min: 1, max: 5, required: true },
+    review_date: { type: Date, default: Date.now },
+    votes: {
+        upvotes: [String], // user emails
+        downvotes: [String]
+    },
+    moderation: {
+        status: { type: String, default: 'pending' },
+        flags: [mongoose.Schema.Types.Mixed],
+        rejection_reason: mongoose.Schema.Types.Mixed // can be String or null
+    },
+    deleted: { type: Boolean, default: false }
+}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+
+const reviewsModel = mongoose.model('reviews', reviewSchema);
+
 
 const ratingSchema = new mongoose.Schema({
-    product_name: String,
-    user_email: String,
-    rating: Number
-}, { timestamps: { createdAt: 'rated_at', updatedAt: false } }); // Only track rated_at
+    product_name: { type: String, required: true },
+    user_email: { type: String, required: true },
+    rating: { type: Number, min: 1, max: 5, required: true }
+}, { timestamps: { createdAt: 'rated_at', updatedAt: false } });
 
 const ratingsModel = mongoose.model('ratings', ratingSchema);
 
 
 const productSchema = new mongoose.Schema({
-    name: String,
-    category_slug: String,
-    specs: {
-        brand: String,
-        storage: String,
-        ram: String,
-        screen_size: String,
-        processor: String
-    },
-    images: [String],
+    name: { type: String, required: true },
+    category_slug: { type: String, required: true },
+    specs: { type: mongoose.Schema.Types.Mixed, default: {} }, // flexible key-value
+    images: [String], // URLs from imgbb
     rating_summary: {
-        average: Number,
-        total_ratings: Number,
+        average: { type: Number, default: 0 },
+        total_ratings: { type: Number, default: 0 },
         star_counts: {
-            "1": Number,
-            "2": Number,
-            "3": Number,
-            "4": Number,
-            "5": Number
+            "1": { type: Number, default: 0 },
+            "2": { type: Number, default: 0 },
+            "3": { type: Number, default: 0 },
+            "4": { type: Number, default: 0 },
+            "5": { type: Number, default: 0 }
         }
-    }
+    },
+    deleted: { type: Boolean, default: false }
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
 const productsModel = mongoose.model('products', productSchema);
 
 
 const categorySchema = new mongoose.Schema({
-    name: String,
-    slug: String,
-    description: String
+    name: { type: String, required: true },
+    slug: { type: String, required: true, unique: true },
+    description: { type: String, default: '' },
+    specs: [String], // List of allowed spec keys for this category
+    deleted: { type: Boolean, default: false }
 });
 
 const categoriesModel = mongoose.model('categories', categorySchema);
+
+
+
+// ===  schema design review reference  (comment by jun, to be reviewed) ===
+
+// const userSchema = new mongoose.Schema({
+//     email: { type: String, required: true, unique: true },
+//     password_hash: { type: String, required: true },
+//     role: {
+//         type: String,
+//         enum: ['admin', 'user'],
+//         default: 'user'
+//     },
+//     profile: {
+//         first_name: { type: String, default: '' },
+//         last_name: { type: String, default: '' },
+//         city: { type: String, default: '' },
+//         country: { type: String, default: '' },
+//         bio: { type: String, default: '' },
+//         profile_photo_url: { type: String, default: '' }
+//     }
+// }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+//
+// const usersModel = mongoose.model('users', userSchema);
+//
+// const reviewSchema = new mongoose.Schema({
+//     productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+//     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+//     stars: { type: Number, min: 1, max: 5, required: true },
+//     title: { type: String, required: true },
+//     pros: String,
+//     cons: String,
+//     details: { type: String, required: true },
+//     images: [String], // Store image URLs or file paths
+//     createdAt: { type: Date, default: Date.now }
+// });
+//
+// const reviewsModel = mongoose.model('reviews', reviewSchema);
+//
+// const ratingSchema = new mongoose.Schema({
+//     product_name: String,
+//     user_email: String,
+//     rating: Number
+// }, { timestamps: { createdAt: 'rated_at', updatedAt: false } }); // Only track rated_at
+//
+// const ratingsModel = mongoose.model('ratings', ratingSchema);
+//
+//
+// const productSchema = new mongoose.Schema({
+//     name: String,
+//     category_slug: String,
+//     specs: {
+//         brand: String,
+//         storage: String,
+//         ram: String,
+//         screen_size: String,
+//         processor: String
+//     },
+//     images: [String],
+//     rating_summary: {
+//         average: Number,
+//         total_ratings: Number,
+//         star_counts: {
+//             "1": Number,
+//             "2": Number,
+//             "3": Number,
+//             "4": Number,
+//             "5": Number
+//         }
+//     }
+// }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+//
+// const productsModel = mongoose.model('products', productSchema);
+//
+//
+// const categorySchema = new mongoose.Schema({
+//     name: String,
+//     slug: String,
+//     description: String
+// });
+//
+// const categoriesModel = mongoose.model('categories', categorySchema);
+
+
+
 
 // Comment by jun, the section is to be deleted after userSchema test.
 // const user_authSchema = new mongoose.Schema({
