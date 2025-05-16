@@ -307,18 +307,21 @@ main {
 }
 
 .search-button {
-    background: linear-gradient(to right, #1b8567, #00b67a);
+    background-color: #7c3aed;
+    /* 紫蓝色，接近 LOG IN/➕ 中间色 */
     color: white;
     border: none;
     padding: 0.9rem 1.5rem;
     cursor: pointer;
     font-weight: bold;
     font-size: 1rem;
-    transition: all 0.2s ease;
+    transition: background-color 0.2s ease;
+    border-radius: 9999px;
 }
 
 .search-button:hover {
-    background: linear-gradient(to right, #00b67a, #1b8567);
+    background-color: #6d28d9;
+    /* 深一阶 hover 效果 */
 }
 
 .brand-name {

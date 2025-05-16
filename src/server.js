@@ -15,6 +15,9 @@ const multer = require("multer");
 const axios = require('axios');
 const { getWeather } = require("./services/weather");
 const upload = multer({ storage: multer.memoryStorage() }); // Store file in memory
+const { OpenAI } = require('openai');
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
 
 // ==== Section 3. Define constants and helpers ====
 const app = express();
@@ -406,6 +409,8 @@ app.get('/write-review', (req, res) => {
 
 // feature product route
 
+
+
 const getTopProducts = async (limit) => {
     return productsModel.find().sort({ rating: -1 }).limit(limit)
 }
@@ -435,12 +440,29 @@ app.get('/TopProducts/:limit', async (req, res) => {
 });
 
 app.get('/products/search', async (req, res) => {
-  const { query } = req.query;
-  const products = await productsModel.find({
-    productname: { $regex: query, $options: 'i' }
-  });
-  res.json(products);
+    const { query } = req.query;
+    const products = await productsModel.find({
+        productname: { $regex: query, $options: 'i' }
+    });
+    res.json(products);
 });
+
+app.post('/ai-welcome', express.json(), async (req, res) => {
+    const prompt = `Give a short, interesting, and slightly playful product insight or review tip related to modern tech gadgets like graphics cards, smartphones, or camera gear.`;
+    try {
+        const response = await openai.chat.completions.create({
+            model: 'gpt-3.5-turbo',
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 80
+        });
+        const message = response.choices[0].message.content;
+        res.json({ message });
+    } catch (err) {
+        console.error('🔥 OpenAI API Error:', err);
+        res.status(500).json({ message: 'AI is having a coffee break ☕️' });
+    }
+});
+
 
 
 //, role: req.session.user.role

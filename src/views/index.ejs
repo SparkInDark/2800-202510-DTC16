@@ -24,6 +24,14 @@
             <p>Read reviews. Write reviews. Find companies.</p>
         </div>
 
+        <div class="mt-6 flex flex-col items-center">
+            <button type="button" id="magic-btn"
+                class="bg-yellow-400 text-black px-6 py-2 rounded font-semibold hover:bg-yellow-500 transition">
+                🔮 Try Click Me
+            </button>
+            <p id="ai-message" class="mt-3 text-center text-gray-800 font-medium text-sm max-w-md"></p>
+        </div>
+
         <!-- Search Section -->
         <div class="search-container mt-8">
             <form action="/search" method="GET" class="search-bar">
@@ -31,7 +39,6 @@
                 <button type="submit" class="search-button">Search</button>
             </form>
         </div>
-
 
 
         <!-- Featured Products Section -->
@@ -94,7 +101,6 @@
             </div>
         </div>
 
-
         <!-- Category Cards -->
         <div class="category-grid">
             <a href="/category" class="category-card">
@@ -114,7 +120,6 @@
                 <p>TV&Home Theatre</p>
             </a>
         </div>
-
 
         <!-- Benefits Section -->
         <section class="benefits-section">
@@ -145,9 +150,21 @@
         </section>
 
 
+        <%- include('component/bottom-navbar.ejs') %>
+            <script src="/script/profile-dropdown.js"></script>
+            <script>
+                document.getElementById('magic-btn').addEventListener('click', async () => {
+                    const res = await fetch('/ai-welcome', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                    const data = await res.json();
+                    document.getElementById('ai-message').textContent = data.message;
+                });
+            </script>
 
-    <%- include('component/bottom-navbar.ejs') %>
-    <script src="/script/profile-dropdown.js"></script>
 </body>
 
 </html>
