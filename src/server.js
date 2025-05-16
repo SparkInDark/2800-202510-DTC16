@@ -410,40 +410,43 @@ app.get('/profile', async (req, res) => {
     if (!req.session.user) {
         return res.redirect('/login');
     }
-    const user = await usersModel.findOne({ email: req.session.user.email });
-    res.render('profile.ejs', { user });
+    try {
+        const user = await usersModel.findOne({ email: req.session.user.email }).lean();
+        res.render('profile.ejs', {
+            user: {
+                ...user,
+                profile: user.profile || {}
+            }
+        });
+    } catch (err) {
+        console.error('Profile load error:', err);
+        res.status(500).send('Error loading profile');
+    }
 });
 
 app.post('/profile/upload-photo', upload.single('profile_photo'), async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
     if (!req.file) return res.status(400).send('No file uploaded');
 
-    try {
-        // Convert buffer to base64
-        const imageBase64 = req.file.buffer.toString('base64');
+        try {
+            const imageUrl = await uploadImageToImgbb(
+                req.file.buffer,
+                req.file.originalname
+            );
 
-        // Upload to imgbb
-        const response = await axios.post('https://api.imgbb.com/1/upload', null, {
-            params: {
-                key: process.env.IMGBB_API_KEY,
-                image: imageBase64
-            }
-        });
+            await usersModel.updateOne(
+                { email: req.session.user.email },
+                { $set: { 'profile.profile_photo_url': imageUrl } }
+            );
 
-        const imageUrl = response.data.data.url;
-
-        // Update user profile in DB
-        await usersModel.updateOne(
-            { email: req.session.user.email },
-            { $set: { 'profile.profile_photo_url': imageUrl } }
-        );
-
-        res.redirect('/profile');
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Image upload failed');
+            req.session.user.profile_photo_url = imageUrl;
+            res.redirect('/profile');
+        } catch (err) {
+            console.error('Image upload error:', err);
+            res.status(500).send('Image upload failed');
+        }
     }
-});
+);
 
 // category route
 app.get('/category', (req, res) => {

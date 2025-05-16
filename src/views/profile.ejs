@@ -7,35 +7,135 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="/style/style.css" />
 </head>
-<body>
+<body class="bg-gray-50">
     <%- include('component/top-navbar.ejs') %>
 
-    <div class="profile-container">
-        <h2>My Profile</h2>
-        <p><strong>Email:</strong> <%= user.email %></p>
-        <p><strong>Role:</strong> <%= user.role %></p>
-        <% if (user.profile) { %>
-            <p><strong>First Name:</strong> <%= user.profile.first_name || '' %></p>
-            <p><strong>Last Name:</strong> <%= user.profile.last_name || '' %></p>
-            <p><strong>City:</strong> <%= user.profile.city || '' %></p>
-            <p><strong>Country:</strong> <%= user.profile.country || '' %></p>
-            <p><strong>Bio:</strong> <%= user.profile.bio || '' %></p>
+    <div class="max-w-4xl mx-auto mt-12 py-8 px-4">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <!-- Profile Header -->
+            <div class="flex items-center justify-between mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">My Profile</h1>
+                <span class="px-4 py-2 bg-<%= user.role === 'admin' ? 'red' : 'blue' %>-100 text-<%= user.role === 'admin' ? 'red' : 'blue' %>-800 rounded-full text-sm">
+                    <%= user.role %>
+                </span>
+            </div>
 
-            <form id="profile-pic-form" action="/profile/upload-photo" method="POST" enctype="multipart/form-data">
-                <label for="profile_photo">Upload Profile Picture:</label>
-                <input type="file" name="profile_photo" id="profile_photo" accept="image/*" required>
-                <button type="submit">Upload</button>
-            </form>
+            <!-- Profile Content Grid -->
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Left Column - Avatar Section -->
+                <div class="md:col-span-1">
+                    <div class="space-y-4">
+                        <% if (user.profile.profile_photo_url) { %>
+                            <img src="<%= user.profile.profile_photo_url %>"
+                                 alt="Profile Photo"
+                                 class="w-32 h-32 rounded-full object-cover mx-auto shadow-lg">
+                        <% } else { %>
+                            <div class="w-32 h-32 rounded-full bg-gray-200 mx-auto flex items-center justify-center">
+                                <span class="text-gray-500 text-2xl">?</span>
+                            </div>
+                        <% } %>
 
-            <% if (user.profile.profile_photo_url) { %>
-                <img src="<%= user.profile.profile_photo_url %>" alt="Profile Photo" style="max-width:150px;">
-            <% } %>
-        <% } else { %>
-            <p>No profile information available.</p>
-        <% } %>
+                        <form id="profile-pic-form"
+                              action="/profile/upload-photo"
+                              method="POST"
+                              enctype="multipart/form-data"
+                              class="space-y-4">
+                            <label class="block">
+                                <span class="sr-only">Choose profile photo</span>
+                                <input type="file"
+                                       name="profile_photo"
+                                       id="profile_photo"
+                                       accept="image/*"
+                                       class="block w-full text-sm text-gray-500
+                                              file:mr-4 file:py-2 file:px-4
+                                              file:rounded-full file:border-0
+                                              file:text-sm file:font-semibold
+                                              file:bg-blue-50 file:text-blue-700
+                                              hover:file:bg-blue-100">
+                            </label>
+                            <button type="submit"
+                                    class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                Update Photo
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right Column - Profile Details -->
+                <div class="md:col-span-2">
+                    <div class="space-y-6">
+                        <!-- Email Section -->
+                        <div class="border-b pb-4">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-2">Account Information</h3>
+                            <p class="text-gray-600">
+                                <span class="font-medium">Email:</span><%= user.email %>
+                            </p>
+                        </div>
+
+                        <!-- Profile Details -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-700">Personal Information</h3>
+                            <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">First Name</dt>
+                                    <dd class="mt-1 text-gray-900">
+                                        <%= user.profile.first_name || 'Not set' %>
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Last Name</dt>
+                                    <dd class="mt-1 text-gray-900">
+                                        <%= user.profile.last_name || 'Not set' %>
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">City</dt>
+                                    <dd class="mt-1 text-gray-900">
+                                        <%= user.profile.city || 'Not set' %>
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Country</dt>
+                                    <dd class="mt-1 text-gray-900">
+                                        <%= user.profile.country || 'Not set' %>
+                                    </dd>
+                                </div>
+                            </dl>
+                        </div>
+
+                        <!-- Bio Section -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-700 mb-2">Bio</h3>
+                            <p class="text-gray-600 whitespace-pre-wrap">
+                                <%= user.profile.bio || 'No bio added' %>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-
     <%- include('component/bottom-navbar.ejs') %>
     <script src="/script/profile-dropdown.js"></script>
+    <script>
+        // Real-time image preview
+        document.getElementById('profile_photo').addEventListener('change', function(e) {
+            const [file] = e.target.files
+            if (file) {
+                const reader = new FileReader()
+                reader.onload = function(e) {
+                    const img = document.querySelector('img')
+                    if (img) {
+                        img.src = e.target.result
+                    } else {
+                        const avatarContainer = document.querySelector('.bg-gray-200')
+                        avatarContainer.innerHTML = `<img src="${e.target.result}"
+                                                         class="w-32 h-32 rounded-full object-cover mx-auto shadow-lg">`
+                    }
+                }
+                reader.readAsDataURL(file)
+            }
+        })
+    </script>
 </body>
 </html>
