@@ -21,18 +21,23 @@
             </div>
             <div class="card-body">
                 <p><strong>Reviewer:</strong> <%= review.user_first_name %> <%= review.user_last_name %></p>
-                <p><strong>Date:</strong> <%= review.created_at.toISOString().slice(0,10) %></p>
+                <p><strong>Date:</strong>
+                    <% if (review.created_at) { %>
+                        <%= new Date(review.created_at).toISOString().slice(0,10) %>
+                    <% } else { %>
+                        N/A
+                    <% } %>
+                </p>
                 <p>
                     <strong>Rating:</strong>
-                    <% for(let i=0; i<review.rating; i++) { %>
+                    <% for(let i=0; i<review.review_rating; i++) { %>
                         <span style="color:gold;">&#9733;</span>
                     <% } %>
-                    <% for(let i=review.rating; i<5; i++) { %>
+                    <% for(let i=review.review_rating; i<5; i++) { %>
                         <span style="color:#ccc;">&#9733;</span>
                     <% } %>
                 </p>
-                <p><strong>Pros:</strong> <%= review.pros.join(', ') %></p>
-                <p><strong>Cons:</strong> <%= review.cons.join(', ') %></p>
+                <p><strong>Review:</strong> <%= review.review_text %></p>
             </div>
         </div>
     </div>
