@@ -51,7 +51,6 @@ const userSchema = new mongoose.Schema({
         bio: { type: String, default: '' },
         profile_photo_url: { type: String, default: '' }
     },
-    deleted: { type: Boolean, default: false }
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
 const usersModel = mongoose.model('users', userSchema);
@@ -85,10 +84,10 @@ const reviewsModel = mongoose.model('reviews', reviewSchema);
 
 
 const ratingSchema = new mongoose.Schema({
-    product_name: { type: String, required: true },
+    product_slug: { type: String, required: true },
     user_email: { type: String, required: true },
     rating: { type: Number, min: 1, max: 5, required: true }
-}, { timestamps: { createdAt: 'rated_at', updatedAt: false } });
+}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
 const ratingsModel = mongoose.model('ratings', ratingSchema);
 
@@ -110,8 +109,7 @@ const productSchema = new mongoose.Schema({
             "5": { type: Number, default: 0 }
         }
     },
-    deleted: { type: Boolean, default: false }
-}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+});
 
 const productsModel = mongoose.model('products', productSchema);
 
@@ -121,7 +119,6 @@ const categorySchema = new mongoose.Schema({
     slug: { type: String, required: true },
     description: { type: String, default: '' },
     specs: [String], // List of allowed spec keys for this category
-    deleted: { type: Boolean, default: false }
 });
 
 const categoriesModel = mongoose.model('categories', categorySchema);
