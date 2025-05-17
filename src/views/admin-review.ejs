@@ -34,8 +34,17 @@
                 <tbody id="reviewTableBody">
                 <% reviews.forEach(r => { %>
                     <tr class="clickable-row" onclick="location.href='/admin/review/<%= r._id %>'">
-                        <td><%= r.created_at.toISOString().slice(0,10).replace(/-/g,'/') %></td>
-                        <td><%= r.product_name %></td>
+
+                        <td>
+                            <% if (r.created_at) { %>
+                                <%= new Date(r.created_at).toISOString().slice(0,10).replace(/-/g,'/') %>
+                            <% } else { %>
+                                N/A
+                            <% } %>
+                        </td>
+
+
+                        <td><%= r.product_slug %></td>
                         <td>
                             <% for(let i=0; i<r.rating; i++) { %>
                                 <span style="color:gold;">&#9733;</span>

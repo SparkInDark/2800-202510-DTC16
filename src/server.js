@@ -659,10 +659,10 @@ app.get('/admin/review', async (req, res) => {
         {
             $lookup: {
                 from: 'ratings',
-                let: { product_name: '$product_name', user_email: '$user_email' },
+                let: { product_slug: '$product_slug', user_email: '$user_email' },
                 pipeline: [
                     { $match: { $expr: { $and: [
-                                    { $eq: ['$product_name', '$$product_name'] },
+                                    { $eq: ['$product_slug', '$$product_slug'] },
                                     { $eq: ['$user_email', '$$user_email'] }
                                 ] } } }
                 ],
@@ -681,7 +681,7 @@ app.get('/admin/review', async (req, res) => {
 app.get('/admin/review/:id', async (req, res) => {
     const review = await reviewsModel.findById(req.params.id).lean();
     const user = await usersModel.findOne({ email: review.user_email }).lean();
-    const rating = await ratingsModel.findOne({ product_name: review.product_name, user_email: review.user_email });
+    const rating = await ratingsModel.findOne({ product_slug: review.product_slug, user_email: review.user_email });
     res.render('admin-review-detail', {
         review: {
             ...review,
