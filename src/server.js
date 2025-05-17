@@ -567,6 +567,59 @@ app.get('/write-review', (req, res) => {
 });
 
 
+// Write Review POST Route
+app.post('/reviews',
+    upload.fields([
+        { name: 'review_image_0', maxCount: 1 },
+        { name: 'review_image_1', maxCount: 1 },
+        { name: 'review_image_2', maxCount: 1 },
+        { name: 'review_image_3', maxCount: 1 }
+    ]),
+    async (req, res) => {
+        try {
+            const { product_slug, user_email, review_rating, review_text } = req.body;
+
+            if (!product_slug || !user_email || !review_rating || !review_text) {
+                return res.status(400).json({ error: 'Missing required fields' });
+            }
+
+            // Build review_images array: 4 slots, matching the grid order
+            let review_images = [];
+            for (let i = 0; i < 4; i++) {
+                // Check for soft-delete flag
+                if (req.body[`delete_image_${i}`] === 'true') {
+                    review_images[i] = null;
+                    continue;
+                }
+                // If a new image was uploaded in this slot
+                const field = `review_image_${i}`;
+                if (req.files && req.files[field] && req.files[field][0]) {
+                    const file = req.files[field][0];
+                    const url = await uploadImageToImgbb(file.buffer, file.originalname);
+                    review_images[i] = url;
+                } else {
+                    review_images[i] = null; // No image uploaded and not marked for delete
+                }
+            }
+
+            // Optionally: remove nulls if you want a compact array
+            review_images = review_images.filter(url => url);
+
+            const review = new reviewsModel({
+                product_slug,
+                user_email,
+                review_rating,
+                review_text,
+                review_images
+            });
+
+            await review.save();
+            res.status(201).json({ message: 'Review submitted successfully', review });
+        } catch (err) {
+            res.status(500).json({ error: 'Server error', details: err.message });
+        }
+    }
+);
 
 
 
