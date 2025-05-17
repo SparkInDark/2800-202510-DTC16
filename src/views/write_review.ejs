@@ -106,5 +106,13 @@
 </html>
 
 <script>
+    const reviewimgMaxImages = 4;
+
+    // Open file dialog for the clicked slot
+    function reviewimgOpenFileDialog(idx) {
+        if (document.getElementById('reviewimg-pending-' + idx).classList.contains('reviewimg-flex')) return; // Don't allow if pending
+        document.getElementById('reviewimg-file-input-' + idx).click();
+    }
+
 
 </script>
