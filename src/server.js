@@ -60,6 +60,7 @@ const usersModel = mongoose.model('users', userSchema);
 const reviewSchema = new mongoose.Schema({
     product_name: { type: String, required: true },
     user_email: { type: String, required: true },
+    title:{ type: String, required: true},
     review_text: {
         overall: String,
         pros: [String],
@@ -520,32 +521,28 @@ app.post('/ai-welcome', express.json(), async (req, res) => {
 
 ///write review function
 app.post('/reviews', async (req, res) => {
-    const { productId, userId, stars, title, pros, cons, details } = req.body;
+    const { product_name, user_email, rating, title, review_detail } = req.body;
 
-    if (!stars || !title || !details || !productId || !userId) {
+    if (!rating || !title || !review_detail || !user_email || !product_name) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
     try {
-        const review = new reviewModel({
-            productId,
-            userId,
-            stars,
+        const review = new reviewsModel({
+            product_name,
+            user_email,
             title,
-            pros,
-            cons,
-            details,
-            images: [] // Add handling if you're including images
+            rating,
+            review_detail,
+            review_images: review_images || []
         });
 
-        await reviewModel.save();
+        await reviewsModel.save();
         res.status(201).json({ message: 'Review submitted successfully', review });
     } catch (err) {
         res.status(500).json({ error: 'Server error', details: err.message });
     }
 });
-
-
 
 
 /*
