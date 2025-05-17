@@ -12,92 +12,135 @@
 <body class="bg-gray-100 text-gray-800">
     <%- include('component/top-navbar.ejs') %>
 
-        <!-- 表单区域 -->
-        <form action="/submit-reviews" method="POST" enctype="multipart/form-data"
-            class="bg-white p-6 mt-24 mx-auto max-w-2xl rounded-lg shadow space-y-5">
 
-            <!-- Hidden product_slug and user_email -->
-            <input type="hidden" name="product_slug" value="<%= product_slug %>">
-            <input type="hidden" name="user_email" value="<%= user_email %>">
+    <form id="review-form" action="/write-review" method="POST" enctype="multipart/form-data"
+          class="bg-white p-6 mt-24 mx-auto max-w-2xl rounded-lg shadow space-y-5">
 
-            <!-- 星级评分 -->
-            <div class="flex items-center space-x-1 text-2xl text-gray-300" id="star-rating">
-                <% for (let i=1; i <=5; i++) { %>
-                    <button type="button" data-rating="<%= i %>" class="star hover:scale-110 transition">
-                        ★
-                    </button>
-                    <% } %>
-            </div>
-            <input type="hidden" name="rating" id="rating-value" value="0" />
+        <!-- Category Selection -->
+        <div>
+            <label for="category-select" class="font-semibold">Select Category</label>
+            <select id="category-select" name="category_slug" class="w-full p-2 border rounded"
+                    onchange="onCategoryChange()">
+                <option value="">-- Choose a category --</option>
+                <% categories.forEach(cat => { %>
+                    <option value="<%= cat.slug %>" <%= category_slug === cat.slug ? 'selected' : '' %>><%= cat.name %></option>
+                <% }) %>
+            </select>
+        </div>
+
+        <!-- Product Selection -->
+        <div>
+            <label for="product-select" class="font-semibold">Select Product</label>
+            <select id="product-select" name="product_slug" class="w-full p-2 border rounded"
+                    <%= !category_slug ? 'disabled' : '' %>
+                    onchange="onProductChange()">
+                <option value="">-- Choose a product --</option>
+                <% products.forEach(prod => { %>
+                    <option value="<%= prod.slug %>" <%= product_slug === prod.slug ? 'selected' : '' %>><%= prod.name %></option>
+                <% }) %>
+            </select>
+        </div>
+
+        <!-- Hidden user_email -->
+        <input type="hidden" name="user_email" value="<%= user_email %>">
+
+        <!-- Only show the rest of the form if product is selected -->
+        <% if (product_slug) { %>
 
 
-            <!-- Review Text -->
-            <textarea name="review_text" rows="5" placeholder="Write your review here..."
-                      class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      required></textarea>
+            <!-- 表单区域 -->
+            <form action="/submit-reviews" method="POST" enctype="multipart/form-data"
+                  class="bg-white p-6 mt-24 mx-auto max-w-2xl rounded-lg shadow space-y-5">
 
+                <!-- Hidden product_slug and user_email -->
+                <input type="hidden" name="product_slug" value="<%= product_slug %>">
+                <input type="hidden" name="user_email" value="<%= user_email %>">
 
-
-            <!-- 上传图片 (up to 4) -->
-            <div class="reviewimg-upload-section">
-                <label class="reviewimg-label">Upload Photos (up to 4)</label>
-                <div id="reviewimg-grid" class="reviewimg-grid">
-                    <% for (let i = 0; i < 4; i++) { %>
-                        <div
-                                class="reviewimg-slot"
-                                onclick="reviewimgOpenFileDialog(<%= i %>)"
-                                id="reviewimg-slot-<%= i %>"
-                        >
-                            <!-- Image preview or placeholder -->
-                            <img
-                                    src=""
-                                    alt="Preview"
-                                    class="reviewimg-img-preview reviewimg-hidden"
-                                    id="reviewimg-img-preview-<%= i %>"
-                            />
-                            <span class="reviewimg-placeholder" id="reviewimg-placeholder-<%= i %>">+</span>
-                            <!-- X button for soft-delete -->
-                            <button
-                                    type="button"
-                                    onclick="event.stopPropagation(); reviewimgMarkForDelete(<%= i %>);"
-                                    class="reviewimg-delete-btn reviewimg-hidden"
-                                    id="reviewimg-delete-<%= i %>"
-                            >
-                                &times;
-                            </button>
-                            <!-- Pending overlay -->
-                            <div
-                                    class="reviewimg-pending-overlay reviewimg-hidden"
-                                    id="reviewimg-pending-<%= i %>"
-                            >Pending…</div>
-                            <!-- Hidden file input for each slot -->
-                            <input
-                                    type="file"
-                                    accept="image/*"
-                                    class="reviewimg-file-input"
-                                    name="review_images"
-                                    id="reviewimg-file-input-<%= i %>"
-                            />
-                            <!-- Hidden soft-delete flag -->
-                            <input
-                                    type="hidden"
-                                    name="delete_image_<%= i %>"
-                                    id="reviewimg-delete-flag-<%= i %>"
-                                    value="false"
-                            />
-                        </div>
+                <!-- 星级评分 -->
+                <div class="flex items-center space-x-1 text-2xl text-gray-300" id="star-rating">
+                    <% for (let i=1; i <=5; i++) { %>
+                        <button type="button" data-rating="<%= i %>" class="star hover:scale-110 transition">
+                            ★
+                        </button>
                     <% } %>
                 </div>
-                <p class="reviewimg-help-text">Click a box to add a photo. Click × to remove. Max 4 images.</p>
-            </div>
+                <input type="hidden" name="rating" id="rating-value" value="0" />
 
 
-            <!-- Submit -->
-            <button type="submit"
-                class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded transition duration-200">
-                Submit Review
-            </button>
-        </form>
+                <!-- Review Text -->
+                <textarea name="review_text" rows="5" placeholder="Write your review here..."
+                          class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          required></textarea>
+
+
+
+                <!-- 上传图片 (up to 4) -->
+                <div class="reviewimg-upload-section">
+                    <label class="reviewimg-label">Upload Photos (up to 4)</label>
+                    <div id="reviewimg-grid" class="reviewimg-grid">
+                        <% for (let i = 0; i < 4; i++) { %>
+                            <div
+                                    class="reviewimg-slot"
+                                    onclick="reviewimgOpenFileDialog(<%= i %>)"
+                                    id="reviewimg-slot-<%= i %>"
+                            >
+                                <!-- Image preview or placeholder -->
+                                <img
+                                        src=""
+                                        alt="Preview"
+                                        class="reviewimg-img-preview reviewimg-hidden"
+                                        id="reviewimg-img-preview-<%= i %>"
+                                />
+                                <span class="reviewimg-placeholder" id="reviewimg-placeholder-<%= i %>">+</span>
+                                <!-- X button for soft-delete -->
+                                <button
+                                        type="button"
+                                        onclick="event.stopPropagation(); reviewimgMarkForDelete(<%= i %>);"
+                                        class="reviewimg-delete-btn reviewimg-hidden"
+                                        id="reviewimg-delete-<%= i %>"
+                                >
+                                    &times;
+                                </button>
+                                <!-- Pending overlay -->
+                                <div
+                                        class="reviewimg-pending-overlay reviewimg-hidden"
+                                        id="reviewimg-pending-<%= i %>"
+                                >Pending…</div>
+                                <!-- Hidden file input for each slot -->
+                                <input
+                                        type="file"
+                                        accept="image/*"
+                                        class="reviewimg-file-input"
+                                        name="review_images"
+                                        id="reviewimg-file-input-<%= i %>"
+                                />
+                                <!-- Hidden soft-delete flag -->
+                                <input
+                                        type="hidden"
+                                        name="delete_image_<%= i %>"
+                                        id="reviewimg-delete-flag-<%= i %>"
+                                        value="false"
+                                />
+                            </div>
+                        <% } %>
+                    </div>
+                    <p class="reviewimg-help-text">Click a box to add a photo. Click × to remove. Max 4 images.</p>
+                </div>
+
+
+                <!-- Submit -->
+                <button type="submit"
+                        class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded transition duration-200">
+                    Submit Review
+                </button>
+            </form>
+
+
+
+        <% } %>
+    </form>
+
+
 
         <%- include('component/bottom-navbar.ejs') %>
     <script src="/script/profile-dropdown.js"></script>
