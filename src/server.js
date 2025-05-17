@@ -61,6 +61,7 @@ const reviewSchema = new mongoose.Schema({
     product_name: { type: String, required: true },
     user_email: { type: String, required: true },
     title:{ type: String, required: true},
+    review:{ type: String, required: true},
     review_text: {
         overall: String,
         pros: [String],
@@ -520,29 +521,40 @@ app.post('/ai-welcome', express.json(), async (req, res) => {
 });
 
 ///write review function
-app.post('/reviews', async (req, res) => {
-    const { product_name, user_email, rating, title, review_detail } = req.body;
+app.post('/reviews', upload.array('images', 5), async (req, res) => {
+    const { product_name, user_email, title, rating, review_detail } = req.body;
 
     if (!rating || !title || !review_detail || !user_email || !product_name) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
     try {
+        // Upload all images
+        let review_images = [];
+        if (req.files && req.files.length > 0) {
+            const uploads = await Promise.all(
+                req.files.map(file => uploadImageToImgbb(file.buffer, file.originalname))
+            );
+            review_images = uploads;
+        }
+
+        // Create the review object
         const review = new reviewsModel({
             product_name,
             user_email,
             title,
             rating,
             review_detail,
-            review_images: review_images || []
+            review_images
         });
 
-        await reviewsModel.save();
+        await review.save();
         res.status(201).json({ message: 'Review submitted successfully', review });
     } catch (err) {
         res.status(500).json({ error: 'Server error', details: err.message });
     }
 });
+
 
 
 /*
