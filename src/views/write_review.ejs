@@ -149,6 +149,24 @@
 </html>
 
 <script>
+
+
+
+    // Dynamic selection category and product
+
+    function onCategoryChange() {
+        const cat = document.getElementById('category-select').value;
+        window.location.href = '/write-review?category_slug=' + encodeURIComponent(cat);
+    }
+    function onProductChange() {
+        const cat = document.getElementById('category-select').value;
+        const prod = document.getElementById('product-select').value;
+        window.location.href = '/write-review?category_slug=' + encodeURIComponent(cat) + '&product_slug=' + encodeURIComponent(prod);
+    }
+
+
+    // Handle image related behavior in review table
+
     const reviewimgMaxImages = 4;
 
     // Open file dialog for the clicked slot
