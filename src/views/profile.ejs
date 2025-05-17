@@ -7,35 +7,250 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="/style/style.css" />
 </head>
-<body>
+<body class="bg-gray-50">
     <%- include('component/top-navbar.ejs') %>
 
-    <div class="profile-container">
-        <h2>My Profile</h2>
-        <p><strong>Email:</strong> <%= user.email %></p>
-        <p><strong>Role:</strong> <%= user.role %></p>
-        <% if (user.profile) { %>
-            <p><strong>First Name:</strong> <%= user.profile.first_name || '' %></p>
-            <p><strong>Last Name:</strong> <%= user.profile.last_name || '' %></p>
-            <p><strong>City:</strong> <%= user.profile.city || '' %></p>
-            <p><strong>Country:</strong> <%= user.profile.country || '' %></p>
-            <p><strong>Bio:</strong> <%= user.profile.bio || '' %></p>
+    <div class="w-full max-w-full sm:max-w-xl md:max-w-4xl mx-auto mt-12 py-8 px-2">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <!-- Profile Header -->
+            <div class="flex items-center justify-between mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">Profile</h1>
+                <span class="px-4 py-2 bg-<%= user.role === 'admin' ? 'red' : 'blue' %>-100 text-<%= user.role === 'admin' ? 'red' : 'blue' %>-800 rounded-full text-sm">
+                    <%= user.role %>
+                </span>
+            </div>
 
-            <form id="profile-pic-form" action="/profile/upload-photo" method="POST" enctype="multipart/form-data">
-                <label for="profile_photo">Upload Profile Picture:</label>
-                <input type="file" name="profile_photo" id="profile_photo" accept="image/*" required>
-                <button type="submit">Upload</button>
+            <!-- Profile Content Grid -->
+            <form action="/profile/edit" method="POST" enctype="multipart/form-data" class="space-y-4">
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Left Column - Avatar Section -->
+
+                <div class="md:col-span-1">
+                    <div class="space-y-4">
+                        <div class="profile-pic-container" id="profilePicContainer">
+                            <!-- X button -->
+                            <button type="button" class="delete-btn" id="deletePicBtn" title="Delete photo" style="display:<%= user.profile && user.profile.profile_photo_url ? 'flex' : 'none' %>;">×</button>
+                            <!-- Deleting overlay -->
+                            <div class="deleting-overlay" id="deletingOverlay" style="display:none;">Pending…</div>
+                            <!-- Image or placeholder -->
+                            <% if (user.profile && user.profile.profile_photo_url) { %>
+                                <img src="<%= user.profile.profile_photo_url %>" alt="Profile Photo" class="pic-preview" id="profilePicPreview">
+                            <% } else { %>
+                                <div class="pic-placeholder" id="profilePicPreview">+</div>
+                            <% } %>
+                            <input type="file" name="profile_photo" id="profile_photo" accept="image/*" style="display:none;">
+                            <input type="hidden" name="delete_photo" id="deletePhotoFlag" value="0">
+                        </div>
+
+
+                    </div>
+                </div>
+
+                <!-- Right Column - Profile Details -->
+                <div class="md:col-span-2">
+                    <div class="space-y-6">
+
+                        <!-- Email Section -->
+                        <div class="pb-4">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-2">Account Information</h3>
+                            <div>
+                                <label class="block text-gray-700">Email</label>
+                                <input type="email" name="email" value="<%= user.email %>" class="w-full border rounded px-3 py-2" required />
+                            </div>
+                            <div>
+                                <label class="block text-gray-700">New Password</label>
+                                <input type="password" id="password" name="password" placeholder="********" class="w-full border rounded px-3 py-2" autocomplete="new-password" />
+                            </div>
+                            <div>
+                                <label class="block text-gray-700">Confirm New Password</label>
+                                <input type="password" id="confirm_password" name="confirm_password" placeholder="********" class="w-full border rounded px-3 py-2" autocomplete="new-password" />
+                                <p id="password-error" class="text-red-600 text-sm mt-1 hidden">Passwords do not match</p>
+                            </div>
+                        </div>
+
+                        <!-- Profile Details -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-700">Personal Information</h3>
+                            <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">First Name</dt>
+                                    <input type="text"
+                                           name="first_name"
+                                           value="<%= user.profile.first_name || '' %>"
+                                           class="w-full border rounded px-3 py-2" />
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Last Name</dt>
+                                    <input type="text"
+                                           name="last_name"
+                                           value="<%= user.profile.last_name || '' %>"
+                                           class="w-full border rounded px-3 py-2" />
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">City</dt>
+                                    <input type="text"
+                                           name="city"
+                                           value="<%= user.profile.city || '' %>"
+                                           class="w-full border rounded px-3 py-2" />
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500">Country</dt>
+                                    <input type="text"
+                                           name="country"
+                                           value="<%= user.profile.country || '' %>"
+                                           class="w-full border rounded px-3 py-2" />
+                                </div>
+                            </dl>
+                        </div>
+
+                        <!-- Bio Section -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-700 mb-2">Bio</h3>
+                            <textarea
+                                    name="bio"
+                                    class="w-full border rounded px-3 py-2"
+                                    rows="3"><%= user.profile.bio || '' %></textarea>
+                        </div>
+
+                    </div>
+                    <button type="submit" class="w-full md:w-auto mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save</button>
+                </div>
+            </div>
             </form>
-
-            <% if (user.profile.profile_photo_url) { %>
-                <img src="<%= user.profile.profile_photo_url %>" alt="Profile Photo" style="max-width:150px;">
-            <% } %>
-        <% } else { %>
-            <p>No profile information available.</p>
-        <% } %>
+        </div>
     </div>
-
     <%- include('component/bottom-navbar.ejs') %>
     <script src="/script/profile-dropdown.js"></script>
+    <script>
+        // Real-time image preview
+        document.getElementById('profile_photo').addEventListener('change', function(e) {
+            const [file] = e.target.files
+            if (file) {
+                const reader = new FileReader()
+                reader.onload = function(e) {
+                    const img = document.querySelector('img')
+                    if (img) {
+                        img.src = e.target.result
+                    } else {
+                        const avatarContainer = document.querySelector('.bg-gray-200')
+                        avatarContainer.innerHTML = `<img src="${e.target.result}"
+                                                         class="w-32 h-32 rounded-full object-cover mx-auto shadow-lg">`
+                    }
+                }
+                reader.readAsDataURL(file)
+            }
+        })
+
+        // Improve visual of password-matching check to use in-page notification
+        document.addEventListener('DOMContentLoaded', function() {
+            const password = document.getElementById('password');
+            const confirm = document.getElementById('confirm_password');
+            const errorMsg = document.getElementById('password-error');
+
+            function checkMatch() {
+                if (confirm.value.length > 0 && password.value !== confirm.value) {
+                    confirm.classList.add('border-red-500', 'ring-2', 'ring-red-300');
+                    errorMsg.classList.remove('hidden');
+                } else {
+                    confirm.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
+                    errorMsg.classList.add('hidden');
+                }
+            }
+
+            password.addEventListener('input', checkMatch);
+            confirm.addEventListener('input', checkMatch);
+        });
+
+        /*
+            Click image/placeholder: opens file dialog
+            Choose file: shows preview (no upload yet)
+            Click X: shows "Deleting on save…" overlay, sets soft-delete
+            Click Save: submits file (if chosen) or soft-delete flag (if X was clicked)
+            No default file input, no "choose a file", no upload button
+         */
+        document.addEventListener('DOMContentLoaded', function() {
+            // Password match check
+            const password = document.getElementById('password');
+            const confirm = document.getElementById('confirm_password');
+            const errorMsg = document.getElementById('password-error');
+
+            function checkMatch() {
+                if (confirm.value.length > 0 && password.value !== confirm.value) {
+                    confirm.classList.add('border-red-500', 'ring-2', 'ring-red-300');
+                    errorMsg.classList.remove('hidden');
+                } else {
+                    confirm.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
+                    errorMsg.classList.add('hidden');
+                }
+            }
+            password.addEventListener('input', checkMatch);
+            confirm.addEventListener('input', checkMatch);
+
+            // Avatar logic
+            const picInput = document.getElementById('profile_photo');
+            let picPreview = document.getElementById('profilePicPreview');
+            const deleteBtn = document.getElementById('deletePicBtn');
+            const deletingOverlay = document.getElementById('deletingOverlay');
+            const deletePhotoFlag = document.getElementById('deletePhotoFlag');
+
+            // Click image/placeholder to open file dialog
+            picPreview.addEventListener('click', function() {
+                if (deletingOverlay.style.display === 'none') {
+                    picInput.click();
+                }
+            });
+
+            // Preview image when chosen
+            picInput.addEventListener('change', function(e) {
+                if (picInput.files && picInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        if (picPreview.tagName === 'IMG') {
+                            picPreview.src = evt.target.result;
+                        } else {
+                            const newImg = document.createElement('img');
+                            newImg.src = evt.target.result;
+                            newImg.className = 'pic-preview';
+                            newImg.id = 'profilePicPreview';
+                            picPreview.replaceWith(newImg);
+                            picPreview = newImg;
+                            newImg.addEventListener('click', function() {
+                                if (deletingOverlay.style.display === 'none') {
+                                    picInput.click();
+                                }
+                            });
+                        }
+                        deletePhotoFlag.value = '0';
+                        deletingOverlay.style.display = 'none';
+                        deleteBtn.style.display = 'flex';
+                        if (picPreview.tagName === 'IMG') {
+                            picPreview.style.filter = '';
+                        }
+                    };
+                    reader.readAsDataURL(picInput.files[0]);
+                }
+            });
+
+            // Delete (soft) button
+            deleteBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                deletePhotoFlag.value = '1';
+                deletingOverlay.style.display = 'flex';
+                if (picPreview.tagName === 'IMG') {
+                    picPreview.style.filter = 'blur(2px) grayscale(1)';
+                }
+            });
+
+            // If user selects a new image after clicking delete, cancel deletion effect
+            picInput.addEventListener('input', function() {
+                deletePhotoFlag.value = '0';
+                deletingOverlay.style.display = 'none';
+                if (picPreview.tagName === 'IMG') {
+                    picPreview.style.filter = '';
+                }
+            });
+        });
+    </script>
 </body>
 </html>
