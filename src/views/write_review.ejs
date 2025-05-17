@@ -51,14 +51,15 @@
             <input type="hidden" name="product_slug" value="<%= product_slug %>">
 
             <!-- 星级评分 -->
-            <div class="flex items-center space-x-1 text-2xl text-gray-300" id="star-rating">
-                <% for (let i=1; i <=5; i++) { %>
-                    <button type="button" data-rating="<%= i %>" class="star hover:scale-110 transition text-gray-300">
-                        ★
-                    </button>
-                <% } %>
+            <div class="review-star-rating" id="review-star-rating">
+                <button type="button" class="review-star" aria-label="1 star">★</button>
+                <button type="button" class="review-star" aria-label="2 stars">★</button>
+                <button type="button" class="review-star" aria-label="3 stars">★</button>
+                <button type="button" class="review-star" aria-label="4 stars">★</button>
+                <button type="button" class="review-star" aria-label="5 stars">★</button>
             </div>
-            <input type="hidden" name="rating" id="rating-value" value="0" />
+            <input type="hidden" name="review_rating" id="review-rating-value" value="0" />
+
 
 
             <!-- Review Text -->
@@ -204,37 +205,38 @@
 
 
             // Star rating logic
-            const ratingInput = document.getElementById('rating-value');
-            const stars = document.querySelectorAll('#star-rating .star');
-            if (ratingInput && stars.length) {
-                console.log("Found stars:", stars.length);
-                stars.forEach((star, idx) => {
-                    star.addEventListener('click', function() {
-                        console.log("Clicked star", idx + 1);
-                        const rating = idx + 1;
-                        ratingInput.value = rating;
-                        // Update star colors
-                        stars.forEach((s, i) => {
-                            if (i < rating) {
-                                s.classList.add('text-yellow-400');
-                                s.classList.remove('text-gray-300');
-                            } else {
-                                s.classList.add('text-gray-300');
-                                s.classList.remove('text-yellow-400');
-                            }
-                        });
-                    });
-                });
+            const ratingInput = document.getElementById('review-rating-value');
+            const stars = document.querySelectorAll('#review-star-rating .review-star');
+            let currentRating = parseInt(ratingInput.value, 10) || 0;
 
-                // Optional: Show current rating on load
-                const currentRating = parseInt(ratingInput.value, 10) || 0;
-                stars.forEach((s, i) => {
-                    if (i < currentRating) {
-                        s.classList.add('text-yellow-400');
-                        s.classList.remove('text-gray-300');
-                    }
+            function updateStars(rating) {
+                stars.forEach((star, i) => {
+                    star.classList.toggle('selected', i < rating);
+                    star.classList.toggle('active', i < rating);
                 });
             }
+
+            stars.forEach((star, idx) => {
+                // Click to select rating
+                star.addEventListener('click', function() {
+                    currentRating = idx + 1;
+                    ratingInput.value = currentRating;
+                    updateStars(currentRating);
+                });
+                // Hover effect
+                star.addEventListener('mouseenter', function() {
+                    updateStars(idx + 1);
+                    star.classList.add('hovered');
+                });
+                // Remove hover effect
+                star.addEventListener('mouseleave', function() {
+                    updateStars(currentRating);
+                    star.classList.remove('hovered');
+                });
+            });
+
+            // Initialize on load
+            updateStars(currentRating);
 
 
 
