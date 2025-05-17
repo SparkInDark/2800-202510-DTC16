@@ -128,6 +128,7 @@
 
         <% } %>
     </form>
+    <div id="review-success" style=" display:none; color:green; front-weight:bold;" ></div>
 
 
 
@@ -190,53 +191,88 @@
                 }
             }
 
-            const reviewForm = document.getElementById('review-form');
-            if (reviewForm) {
-                reviewForm.addEventListener('submit', function (e) {
-                    for (let i = 0; i < reviewimgMaxImages; i++) {
-                        if (document.getElementById('reviewimg-delete-flag-' + i) &&
-                            document.getElementById('reviewimg-delete-flag-' + i).value === 'true') {
-                            document.getElementById('reviewimg-file-input-' + i).value = '';
-                        }
-                    }
-                });
-            }
 
 
             // Star rating logic
             const ratingInput = document.getElementById('review-rating-value');
             const stars = document.querySelectorAll('#review-star-rating .review-star');
-            let currentRating = parseInt(ratingInput.value, 10) || 0;
 
-            function updateStars(rating) {
-                stars.forEach((star, i) => {
-                    star.classList.toggle('selected', i < rating);
-                    star.classList.toggle('active', i < rating);
+            let currentRating = 0;
+            if (ratingInput) {
+                currentRating = parseInt(ratingInput.value, 10) || 0;
+
+                function updateStars(rating) {
+                    stars.forEach((star, i) => {
+                        star.classList.toggle('selected', i < rating);
+                        star.classList.toggle('active', i < rating);
+                    });
+                }
+
+                stars.forEach((star, idx) => {
+                    // Click to select rating
+                    star.addEventListener('click', function() {
+                        currentRating = idx + 1;
+                        ratingInput.value = currentRating;
+                        updateStars(currentRating);
+                    });
+                    // Hover effect
+                    star.addEventListener('mouseenter', function() {
+                        updateStars(idx + 1);
+                        star.classList.add('hovered');
+                    });
+                    // Remove hover effect
+                    star.addEventListener('mouseleave', function() {
+                        updateStars(currentRating);
+                        star.classList.remove('hovered');
+                    });
                 });
+
+                // Initialize on load
+                updateStars(currentRating);
             }
 
-            stars.forEach((star, idx) => {
-                // Click to select rating
-                star.addEventListener('click', function() {
-                    currentRating = idx + 1;
-                    ratingInput.value = currentRating;
-                    updateStars(currentRating);
-                });
-                // Hover effect
-                star.addEventListener('mouseenter', function() {
-                    updateStars(idx + 1);
-                    star.classList.add('hovered');
-                });
-                // Remove hover effect
-                star.addEventListener('mouseleave', function() {
-                    updateStars(currentRating);
-                    star.classList.remove('hovered');
-                });
-            });
 
-            // Initialize on load
-            updateStars(currentRating);
 
+            const reviewForm = document.getElementById('review-form');
+            const reviewSuccess = document.getElementById('review-success');
+
+            if (reviewForm && reviewSuccess) {
+                reviewForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+
+                    // --- IMAGE SOFT-DELETE LOGIC ---
+                    for (let i = 0; i < reviewimgMaxImages; i++) {
+                        const deleteFlag = document.getElementById('reviewimg-delete-flag-' + i);
+                        const fileInput = document.getElementById('reviewimg-file-input-' + i);
+                        if (deleteFlag && fileInput && deleteFlag.value === 'true') {
+                            fileInput.value = '';
+                        }
+                    }
+
+                    // --- AJAX SUBMISSION LOGIC ---
+                    const formData = new FormData(reviewForm);
+                    fetch('/write-review', {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.message) {
+                                reviewSuccess.style.display = 'block';
+                                reviewSuccess.textContent = data.message;
+                                reviewForm.reset();
+                                // Reset star rating UI if needed
+                                const stars = document.querySelectorAll('#review-star-rating .review-star');
+                                stars.forEach(star => {
+                                    star.classList.remove('selected', 'active', 'hovered');
+                                });
+                            } else if (data.error) {
+                                alert(data.error);
+                            }
+                        })
+                        .catch(err => alert('Submission failed'));
+                });
+            }
 
 
         });
