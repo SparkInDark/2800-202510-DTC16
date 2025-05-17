@@ -58,29 +58,28 @@ const usersModel = mongoose.model('users', userSchema);
 
 
 const reviewSchema = new mongoose.Schema({
-    product_name: { type: String, required: true },
+    product_slug: { type: String, required: true  },
     user_email: { type: String, required: true },
-    title:{ type: String, required: true},
-    review:{ type: String, required: true},
-    review_text: {
-        overall: String,
-        pros: [String],
-        cons: [String]
+    review_rating: { type: Number, min: 1, max: 5, required: true },
+    review_text: { type: String, required: true },
+    review_images: {
+        type: [String],
+        validate: [arr => arr.length <= 4, 'You can upload up to 4 images only.']
     },
-    review_images: [String], // URLs
-    rating: { type: Number, min: 1, max: 5, required: true },
-    review_date: { type: Date, default: Date.now },
     votes: {
-        upvotes: [String], // user emails
-        downvotes: [String]
+        upvotes: [String],    // array of user IDs or emails who upvoted
+        downvotes: [String]   // array of user IDs or emails who downvoted
     },
     moderation: {
-        status: { type: String, default: 'pending' },
-        flags: [mongoose.Schema.Types.Mixed],
-        rejection_reason: mongoose.Schema.Types.Mixed // can be String or null
+        status: {
+            type: String,
+            enum: ['flagged', 'approved', 'rejected'],     // flagged for further review, reject make a review invisible
+            default: 'approved'
+        },
+        flagged_by: [String],       // user emails
+        rejection_reason: { type: String, default: '' }   // optional, only for rejected
     },
-    deleted: { type: Boolean, default: false }
-}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+}, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });   // if update tim = create time, then use upate, if update time is newer, use upated time
 
 const reviewsModel = mongoose.model('reviews', reviewSchema);
 
@@ -96,6 +95,7 @@ const ratingsModel = mongoose.model('ratings', ratingSchema);
 
 const productSchema = new mongoose.Schema({
     name: { type: String, required: true },
+    slug: { type: String, required: true },
     category_slug: { type: String, required: true },
     specs: { type: mongoose.Schema.Types.Mixed, default: {} }, // flexible key-value
     images: [String], // URLs from imgbb
@@ -118,7 +118,7 @@ const productsModel = mongoose.model('products', productSchema);
 
 const categorySchema = new mongoose.Schema({
     name: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
+    slug: { type: String, required: true },
     description: { type: String, default: '' },
     specs: [String], // List of allowed spec keys for this category
     deleted: { type: Boolean, default: false }
@@ -505,13 +505,6 @@ app.get('/product/:productName', (req, res) => {
     res.render('productdetail.ejs', { productName });
 })
 
-// write-review route
-app.get('/write-review', (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login');
-    }
-    res.render('write_review.ejs');
-});
 
 // search route
 app.get('/search', async (req, res) => {
@@ -563,40 +556,18 @@ app.post('/ai-welcome', express.json(), async (req, res) => {
     }
 });
 
-///write review function
-app.post('/reviews', upload.array('images', 5), async (req, res) => {
-    const { product_name, user_email, title, rating, review_detail } = req.body;
 
-    if (!rating || !title || !review_detail || !user_email || !product_name) {
-        return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    try {
-        // Upload all images
-        let review_images = [];
-        if (req.files && req.files.length > 0) {
-            const uploads = await Promise.all(
-                req.files.map(file => uploadImageToImgbb(file.buffer, file.originalname))
-            );
-            review_images = uploads;
-        }
-
-        // Create the review object
-        const review = new reviewsModel({
-            product_name,
-            user_email,
-            title,
-            rating,
-            review_detail,
-            review_images
-        });
-
-        await review.save();
-        res.status(201).json({ message: 'Review submitted successfully', review });
-    } catch (err) {
-        res.status(500).json({ error: 'Server error', details: err.message });
-    }
+// Write-review get route
+app.get('/write-review', (req, res) => {
+    const { product_slug } = req.query;
+    res.render('write_review.ejs', {
+        product_slug,
+        user_email: req.session.user.email
+    });
 });
+
+
+
 
 
 
