@@ -368,8 +368,10 @@ app.post('/login', async (req, res) => {
 
     // Set session data
     req.session.user = {
+        _id: user._id,
         email: user.email,
-        role: user.role
+        role: user.role,
+        profile: user.profile
     };
 
     // Redirect to the home page
@@ -406,9 +408,6 @@ app.post('/logout', (req, res) => {
 
 // profile route
 app.get('/profile', async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login');
-    }
     try {
         const user = await usersModel.findOne({ email: req.session.user.email }).lean();
         res.render('profile.ejs', {
@@ -424,8 +423,6 @@ app.get('/profile', async (req, res) => {
 });
 
 app.post('/profile/edit', upload.single('profile_photo'), async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-
     const { email, first_name, last_name, city, country, bio, password, confirm_password, delete_photo } = req.body;
     let updateData = {
         'profile.first_name': first_name,
