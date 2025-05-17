@@ -568,7 +568,7 @@ app.get('/write-review', (req, res) => {
 
 
 // Write Review POST Route
-app.post('/reviews',
+app.post('/write-review',
     upload.fields([
         { name: 'review_image_0', maxCount: 1 },
         { name: 'review_image_1', maxCount: 1 },
