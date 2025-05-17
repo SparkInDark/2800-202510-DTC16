@@ -558,11 +558,19 @@ app.post('/ai-welcome', express.json(), async (req, res) => {
 
 
 // Write-review get route
-app.get('/write-review', (req, res) => {
-    const { product_slug } = req.query;
+app.get('/write-review', async (req, res) => {
+    const { category_slug, product_slug } = req.query;
+    const categories = await categoriesModel.find({});
+    let products = [];
+    if (category_slug) {
+        products = await productsModel.find({ category_slug });
+    }
     res.render('write_review.ejs', {
+        categories,
+        products,
+        category_slug,
         product_slug,
-        user_email: req.session.user.email
+        user_email: req.session.user ? req.session.user.email : ''
     });
 });
 
