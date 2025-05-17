@@ -587,7 +587,7 @@ Write review page overlay effect and X button
     border: none;
     outline: none;
     cursor: pointer;
-    color: #d1d5db; /* gray-300 */
+    color: rgba(201, 204, 209, 0.73); /* gray-300 */
     transition: color 0.2s, transform 0.1s;
     padding: 0;
     font-size: 1em;
@@ -596,11 +596,16 @@ Write review page overlay effect and X button
 
 .review-star.selected,
 .review-star.active {
-    color: #facc15; /* yellow-400 */
+    color: #c14646; /* yellow-400 */
 }
 
 .review-star:hover,
 .review-star.hovered {
-    color: #fde047; /* lighter yellow */
+    color: #c14646; /* lighter yellow */
     transform: scale(1.15);
 }
+
+.reviewimg-file-input {
+    display: none;
+}
+
