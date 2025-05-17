@@ -600,8 +600,13 @@ app.post('/write-review',
                 const field = `review_image_${i}`;
                 if (req.files && req.files[field] && req.files[field][0]) {
                     const file = req.files[field][0];
-                    const url = await uploadImageToImgbb(file.buffer, file.originalname);
-                    review_images[i] = url;
+                    try {
+                        const url = await uploadImageToImgbb(file.buffer, file.originalname);
+                        review_images[i] = url;
+                    } catch (uploadErr) {
+                        // Respond immediately with an error and stop further processing
+                        return res.status(500).json({ error: 'Image upload failed', details: uploadErr.message });
+                    }
                 } else {
                     review_images[i] = null; // No image uploaded and not marked for delete
                 }
@@ -619,7 +624,19 @@ app.post('/write-review',
             });
 
             await review.save();
-            res.status(201).json({ message: 'Review submitted successfully', review });
+            const product = await productsModel.findOne({ slug: product_slug });
+            let category = null;
+            if (product && product.category_slug) {
+                category = await categoriesModel.findOne({ slug: product.category_slug });
+            }
+            res.status(201).json({
+                message: 'Review submitted successfully',
+                review: {
+                    ...review.toObject(),
+                    product_name: product ? product.name : product_slug,
+                    category_name: category ? category.name : ''
+                }
+            });
         } catch (err) {
             res.status(500).json({ error: 'Server error', details: err.message });
         }
