@@ -424,34 +424,10 @@ app.get('/profile', async (req, res) => {
     }
 });
 
-app.post('/profile/upload-photo', upload.single('profile_photo'), async (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-    if (!req.file) return res.status(400).send('No file uploaded');
-
-        try {
-            const imageUrl = await uploadImageToImgbb(
-                req.file.buffer,
-                req.file.originalname
-            );
-
-            await usersModel.updateOne(
-                { email: req.session.user.email },
-                { $set: { 'profile.profile_photo_url': imageUrl } }
-            );
-
-            req.session.user.profile_photo_url = imageUrl;
-            res.redirect('/profile');
-        } catch (err) {
-            console.error('Image upload error:', err);
-            res.status(500).send('Image upload failed');
-        }
-    }
-);
-
-app.post('/profile/edit', async (req, res) => {
+app.post('/profile/edit', upload.single('profile_photo'), async (req, res) => {
     if (!req.session.user) return res.redirect('/login');
 
-    const { email, first_name, last_name, city, country, bio, password, confirm_password } = req.body;
+    const { email, first_name, last_name, city, country, bio, password, confirm_password, delete_photo } = req.body;
     let updateData = {
         'profile.first_name': first_name,
         'profile.last_name': last_name,
@@ -476,6 +452,25 @@ app.post('/profile/edit', async (req, res) => {
         }
         const hashedPassword = await bcrypt.hash(password, saltRounds);
         updateData.password_hash = hashedPassword;
+    }
+
+    // Handle soft photo deletion
+    if (delete_photo === '1') {
+        updateData['profile.profile_photo_url'] = '';
+    }
+
+    // Handle photo upload (overrides deletion if both present)
+    if (req.file) {
+        try {
+            const imageUrl = await uploadImageToImgbb(
+                req.file.buffer,
+                req.file.originalname
+            );
+            updateData['profile.profile_photo_url'] = imageUrl;
+        } catch (err) {
+            console.error('Image upload error:', err);
+            return res.status(500).send('Image upload failed');
+        }
     }
 
     try {
