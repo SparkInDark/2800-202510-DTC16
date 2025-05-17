@@ -44,12 +44,12 @@
                         </td>
 
 
-                        <td><%= r.product_slug %></td>
+                        <td><%= r.product_name %></td>
                         <td>
-                            <% for(let i=0; i<r.rating; i++) { %>
+                            <% for(let i=0; i<r.review_rating; i++) { %>
                                 <span style="color:gold;">&#9733;</span>
                             <% } %>
-                            <% for(let i=r.rating; i<5; i++) { %>
+                            <% for(let i=r.review_rating; i<5; i++) { %>
                                 <span style="color:#ccc;">&#9733;</span>
                             <% } %>
                         </td>

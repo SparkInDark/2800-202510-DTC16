@@ -658,6 +658,19 @@ app.get('/admin/review', async (req, res) => {
         { $limit: 100 },
         {
             $lookup: {
+                from: 'products',
+                localField: 'product_slug',
+                foreignField: 'slug',
+                as: 'productInfo'
+            }
+        },
+        {
+            $addFields: {
+                product_name: { $arrayElemAt: ['$productInfo.name', 0] }
+            }
+        },
+        {
+            $lookup: {
                 from: 'ratings',
                 let: { product_slug: '$product_slug', user_email: '$user_email' },
                 pipeline: [
@@ -673,23 +686,26 @@ app.get('/admin/review', async (req, res) => {
             $addFields: {
                 rating: { $ifNull: [ { $arrayElemAt: ['$ratingInfo.rating', 0] }, 0 ] }
             }
-        }
+        },
+        { $project: { productInfo: 0, ratingInfo: 0 } }
     ]);
     res.render('admin-review', { reviews });
 });
+
 
 app.get('/admin/review/:id', async (req, res) => {
     const review = await reviewsModel.findById(req.params.id).lean();
     const user = await usersModel.findOne({ email: review.user_email }).lean();
     const rating = await ratingsModel.findOne({ product_slug: review.product_slug, user_email: review.user_email });
+    const product = await productsModel.findOne({ slug: review.product_slug }).lean();
     res.render('admin-review-detail', {
         review: {
             ...review,
             rating: rating ? rating.rating : 0,
             user_first_name: user?.profile?.first_name || '',
             user_last_name: user?.profile?.last_name || '',
-            pros: review.review_text.pros || [],
-            cons: review.review_text.cons || []
+            review_text: review.review_text,
+            product_name: product ? product.name : review.product_slug         // show product name through slug
         }
     });
 });
@@ -717,6 +733,9 @@ app.get('/admin/product', async (req, res) => {
             $addFields: {
                 category_name: { $arrayElemAt: ['$cat.name', 0] }
             }
+        },
+        {
+            $project: { cat: 0 }
         }
     ]);
     res.render('admin-product', { products });
