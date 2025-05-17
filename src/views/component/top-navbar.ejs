@@ -12,7 +12,11 @@
             <% if (user) { %>
                 <div class="relative">
                     <button id="profileDropdownBtn" class="focus:outline-none">
-                        <img src="/img/user-icon.png" class="w-10 sm:w-12 h-auto rounded-full" />
+                        <img src="<%= user.profile && user.profile.profile_photo_url ? user.profile.profile_photo_url : '/img/user-icon.png' %>"
+                             class="w-10 sm:w-12 h-auto rounded-full object-cover bg-gray-300"
+                             alt="Profile"
+                        />
+
                     </button>
                     <div id="profileDropdownMenu" class="hidden absolute right-0 mt-2 w-40 !bg-white rounded-md shadow-lg z-50">
                         <a href="/profile" class="block px-4 py-2 text-gray-800 hover:!bg-gray-200">Profile</a>
