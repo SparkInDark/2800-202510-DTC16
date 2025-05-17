@@ -53,7 +53,7 @@
             <!-- 星级评分 -->
             <div class="flex items-center space-x-1 text-2xl text-gray-300" id="star-rating">
                 <% for (let i=1; i <=5; i++) { %>
-                    <button type="button" data-rating="<%= i %>" class="star hover:scale-110 transition">
+                    <button type="button" data-rating="<%= i %>" class="star hover:scale-110 transition text-gray-300">
                         ★
                     </button>
                 <% } %>
@@ -201,6 +201,43 @@
                     }
                 });
             }
+
+
+            // Star rating logic
+            const ratingInput = document.getElementById('rating-value');
+            const stars = document.querySelectorAll('#star-rating .star');
+            if (ratingInput && stars.length) {
+                console.log("Found stars:", stars.length);
+                stars.forEach((star, idx) => {
+                    star.addEventListener('click', function() {
+                        console.log("Clicked star", idx + 1);
+                        const rating = idx + 1;
+                        ratingInput.value = rating;
+                        // Update star colors
+                        stars.forEach((s, i) => {
+                            if (i < rating) {
+                                s.classList.add('text-yellow-400');
+                                s.classList.remove('text-gray-300');
+                            } else {
+                                s.classList.add('text-gray-300');
+                                s.classList.remove('text-yellow-400');
+                            }
+                        });
+                    });
+                });
+
+                // Optional: Show current rating on load
+                const currentRating = parseInt(ratingInput.value, 10) || 0;
+                stars.forEach((s, i) => {
+                    if (i < currentRating) {
+                        s.classList.add('text-yellow-400');
+                        s.classList.remove('text-gray-300');
+                    }
+                });
+            }
+
+
+
         });
     </script>
 
