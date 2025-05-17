@@ -12,8 +12,7 @@
 <body class="bg-gray-100 text-gray-800">
     <%- include('component/top-navbar.ejs') %>
 
-    <!-- Hidden user_email -->
-    <input type="hidden" name="user_email" value="<%= user_email %>">
+
 
     <form id="review-form" action="/write-review" method="POST" enctype="multipart/form-data"
           class="bg-white p-6 mt-24 mx-auto max-w-2xl rounded-lg shadow space-y-5">
@@ -46,6 +45,9 @@
 
         <!-- Only show the rest of the form if product is selected -->
         <% if (product_slug) { %>
+
+            <!-- Hidden user_email -->
+            <input type="hidden" name="user_email" value="<%= user_email %>">
 
             <!-- Hidden product_slug ( this one put inside this hidden feature block ) -->
             <input type="hidden" name="product_slug" value="<%= product_slug %>">
