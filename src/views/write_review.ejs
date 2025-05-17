@@ -133,5 +133,22 @@
         });
     }
 
+    // Mark for soft-delete
+    function reviewimgMarkForDelete(idx) {
+        document.getElementById('reviewimg-pending-' + idx).classList.remove('reviewimg-hidden');
+        document.getElementById('reviewimg-pending-' + idx).classList.add('reviewimg-flex');
+        document.getElementById('reviewimg-img-preview-' + idx).classList.add('reviewimg-hidden');
+        document.getElementById('reviewimg-delete-' + idx).classList.add('reviewimg-hidden');
+        document.getElementById('reviewimg-delete-flag-' + idx).value = 'true';
+    }
+
+    // On submit, remove files flagged for delete
+    document.querySelector('form').addEventListener('submit', function (e) {
+        for (let i = 0; i < reviewimgMaxImages; i++) {
+            if (document.getElementById('reviewimg-delete-flag-' + i).value === 'true') {
+                document.getElementById('reviewimg-file-input-' + i).value = ''; // Clear file input
+            }
+        }
+    });
 
 </script>
