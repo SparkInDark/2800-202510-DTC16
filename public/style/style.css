@@ -570,3 +570,37 @@ Write review page overlay effect and X button
 .reviewimg-hidden {
     display: none !important;
 }
+.reviewimg-flex {
+    display: flex !important;
+}
+
+.review-star-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.25em;
+    font-size: 2em;
+    margin-bottom: 1em;
+}
+
+.review-star {
+    background: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    color: #d1d5db; /* gray-300 */
+    transition: color 0.2s, transform 0.1s;
+    padding: 0;
+    font-size: 1em;
+    line-height: 1;
+}
+
+.review-star.selected,
+.review-star.active {
+    color: #facc15; /* yellow-400 */
+}
+
+.review-star:hover,
+.review-star.hovered {
+    color: #fde047; /* lighter yellow */
+    transform: scale(1.15);
+}
