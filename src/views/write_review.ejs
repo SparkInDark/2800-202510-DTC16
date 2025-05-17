@@ -15,7 +15,7 @@
 
 
     <form id="review-form" action="/write-review" method="POST" enctype="multipart/form-data"
-          class="bg-white p-6 mt-24 mx-auto max-w-2xl rounded-lg shadow space-y-5">
+          class="bg-white p-14 mt-20 mx-auto w-full max-w-full sm:max-w-lg md:max-w-xl lg:max-w-3xl xl:max-w-4xl pt-12 rounded-lg shadow space-y-5" style="padding-bottom: 140px;">
 
         <!-- Category Selection -->
         <div>
@@ -50,6 +50,9 @@
             <input type="hidden" name="user_email" value="<%= user_email %>">
 
             <!-- 星级评分 -->
+            <div id="rating-alert" class="hidden mb-4">
+                <!-- Alert will be injected here -->
+            </div>
             <div class="review-star-rating" id="review-star-rating">
                 <button type="button" class="review-star" aria-label="1 star">★</button>
                 <button type="button" class="review-star" aria-label="2 stars">★</button>
@@ -101,10 +104,10 @@
                                     id="reviewimg-pending-<%= i %>"
                             >Pending…</div>
                             <!-- Hidden file input for each slot -->
-                            <input type="file" name="review_image_0" id="reviewimg-file-input-0" ... />
-                            <input type="file" name="review_image_1" id="reviewimg-file-input-1" ... />
-                            <input type="file" name="review_image_2" id="reviewimg-file-input-2" ... />
-                            <input type="file" name="review_image_3" id="reviewimg-file-input-3" ... />
+                            <input type="file" name="review_image_0" id="reviewimg-file-input-0" class="reviewimg-file-input" />
+                            <input type="file" name="review_image_1" id="reviewimg-file-input-1" class="reviewimg-file-input" />
+                            <input type="file" name="review_image_2" id="reviewimg-file-input-2" class="reviewimg-file-input" />
+                            <input type="file" name="review_image_3" id="reviewimg-file-input-3" class="reviewimg-file-input" />
                             <!-- Hidden soft-delete flag -->
                             <input
                                     type="hidden"
@@ -128,7 +131,12 @@
 
         <% } %>
     </form>
-    <div id="review-success" style=" display:none; color:green; front-weight:bold;" ></div>
+
+    <div id="review-success" style=" display:none; color:green; font-size:20px; font-weight:bold; margin-top:10em;" >
+        <br>
+        <a href="/write-review" style="color:#2563eb;">Write another review</a>
+    </div>
+    <div id="review-error" style="display:none; color:red; font-weight:bold; margin-top:10em;"></div>
 
 
 
@@ -140,8 +148,21 @@
             // Wrap js insdie a DOM to fix issue
             //  - use addEventListener (or access .addEventListener on an element) before the DOM has created those elements.
 
-            // Dynamic selection category and product
+            // error handling function - success or failed
+            const reviewError = document.getElementById('review-error');
 
+            function showError(message) {
+                if (reviewError) {
+                    reviewError.textContent = message;
+                    reviewError.style.display = 'block';
+                }
+                // Optionally hide the success message if also showing an error
+                if (reviewSuccess) {
+                    reviewSuccess.style.display = 'none';
+                }
+            }
+
+            // Dynamic selection category and product
             window.onCategoryChange = function() {
                 const cat = document.getElementById('category-select').value;
                 window.location.href = '/write-review?category_slug=' + encodeURIComponent(cat);
@@ -238,9 +259,27 @@
 
             if (reviewForm && reviewSuccess) {
                 reviewForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-
-                    // --- IMAGE SOFT-DELETE LOGIC ---
+                    e.preventDefault()
+                    // Check for rating before submitting
+                    const reviewRating = reviewForm.querySelector('[name="review_rating"]').value;
+                    const ratingAlert = document.getElementById('rating-alert');
+                    if (!reviewRating || parseInt(reviewRating) < 1) {
+                        e.preventDefault();
+                        ratingAlert.innerHTML = `
+                        <div class="flex items-center p-4 mb-4 text-sm text-yellow-800 rounded-lg bg-yellow-50" role="alert">
+                            <svg class="flex-shrink-0 inline w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 13a1 1 0 01-1 1H3a1 1 0 01-1-1V7a1 1 0 011-1h14a1 1 0 011 1v6zm-8-3a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg>
+                            <span class="font-medium">Please select a rating before submitting your review.</span>
+                        </div>
+                    `;
+                        ratingAlert.style.display = 'block';
+                        ratingAlert.classList.remove('hidden');
+                        ratingAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        return false;
+                    } else {
+                        ratingAlert.style.display = 'none';
+                        ratingAlert.classList.add('hidden');
+                    }
+                    // Image soft-delete logic
                     for (let i = 0; i < reviewimgMaxImages; i++) {
                         const deleteFlag = document.getElementById('reviewimg-delete-flag-' + i);
                         const fileInput = document.getElementById('reviewimg-file-input-' + i);
@@ -249,7 +288,18 @@
                         }
                     }
 
-                    // --- AJAX SUBMISSION LOGIC ---
+                    // Gather the submitted data before resetting the form
+                    const reviewText = reviewForm.querySelector('[name="review_text"]').value;
+
+                    const reviewImages = [];
+                    for (let i = 0; i < reviewimgMaxImages; i++) {
+                        const fileInput = document.getElementById('reviewimg-file-input-' + i);
+                        if (fileInput && fileInput.files && fileInput.files[0]) {
+                            // Use FileReader to get the image preview
+                            reviewImages.push(URL.createObjectURL(fileInput.files[0]));
+                        }
+                    }
+
                     const formData = new FormData(reviewForm);
                     fetch('/write-review', {
                         method: 'POST',
@@ -258,19 +308,48 @@
                         .then(res => res.json())
                         .then(data => {
                             if (data.message) {
+                                reviewForm.style.display = 'none';
+
+                                // Get info from response or form
+                                const productName = data.review.product_name || reviewForm.querySelector('#product-select option:checked')?.textContent || data.review.product_slug;
+                                const categoryName = data.review.category_name || reviewForm.querySelector('#category-select option:checked')?.textContent || '';
+                                const reviewDate = data.review.created_at ? new Date(data.review.created_at) : new Date();
+                                const userEmail = data.review.user_email;
+
+                                // Format date
+                                const dateString = reviewDate.toLocaleString();
+
+                                // Build pretty summary
+                                let summaryHtml = `
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:2em 1.5em;max-width:450px;margin:auto;box-shadow:0 2px 12px #e0ffe0;">
+      <div style="font-size:1.2em;color:#22c55e;font-weight:bold;margin-bottom:0.5em;">
+        <span style="font-size:1.6em;vertical-align:-3px;">✅</span> ${data.message}
+      </div>
+      <div style="color:#374151;font-size:1.1em;margin-bottom:1em;">
+        <div><strong>Product:</strong> ${productName}</div>
+        ${categoryName ? `<div><strong>Category:</strong> ${categoryName}</div>` : ''}
+        <div><strong>Reviewed by:</strong> ${userEmail}</div>
+        <div><strong>Time:</strong> ${dateString}</div>
+      </div>
+      <div style="margin:1em 0;">
+        <strong>Your Review:</strong>
+        <div style="margin:0.5em 0;">
+          <span style="color:#facc15; font-size:1.5em; letter-spacing:1px;">
+            ${'★'.repeat(reviewRating)}${'☆'.repeat(5 - reviewRating)}
+          </span>
+        </div>
+        <div style="margin-bottom:0.5em;white-space:pre-line;">${reviewText.replace(/\n/g, '<br>')}</div>
+      </div>
+    </div>
+    `;
+                                reviewSuccess.innerHTML = summaryHtml;
                                 reviewSuccess.style.display = 'block';
-                                reviewSuccess.textContent = data.message;
-                                reviewForm.reset();
-                                // Reset star rating UI if needed
-                                const stars = document.querySelectorAll('#review-star-rating .review-star');
-                                stars.forEach(star => {
-                                    star.classList.remove('selected', 'active', 'hovered');
-                                });
+                                if (reviewError) reviewError.style.display = 'none';
                             } else if (data.error) {
-                                alert(data.error);
+                                showError(data.error + (data.details ? ': ' + data.details : ''));
                             }
                         })
-                        .catch(err => alert('Submission failed'));
+                        .catch(err => showError('Submission failed. Please try again.'));
                 });
             }
 
