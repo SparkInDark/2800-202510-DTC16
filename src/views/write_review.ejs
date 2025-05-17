@@ -144,48 +144,22 @@
 
             // Dynamic selection category and product
 
-            function onCategoryChange() {
+            window.onCategoryChange = function() {
                 const cat = document.getElementById('category-select').value;
                 window.location.href = '/write-review?category_slug=' + encodeURIComponent(cat);
             }
-            function onProductChange() {
+            window.onProductChange = function() {
                 const cat = document.getElementById('category-select').value;
                 const prod = document.getElementById('product-select').value;
                 window.location.href = '/write-review?category_slug=' + encodeURIComponent(cat) + '&product_slug=' + encodeURIComponent(prod);
             }
 
 
-            // Handle image related behavior in review table
-
-            const reviewimgMaxImages = 4;
-
-            // Open file dialog for the clicked slot
-            function reviewimgOpenFileDialog(idx) {
-                if (document.getElementById('reviewimg-pending-' + idx).classList.contains('reviewimg-flex')) return; // Don't allow if pending
+            window.reviewimgOpenFileDialog = function(idx) {
+                if (document.getElementById('reviewimg-pending-' + idx).classList.contains('reviewimg-flex')) return;
                 document.getElementById('reviewimg-file-input-' + idx).click();
             }
-
-            // Handle file selection and preview
-            for (let i = 0; i < reviewimgMaxImages; i++) {
-                document.getElementById('reviewimg-file-input-' + i).addEventListener('change', function (e) {
-                    const file = e.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = function (evt) {
-                            document.getElementById('reviewimg-img-preview-' + i).src = evt.target.result;
-                            document.getElementById('reviewimg-img-preview-' + i).classList.remove('reviewimg-hidden');
-                            document.getElementById('reviewimg-placeholder-' + i).classList.add('reviewimg-hidden');
-                            document.getElementById('reviewimg-delete-' + i).classList.remove('reviewimg-hidden');
-                            document.getElementById('reviewimg-pending-' + i).classList.add('reviewimg-hidden');
-                            document.getElementById('reviewimg-delete-flag-' + i).value = 'false';
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                });
-            }
-
-            // Mark for soft-delete
-            function reviewimgMarkForDelete(idx) {
+            window.reviewimgMarkForDelete = function(idx) {
                 document.getElementById('reviewimg-pending-' + idx).classList.remove('reviewimg-hidden');
                 document.getElementById('reviewimg-pending-' + idx).classList.add('reviewimg-flex');
                 document.getElementById('reviewimg-img-preview-' + idx).classList.add('reviewimg-hidden');
@@ -193,14 +167,43 @@
                 document.getElementById('reviewimg-delete-flag-' + idx).value = 'true';
             }
 
-            // On submit, remove files flagged for delete
-            document.querySelector('form').addEventListener('submit', function (e) {
-                for (let i = 0; i < reviewimgMaxImages; i++) {
-                    if (document.getElementById('reviewimg-delete-flag-' + i).value === 'true') {
-                        document.getElementById('reviewimg-file-input-' + i).value = ''; // Clear file input
-                    }
+
+            // Handle image related behavior in review table
+
+            const reviewimgMaxImages = 4;
+
+            for (let i = 0; i < reviewimgMaxImages; i++) {
+                const input = document.getElementById('reviewimg-file-input-' + i);
+                if (input) {
+                    input.addEventListener('change', function (e) {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = function (evt) {
+                                document.getElementById('reviewimg-img-preview-' + i).src = evt.target.result;
+                                document.getElementById('reviewimg-img-preview-' + i).classList.remove('reviewimg-hidden');
+                                document.getElementById('reviewimg-placeholder-' + i).classList.add('reviewimg-hidden');
+                                document.getElementById('reviewimg-delete-' + i).classList.remove('reviewimg-hidden');
+                                document.getElementById('reviewimg-pending-' + i).classList.add('reviewimg-hidden');
+                                document.getElementById('reviewimg-delete-flag-' + i).value = 'false';
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
                 }
-            });
+            }
+
+            const reviewForm = document.getElementById('review-form');
+            if (reviewForm) {
+                reviewForm.addEventListener('submit', function (e) {
+                    for (let i = 0; i < reviewimgMaxImages; i++) {
+                        if (document.getElementById('reviewimg-delete-flag-' + i) &&
+                            document.getElementById('reviewimg-delete-flag-' + i).value === 'true') {
+                            document.getElementById('reviewimg-file-input-' + i).value = '';
+                        }
+                    }
+                });
+            }
         });
     </script>
 
