@@ -200,32 +200,6 @@ main {
     background: var(--tp-green);
 }
 
-/* Responsive */
-@media (min-width: 640px) {
-    .category-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-
-    .benefits-grid {
-        flex-direction: row;
-        gap: 20px;
-    }
-}
-
-@media (min-width: 768px) {
-    .category-grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-
-@media (max-width: 640px) {
-    #location-info {
-        font-size: 11px;
-        padding: 4px 6px;
-        width: 100px;
-    }
-}
-
 #location-info {
     position: absolute;
     top: 96px;
@@ -489,7 +463,7 @@ Write review page overlay effect and X button
 
 .reviewimg-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(4, 1fr);
     gap: 1em;
 }
 
@@ -609,3 +583,40 @@ Write review page overlay effect and X button
     display: none;
 }
 
+
+
+/*
+Keep this responsive at the bottom
+>>>>>>>>>>>>
+ */
+
+
+/* Responsive */
+@media (min-width: 640px) {
+    .category-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .benefits-grid {
+        flex-direction: row;
+        gap: 20px;
+    }
+}
+
+@media (min-width: 768px) {
+    .category-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    #location-info {
+        font-size: 11px;
+        padding: 4px 6px;
+        width: 100px;
+    }
+}
+
+/*
+<<<<<<<<<<<<
+Keep this responsive at the bottom
+ */
