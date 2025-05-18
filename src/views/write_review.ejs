@@ -132,7 +132,7 @@
         <% } %>
     </form>
 
-    <div id="review-success" style=" display:none; color:green; font-size:20px; font-weight:bold; margin-top:10em;" >
+    <div id="review-success" style=" display:none; color:green; font-size:20px; font-weight:bold; margin-top:10em; margin-bottom:10em;" >
         <br>
         <a href="/write-review" style="color:#2563eb;">Write another review</a>
     </div>
@@ -321,7 +321,7 @@
 
                                 // Build pretty summary
                                 let summaryHtml = `
-    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:2em 1.5em;max-width:450px;margin:auto;box-shadow:0 2px 12px #e0ffe0;">
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:4em 1.5em;max-width:450px;margin:0 auto;margin-top:0.5em;margin-bottom:6em;box-shadow:0 2px 12px #e0ffe0;">
       <div style="font-size:1.2em;color:#22c55e;font-weight:bold;margin-bottom:0.5em;">
         <span style="font-size:1.6em;vertical-align:-3px;"> </span> ${data.message}
       </div>
@@ -338,7 +338,7 @@
             ${'★'.repeat(reviewRating)}${'☆'.repeat(5 - reviewRating)}
           </span>
         </div>
-        <div style="margin-bottom:0.5em;white-space:pre-line;">${reviewText.replace(/\n/g, '<br>')}</div>
+        <div style="margin-bottom:2em;white-space:pre-line;">${reviewText.replace(/\n/g, '<br>')}</div>
       </div>
     </div>
     `;
