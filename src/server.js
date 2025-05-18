@@ -227,8 +227,23 @@ app.set('views', path.join(__dirname, 'views'));
 
 // ==== Section 6. Middleware (app.use) ====
 
-// Middleware to parse URL-encoded bodies (form submissions)
+
+/*
+Comment out by jun, this line of code takes over all uploading behavior (body parse) before Multer can access it,
+it works on local live server, but not on firebase as per documentation https://github.com/expressjs/multer/issues/799
+Therefore,
+remove these global middleware:
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+Instead,
+use body parse in individual route selectively as below:
+app.post('/some-text-form', express.urlencoded({ extended: true }), (req, res)
+app.post('/some-json-api', express.json(), (req, res) =>
+app.post('/profile/edit', upload.any(), (req, res) =>
+*/
+// Middleware to parse URL-encoded bodies (form submissions)
+// app.use(express.urlencoded({ extended: true }));
+
 
 // This is required for hosting (firebase, render.com, Heroku, etc)
 // Reason: In next section, https for cookie is enforced, however the internal traffic
@@ -306,7 +321,7 @@ app.get('/register', (req, res) => {
 })
 
 // use { email: req.session.user.email}, but not username
-app.post('/register', async (req, res) => {
+app.post('/register', express.urlencoded({ extended: true }), async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -349,7 +364,7 @@ app.get('/login', (req, res) => {
     res.render('login.ejs');
 })
 
-app.post('/login', async (req, res) => {
+app.post('/login', express.urlencoded({ extended: true }), async (req, res) => {
     const { email, password } = req.body;
 
     // Find the user by username
@@ -389,7 +404,7 @@ app.get('/logout', (req, res) => {
     });
 })
 
-app.post('/logout', (req, res) => {
+app.post('/logout', express.urlencoded({ extended: true }), (req, res) => {
     const from = req.body.from || '/home';
     req.session.destroy(err => {
         if (err) {
@@ -422,7 +437,7 @@ app.get('/profile', async (req, res) => {
     }
 });
 
-app.post('/profile/edit', upload.single('profile_photo'), async (req, res) => {
+app.post('/profile/edit', upload.any(), async (req, res) => {
     const { email, first_name, last_name, city, country, bio, password, confirm_password, delete_photo } = req.body;
     let updateData = {
         'profile.first_name': first_name,
@@ -456,11 +471,14 @@ app.post('/profile/edit', upload.single('profile_photo'), async (req, res) => {
     }
 
     // Handle photo upload (overrides deletion if both present)
-    if (req.file) {
+    // Following the change from app.post('/profile/edit', upload.single('profile_photo') to app.post('/profile/edit', upload.any(),
+    // Add profile_photo definition to here to handle ejs page Form Action name "profile_photo"
+    const profilePhoto = req.files.find(f => f.fieldname === 'profile_photo');
+    if (profilePhoto) {
         try {
             const imageUrl = await uploadImageToImgbb(
-                req.file.buffer,
-                req.file.originalname
+                profilePhoto.buffer,
+                profilePhoto.originalname
             );
             updateData['profile.profile_photo_url'] = imageUrl;
         } catch (err) {
@@ -570,75 +588,68 @@ app.get('/write-review', async (req, res) => {
 
 
 // Write Review POST Route
-app.post('/write-review',
-    upload.fields([
-        { name: 'review_image_0', maxCount: 1 },
-        { name: 'review_image_1', maxCount: 1 },
-        { name: 'review_image_2', maxCount: 1 },
-        { name: 'review_image_3', maxCount: 1 }
-    ]),
-    async (req, res) => {
-        try {
-            const { product_slug, user_email, review_rating, review_text } = req.body;
+app.post('/write-review', upload.any(), async (req, res) => {
+    try {
+        const { product_slug, user_email, review_rating, review_text } = req.body;
+        const rating = Number(review_rating);
 
-            if (!product_slug || !user_email || !review_rating || !review_text) {
-                return res.status(400).json({ error: 'Missing required fields' });
-            }
-
-            // Build review_images array: 4 slots, matching the grid order
-            let review_images = [];
-            for (let i = 0; i < 4; i++) {
-                // Check for soft-delete flag
-                if (req.body[`delete_image_${i}`] === 'true') {
-                    review_images[i] = null;
-                    continue;
-                }
-                // If a new image was uploaded in this slot
-                const field = `review_image_${i}`;
-                if (req.files && req.files[field] && req.files[field][0]) {
-                    const file = req.files[field][0];
-                    try {
-                        const url = await uploadImageToImgbb(file.buffer, file.originalname);
-                        review_images[i] = url;
-                    } catch (uploadErr) {
-                        // Respond immediately with an error and stop further processing
-                        return res.status(500).json({ error: 'Image upload failed', details: uploadErr.message });
-                    }
-                } else {
-                    review_images[i] = null; // No image uploaded and not marked for delete
-                }
-            }
-
-            // Optionally: remove nulls if you want a compact array
-            review_images = review_images.filter(url => url);
-
-            const review = new reviewsModel({
-                product_slug,
-                user_email,
-                review_rating,
-                review_text,
-                review_images
-            });
-
-            await review.save();
-            const product = await productsModel.findOne({ slug: product_slug });
-            let category = null;
-            if (product && product.category_slug) {
-                category = await categoriesModel.findOne({ slug: product.category_slug });
-            }
-            res.status(201).json({
-                message: 'Review submitted successfully',
-                review: {
-                    ...review.toObject(),
-                    product_name: product ? product.name : product_slug,
-                    category_name: category ? category.name : ''
-                }
-            });
-        } catch (err) {
-            res.status(500).json({ error: 'Server error', details: err.message });
+        if (!product_slug || !user_email || !rating || !review_text) {
+            return res.status(400).json({ error: 'Missing required fields' });
         }
+
+        // Build review_images array: 4 slots, matching the grid order
+        let review_images = [];
+        for (let i = 0; i < 4; i++) {
+            // Check for soft-delete flag
+            if (req.body[`delete_image_${i}`] === 'true') {
+                review_images[i] = null;
+                continue;
+            }
+            // If a new image was uploaded in this slot
+            const field = `review_image_${i}`;
+            const file = req.files.find(f => f.fieldname === field);
+            if (file) {
+                try {
+                    const url = await uploadImageToImgbb(file.buffer, file.originalname);
+                    review_images[i] = url;
+                } catch (uploadErr) {
+                    // Respond immediately with an error and stop further processing
+                    return res.status(500).json({ error: 'Image upload failed', details: uploadErr.message });
+                }
+            } else {
+                review_images[i] = null; // No image uploaded and not marked for delete
+            }
+        }
+
+        // Optionally: remove nulls if you want a compact array
+        review_images = review_images.filter(url => url);
+
+        const review = new reviewsModel({
+            product_slug,
+            user_email,
+            review_rating,
+            review_text,
+            review_images
+        });
+
+        await review.save();
+        const product = await productsModel.findOne({ slug: product_slug });
+        let category = null;
+        if (product && product.category_slug) {
+            category = await categoriesModel.findOne({ slug: product.category_slug });
+        }
+        res.status(201).json({
+            message: 'Review submitted successfully',
+            review: {
+                ...review.toObject(),
+                product_name: product ? product.name : product_slug,
+                category_name: category ? category.name : ''
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error', details: err.message });
     }
-);
+});
 
 
 
@@ -756,46 +767,40 @@ app.get('/admin/product/:id', async (req, res) => {
     res.render('admin-product-detail', { product, categories, productSpecs });
 });
 
-app.post('/admin/product/:id/edit',
-    upload.fields([
-        { name: 'new_image_0', maxCount: 1 },
-        { name: 'new_image_1', maxCount: 1 },
-        { name: 'new_image_2', maxCount: 1 },
-        { name: 'new_image_3', maxCount: 1 }
-    ]),
-    async (req, res) => {
-        const product = await productsModel.findById(req.params.id);
-        if (req.body.delete) {
-            await product.deleteOne();
-            return res.redirect('/admin/product');
-        }
-        product.name = req.body.name;
-        product.category_slug = req.body.category_slug;
-        product.specs = req.body.specs || {};
+app.post('/admin/product/:id/edit', upload.any(), async (req, res) => {
+    const product = await productsModel.findById(req.params.id);
+    if (req.body.delete) {
+        await product.deleteOne();
+        return res.redirect('/admin/product');
+    }
+    product.name = req.body.name;
+    product.category_slug = req.body.category_slug;
+    product.specs = req.body.specs || {};
 
-        // NEW: Handle multiple image deletions from images_to_delete
-        if (req.body.images_to_delete) {
-            const indices = req.body.images_to_delete
-                .split(',')
-                .map(s => parseInt(s, 10))
-                .filter(n => !isNaN(n));
-            for (const idx of indices) {
-                product.images[idx] = null;
-            }
+    // NEW: Handle multiple image deletions from images_to_delete
+    if (req.body.images_to_delete) {
+        const indices = req.body.images_to_delete
+            .split(',')
+            .map(s => parseInt(s, 10))
+            .filter(n => !isNaN(n));
+        for (const idx of indices) {
+            product.images[idx] = null;
         }
+    }
 
-        // Handle any new images
-        for (let i = 0; i < 4; i++) {
-            const field = `new_image_${i}`;
-            if (req.files && req.files[field] && req.files[field][0]) {
-                const file = req.files[field][0];
-                const url = await uploadImageToImgbb(file.buffer, file.originalname);
-                product.images[i] = url;
-            }
+    // Handle any new images
+    for (let i = 0; i < 4; i++) {
+        const field = `new_image_${i}`;
+        // Find the file in req.files array with the correct fieldname
+        const file = req.files.find(f => f.fieldname === field);
+        if (file) {
+            const url = await uploadImageToImgbb(file.buffer, file.originalname);
+            product.images[i] = url;
         }
-        await product.save();
-        res.redirect(`/admin/product/${product._id}`);
-    });
+    }
+    await product.save();
+    res.redirect(`/admin/product/${product._id}`);
+});
 
 
 // === ADMIN CATEGORY ===
@@ -837,7 +842,7 @@ function slugify(str) {
         .replace(/^-+|-+$/g, '');
 }
 
-app.post('/admin/cat/category/add', async (req, res) => {
+app.post('/admin/cat/category/add', express.urlencoded({ extended: true }), async (req, res) => {
     const slug = slugify(req.body.name);
     await categoriesModel.create({
         name: req.body.name,
@@ -848,7 +853,7 @@ app.post('/admin/cat/category/add', async (req, res) => {
     res.redirect('/admin/cat/category');
 });
 
-app.post('/admin/cat/category/:id/edit', async (req, res) => {
+app.post('/admin/cat/category/:id/edit', express.urlencoded({ extended: true }), async (req, res) => {
     if (req.body.delete === "1") {
         // Actually delete the category from the database
         await categoriesModel.deleteOne({ _id: req.params.id });
@@ -873,7 +878,7 @@ app.get('/admin/cat/product', async (req, res) => {
     res.render('admin-cat-product', { categories, products });
 });
 
-app.post('/admin/cat/product/add', async (req, res) => {
+app.post('/admin/cat/product/add', express.urlencoded({ extended: true }), async (req, res) => {
     const slug = slugify(req.body.name);
     await productsModel.create({
         name: req.body.name,
@@ -885,7 +890,7 @@ app.post('/admin/cat/product/add', async (req, res) => {
     res.redirect('/admin/cat/product');
 });
 
-app.post('/admin/cat/product/:id/edit', async (req, res) => {
+app.post('/admin/cat/product/:id/edit', express.urlencoded({ extended: true }), async (req, res) => {
     if (req.body.delete === "1") {
         await productsModel.deleteOne({ _id: req.params.id });
         return res.redirect('/admin/cat/product');
@@ -905,7 +910,7 @@ app.get('/admin/cat/spec', async (req, res) => {
     res.render('admin-cat-spec', { categories });
 });
 
-app.post('/admin/cat/spec/add', async (req, res) => {
+app.post('/admin/cat/spec/add', express.urlencoded({ extended: true }), async (req, res) => {
     await categoriesModel.updateOne(
         { slug: req.body.category_slug },
         { $addToSet: { specs: req.body.spec_key } }
@@ -913,7 +918,7 @@ app.post('/admin/cat/spec/add', async (req, res) => {
     res.redirect('/admin/cat/spec');
 });
 
-app.post('/admin/cat/spec/:slug/edit', async (req, res) => {
+app.post('/admin/cat/spec/:slug/edit', express.urlencoded({ extended: true }), async (req, res) => {
     const cat = await categoriesModel.findOne({ slug: req.params.slug });
     if (req.body.delete !== undefined && req.body.delete !== "") {
         cat.specs.splice(Number(req.body.delete), 1);
@@ -949,46 +954,39 @@ app.get('/admin/cat/product-detail', async (req, res) => {
 });
 
 
-app.post('/admin/cat/product-detail',
-    upload.fields([
-        { name: 'new_image_0', maxCount: 1 },
-        { name: 'new_image_1', maxCount: 1 },
-        { name: 'new_image_2', maxCount: 1 },
-        { name: 'new_image_3', maxCount: 1 }
-    ]),
-    async (req, res) => {
-        const product = await productsModel.findById(req.body.product_id);
-        if (req.body.delete) {
-            await product.deleteOne();
-            return res.redirect('/admin/cat/product-detail');
-        }
-        product.category_slug = req.body.category_slug;
-        product.specs = req.body.specs || {};
-
-        // Handle multiple image deletions from images_to_delete
-        if (req.body.images_to_delete) {
-            const indices = req.body.images_to_delete
-                .split(',')
-                .map(s => parseInt(s, 10))
-                .filter(n => !isNaN(n));
-            for (const idx of indices) {
-                product.images[idx] = null;
-            }
-        }
-
-        // Handle any new images
-        for (let i = 0; i < 4; i++) {
-            const field = `new_image_${i}`;
-            if (req.files && req.files[field] && req.files[field][0]) {
-                const file = req.files[field][0];
-                const url = await uploadImageToImgbb(file.buffer, file.originalname);
-                product.images[i] = url;
-            }
-        }
-        await product.save();
-        res.redirect(`/admin/cat/product-detail?product_id=${product._id}`);
+app.post('/admin/cat/product-detail', upload.any(), async (req, res) => {
+    const product = await productsModel.findById(req.body.product_id);
+    if (req.body.delete) {
+        await product.deleteOne();
+        return res.redirect('/admin/cat/product-detail');
     }
-);
+    product.category_slug = req.body.category_slug;
+    product.specs = req.body.specs || {};
+
+    // Handle multiple image deletions from images_to_delete
+    if (req.body.images_to_delete) {
+        const indices = req.body.images_to_delete
+            .split(',')
+            .map(s => parseInt(s, 10))
+            .filter(n => !isNaN(n));
+        for (const idx of indices) {
+            product.images[idx] = null;
+        }
+    }
+
+    // Handle any new images
+    for (let i = 0; i < 4; i++) {
+        const field = `new_image_${i}`;
+        // Find the file in req.files array with the correct fieldname
+        const file = req.files.find(f => f.fieldname === field);
+        if (file) {
+            const url = await uploadImageToImgbb(file.buffer, file.originalname);
+            product.images[i] = url;
+        }
+    }
+    await product.save();
+    res.redirect(`/admin/cat/product-detail?product_id=${product._id}`);
+});
 
 
 // === ADMIN USER ===
