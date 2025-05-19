@@ -6,4 +6,7 @@ log/
 logs/
 .DS_Store
 .env
+.env-key.json
+src/.env
+src/.env-key.json
 
