@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/SparkInDark/2800-202510-DTC16#readme",
   "dependencies": {
+    "@google-cloud/storage": "^7.16.0",
     "axios": "^1.9.0",
     "bcrypt": "^5.1.1",
     "busboy": "^1.6.0",
