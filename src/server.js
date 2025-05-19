@@ -12,14 +12,14 @@ const MongoStore = require('connect-mongo');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const busboy = require('busboy');
-console.log('Busboy export:', busboy); // <--- Add this here
+console.log('Busboy export:', busboy); // <--- Add this here, temporary for img upload troubleshooting
 
 const { OpenAI } = require('openai');
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const top10products = require('./services/top10product'); // 注意路径
 
 const { getWeather } = require("./services/weather");
-const { uploadImageToImgbb } = require('./services/imgupload');
+const { uploadImageToGCS } = require('./services/imgupload');
 
 
 // ==== Section 3. Define constants and helpers ====
@@ -439,14 +439,22 @@ app.post('/profile/edit', (req, res) => {
     });
 
     // Collect file (if any)
-    bb.on('file', (fieldname, file, filename, encoding, mimetype) => {
+    bb.on('file', (fieldname, file, info) => {
+        const { filename, encoding, mimeType } = info;
         if (fieldname === 'profile_photo' && filename) {
             profilePhotoName = filename;
-            profilePhotoMime = mimetype;
+            profilePhotoMime = mimeType;
+            // debug for GCP filename type is not a string issue
+            // Debug: Check the filename and its type
+            console.log('profilePhotoName assigned:', profilePhotoName, typeof profilePhotoName);
             const buffers = [];
             file.on('data', (data) => buffers.push(data));
             file.on('end', () => {
                 profilePhotoBuffer = Buffer.concat(buffers);
+                profilePhotoName = filename;
+                profilePhotoMime = mimeType;
+                // Debug: Confirm buffer and filename after file end
+                console.log('File end. profilePhotoName:', profilePhotoName, typeof profilePhotoName);
             });
         } else {
             // Drain any other files
@@ -489,10 +497,13 @@ app.post('/profile/edit', (req, res) => {
 
         // Handle photo upload (overrides deletion if both present)
         if (profilePhotoBuffer && Buffer.isBuffer(profilePhotoBuffer) && profilePhotoBuffer.length > 0) {
+            // Debug: Check filename values before upload
+            console.log('About to upload:', profilePhotoName, typeof profilePhotoName);
             try {
-                const imageUrl = await uploadImageToImgbb(
+                const imageUrl = await uploadImageToGCS(
                     profilePhotoBuffer,
-                    profilePhotoName
+                    profilePhotoName,
+                    profilePhotoMime
                 );
                 updateData['profile.profile_photo_url'] = imageUrl;
             } catch (err) {
@@ -614,7 +625,6 @@ app.post('/write-review', (req, res) => {
     const bb = busboy({ headers: req.headers });
     const fields = {};
     const files = {}; // { review_image_0: { buffer, originalname }, ... }
-    const buffersByField = {};
 
     // Collect fields
     bb.on('field', (fieldname, val) => {
@@ -622,14 +632,16 @@ app.post('/write-review', (req, res) => {
     });
 
     // Collect files
-    bb.on('file', (fieldname, file, filename, encoding, mimetype) => {
+    bb.on('file', (fieldname, file, info) => {
+        const { filename, encoding, mimeType } = info;
         if (filename) {
             const buffers = [];
             file.on('data', data => buffers.push(data));
             file.on('end', () => {
                 files[fieldname] = {
                     buffer: Buffer.concat(buffers),
-                    originalname: filename
+                    originalname: filename,
+                    mimeType: mimeType
                 };
             });
         } else {
@@ -660,7 +672,7 @@ app.post('/write-review', (req, res) => {
                 const file = files[field];
                 if (file && Buffer.isBuffer(file.buffer) && file.buffer.length > 0) {
                     try {
-                        const url = await uploadImageToImgbb(file.buffer, file.originalname);
+                        const url = await uploadImageToGCS(file.buffer, file.originalname, file.mimeType);
                         review_images[i] = url;
                     } catch (uploadErr) {
                         return res.status(500).json({ error: 'Image upload failed', details: uploadErr.message });
@@ -835,14 +847,16 @@ app.post('/admin/product/:id/edit', async (req, res) => {
     });
 
     // Collect files
-    bb.on('file', (fieldname, file, filename, encoding, mimetype) => {
+    bb.on('file', (fieldname, file, info) => {
+        const { filename, encoding, mimeType } = info;
         if (filename) {
             const buffers = [];
             file.on('data', data => buffers.push(data));
             file.on('end', () => {
                 files[fieldname] = {
                     buffer: Buffer.concat(buffers),
-                    originalname: filename
+                    originalname: filename,
+                    mimeType: mimeType
                 };
             });
         } else {
@@ -879,7 +893,7 @@ app.post('/admin/product/:id/edit', async (req, res) => {
                 const field = `new_image_${i}`;
                 const file = files[field];
                 if (file && Buffer.isBuffer(file.buffer) && file.buffer.length > 0) {
-                    const url = await uploadImageToImgbb(file.buffer, file.originalname);
+                    const url = await uploadImageToGCS(file.buffer, file.originalname, file.mimeType);
                     product.images[i] = url;
                 }
             }
@@ -1065,14 +1079,16 @@ app.post('/admin/cat/product-detail', async (req, res) => {
     });
 
     // Collect files
-    bb.on('file', (fieldname, file, filename, encoding, mimetype) => {
+    bb.on('file', (fieldname, file, info) => {
+        const { filename, encoding, mimeType } = info;
         if (filename) {
             const buffers = [];
             file.on('data', data => buffers.push(data));
             file.on('end', () => {
                 files[fieldname] = {
                     buffer: Buffer.concat(buffers),
-                    originalname: filename
+                    originalname: filename,
+                    mimeType: mimeType
                 };
             });
         } else {
@@ -1111,7 +1127,7 @@ app.post('/admin/cat/product-detail', async (req, res) => {
                 const field = `new_image_${i}`;
                 const file = files[field];
                 if (file && Buffer.isBuffer(file.buffer) && file.buffer.length > 0) {
-                    const url = await uploadImageToImgbb(file.buffer, file.originalname);
+                    const url = await uploadImageToGCS(file.buffer, file.originalname, file.mimeType);
                     product.images[i] = url;
                 }
             }
@@ -1153,6 +1169,7 @@ app.post('/admin/user/:id/edit', async (req, res) => {
     const fields = {};
     let profilePicBuffer = null;
     let profilePicName = '';
+    let profilePicMime = '';
 
     // Collect fields
     bb.on('field', (fieldname, val) => {
@@ -1160,13 +1177,15 @@ app.post('/admin/user/:id/edit', async (req, res) => {
     });
 
     // Collect file (profile_pic)
-    bb.on('file', (fieldname, file, filename, encoding, mimetype) => {
+    bb.on('file', (fieldname, file, info) => {
+        const { filename, encoding, mimeType } = info;
         if (fieldname === 'profile_pic' && filename) {
             const buffers = [];
             file.on('data', data => buffers.push(data));
             file.on('end', () => {
                 profilePicBuffer = Buffer.concat(buffers);
                 profilePicName = filename;
+                profilePicMime = mimeType;
             });
         } else {
             file.resume();
@@ -1190,7 +1209,7 @@ app.post('/admin/user/:id/edit', async (req, res) => {
                 return res.redirect(`/admin/user/${user._id}`);
             }
             if (profilePicBuffer && Buffer.isBuffer(profilePicBuffer) && profilePicBuffer.length > 0) {
-                const url = await uploadImageToImgbb(profilePicBuffer, profilePicName);
+                const url = await uploadImageToGCS(profilePicBuffer, profilePicName, profilePicMime);
                 user.profile.profile_photo_url = url;
             }
             user.profile.first_name = fields.first_name;
