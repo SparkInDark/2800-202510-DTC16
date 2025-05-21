@@ -4,6 +4,7 @@ node_modules/
 !important.log
 log/
 logs/
+test/
 .DS_Store
 .env
 .env-key.json
