@@ -287,7 +287,7 @@ app.get('/', (req, res) => {
 app.get('/home', async (req, res) => {
      try {
         console.log(req.session.user);
-        const topProducts = await Product.find()
+        const topProducts = await productsModel.find()
             .sort({ 'rating_summary.average': -1 })
             .limit(3);
 
@@ -605,7 +605,7 @@ app.get('/search', async (req, res) => {
 //
 app.get('/top10products', async (req, res) => {
      try {
-        const topProducts = await Product.find()
+        const topProducts = await productsModel.find()
             .sort({ 'rating_summary.average': -1 })
             .limit(10);
 
