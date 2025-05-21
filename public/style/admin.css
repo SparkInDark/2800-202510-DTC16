@@ -55,6 +55,18 @@ tr:last-child td {
     cursor: pointer;
     transition: background 0.18s;
 }
+/* Show right arrow on row hover, positioned absolutely at the right edge */
+.clickable-row:hover::after {
+    content: '〉';
+    color: #888;
+    position: absolute;
+    right: 0.1em;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2em;
+    pointer-events: none;
+    transition: color 0.18s;
+}
 .clickable-row {
     position: relative;
     transition: background 0.18s;
@@ -375,7 +387,7 @@ button.btn-primary:hover, .btn.btn-primary:hover {
 @media (max-width: 600px) {
     .container {
         max-width: 100vw;
-        padding: 1rem 1rem 4rem 1rem;
+        padding: 1rem 0.7rem 4rem 0.7rem;
         border-radius: 0;
         box-shadow: none;
     }
