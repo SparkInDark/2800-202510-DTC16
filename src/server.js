@@ -284,9 +284,14 @@ app.get('/', (req, res) => {
 })
 
 // Home route
-app.get('/home', (req, res) => {
+app.get('/home', async (req, res) => {
     console.log(req.session.user);
-    res.render('index', { weather: null });
+    const topProducts = await Product
+    .find()
+    .sort({ 'rating_summary.average': -1 }) // descending
+    .limit(3);
+
+    res.render('index', { weather: null, topProducts});
 });
 
 // Weather route for AJAX weather fetch
