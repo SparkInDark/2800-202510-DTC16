@@ -285,13 +285,17 @@ app.get('/', (req, res) => {
 
 // Home route
 app.get('/home', async (req, res) => {
-    console.log(req.session.user);
-    const topProducts = await Product
-    .find()
-    .sort({ 'rating_summary.average': -1 }) // descending
-    .limit(3);
+     try {
+        console.log(req.session.user);
+        const topProducts = await Product.find()
+            .sort({ 'rating_summary.average': -1 })
+            .limit(3);
 
-    res.render('index', { weather: null, topProducts});
+        res.render('index', { topProducts });
+    } catch (error) {
+        console.error('Error fetching top products:', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 // Weather route for AJAX weather fetch
@@ -599,8 +603,17 @@ app.get('/search', async (req, res) => {
 });
 
 //
-app.get('/top10products', (req, res) => {
-    res.render('top10products', { products: top10products, user: req.session.user });
+app.get('/top10products', async (req, res) => {
+     try {
+        const topProducts = await Product.find()
+            .sort({ 'rating_summary.average': -1 })
+            .limit(10);
+
+        res.render('top10products', { topProducts });
+    } catch (error) {
+        console.error('Error fetching top products:', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 
