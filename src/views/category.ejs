@@ -28,189 +28,43 @@
         </div>
 
         <!-- Category Section -->
-        <div class="bg-[#fefcf6] pt-10 pb-32 min-h-screen">
-            <h2 class="text-xl font-semibold text-center mb-6">Explore categories</h2>
+        <% categories.forEach(category=> { %>
+            <div class="category-card">
+                <h2>
+                    <%= category.name %>
+                </h2>
+                <p>
+                    <%= category.description %>
+                </p>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-4 sm:px-10 lg:px-24">
-
-                <!-- Phones -->
-                <div class="bg-white rounded-xl overflow-hidden shadow border">
-                    <div class="bg-yellow-200 p-4 flex items-center gap-2">
-                        <i class="fas fa-mobile-alt text-xl text-gray-700"></i>
-                        <h3 class="text-lg font-bold text-gray-800">Phones</h3>
-                    </div>
-                    <ul class="px-4 py-3 space-y-2 text-base text-gray-700">
-                        <li>
-                            <button onclick="toggleDropdown('iphoneDropdown', this)"
-                                class="flex items-center gap-2 text-gray-800 focus:outline-none">
-                                <i class="fas fa-chevron-right text-xs transition-transform duration-200"></i>
-                                <span>iPhone</span>
-                            </button>
-                            <ul id="iphoneDropdown" class="ml-6 mt-2 space-y-1 hidden text-sm text-gray-600">
-                                <li><a href="/product?item=iphone-16-pro-max" class="hover:text-indigo-500">iPhone 16
-                                        Pro Max</a></li>
-                                <li><a href="/product?item=iphone-15-pro" class="hover:text-indigo-500">iPhone 15
-                                        Pro</a></li>
-                                <li><a href="/product?item=iphone-14" class="hover:text-indigo-500">iPhone 14</a></li>
-                                <li><a href="/product?item=iphone-se" class="hover:text-indigo-500">iPhone SE</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <button onclick="toggleDropdown('androidDropdown', this)"
-                                class="flex items-center gap-2 text-gray-800 focus:outline-none">
-                                <i class="fas fa-chevron-right text-xs transition-transform duration-200"></i>
-                                <span>Android</span>
-                            </button>
-                            <ul id="androidDropdown" class="ml-6 mt-2 space-y-1 hidden text-sm text-gray-600">
-                                <li><a href="#" class="hover:text-indigo-500">Samsung Galaxy</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">Google Pixel</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">OnePlus</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <button onclick="toggleDropdown('accessoriesDropdown', this)"
-                                class="flex items-center gap-2 text-gray-800 focus:outline-none">
-                                <i class="fas fa-chevron-right text-xs transition-transform duration-200"></i>
-                                <span>Accessories</span>
-                            </button>
-                            <ul id="accessoriesDropdown" class="ml-6 mt-2 space-y-1 hidden text-sm text-gray-600">
-                                <li><a href="#" class="hover:text-indigo-500">Chargers</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">Cases</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">Screen Protectors</a></li>
-                            </ul>
-                        </li>
+                <% if (category.products.length> 0) { %>
+                    <ul class="product-list">
+                        <% category.products.forEach(product=> { %>
+                            <li>
+                                <strong>
+                                    <%= product.name %>
+                                </strong><br>
+                                <p>Average Rating: <%= product.rating_summary.average %>
+                                </p>
+                            </li>
+                            <% }) %>
                     </ul>
-                </div>
-
-                <!-- Computers -->
-                <div class="bg-white rounded-xl overflow-hidden shadow border">
-                    <div class="bg-pink-200 p-4 flex items-center gap-2">
-                        <i class="fas fa-laptop text-xl text-gray-700"></i>
-                        <h3 class="text-lg font-bold text-gray-800">Computers</h3>
-                    </div>
-                    <ul class="px-4 py-3 space-y-2 text-base text-gray-700">
-                        <li>
-                            <button onclick="toggleDropdown('laptopsDropdown', this)"
-                                class="flex items-center gap-2 text-gray-800 focus:outline-none">
-                                <i class="fas fa-chevron-right text-xs transition-transform duration-200"></i>
-                                <span>Laptops</span>
-                            </button>
-                            <ul id="laptopsDropdown" class="ml-6 mt-2 space-y-1 hidden text-sm text-gray-600">
-                                <li><a href="#" class="hover:text-indigo-500">MacBook</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">Dell XPS</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">HP Spectre</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <button onclick="toggleDropdown('desktopsDropdown', this)"
-                                class="flex items-center gap-2 text-gray-800 focus:outline-none">
-                                <i class="fas fa-chevron-right text-xs transition-transform duration-200"></i>
-                                <span>Desktops</span>
-                            </button>
-                            <ul id="desktopsDropdown" class="ml-6 mt-2 space-y-1 hidden text-sm text-gray-600">
-                                <li><a href="#" class="hover:text-indigo-500">iMac</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">Gaming PC</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">Workstation</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <button onclick="toggleDropdown('tabletsDropdown', this)"
-                                class="flex items-center gap-2 text-gray-800 focus:outline-none">
-                                <i class="fas fa-chevron-right text-xs transition-transform duration-200"></i>
-                                <span>Tablets</span>
-                            </button>
-                            <ul id="tabletsDropdown" class="ml-6 mt-2 space-y-1 hidden text-sm text-gray-600">
-                                <li><a href="#" class="hover:text-indigo-500">iPad</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">Samsung Galaxy Tab</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Photography -->
-                <div class="bg-white rounded-xl overflow-hidden shadow border">
-                    <div class="bg-green-100 p-4 flex items-center gap-2">
-                        <i class="fas fa-camera text-xl text-gray-700"></i>
-                        <h3 class="text-lg font-bold text-gray-800">Photography</h3>
-                    </div>
-                    <ul class="px-4 py-3 space-y-2 text-base text-gray-700">
-                        <li>
-                            <button onclick="toggleDropdown('camerasDropdown', this)"
-                                class="flex items-center gap-2 text-gray-800 focus:outline-none">
-                                <i class="fas fa-chevron-right text-xs transition-transform duration-200"></i>
-                                <span>Cameras</span>
-                            </button>
-                            <ul id="camerasDropdown" class="ml-6 mt-2 space-y-1 hidden text-sm text-gray-600">
-                                <li><a href="#" class="hover:text-indigo-500">Canon</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">Sony</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">Nikon</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">Leica</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">Panasonic</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Drones -->
-                <div class="bg-white rounded-xl overflow-hidden shadow border">
-                    <div class="bg-red-100 p-4 flex items-center gap-2">
-                        <i class="fas fa-helicopter text-xl text-gray-700"></i>
-                        <h3 class="text-lg font-bold text-gray-800">Drones</h3>
-                    </div>
-                    <ul class="px-4 py-3 space-y-2 text-base text-gray-700">
-                        <li>
-                            <button onclick="toggleDropdown('quadcoptersDropdown', this)"
-                                class="flex items-center gap-2 text-gray-800 focus:outline-none">
-                                <i class="fas fa-chevron-right text-xs transition-transform duration-200"></i>
-                                <span>Quadcopters</span>
-                            </button>
-                            <ul id="quadcoptersDropdown" class="ml-6 mt-2 space-y-1 hidden text-sm text-gray-600">
-                                <li><a href="#" class="hover:text-indigo-500">DJI Mini 3 Pro</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">DJI Air 2S</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">Autel Evo Lite+</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <button onclick="toggleDropdown('fpvDropdown', this)"
-                                class="flex items-center gap-2 text-gray-800 focus:outline-none">
-                                <i class="fas fa-chevron-right text-xs transition-transform duration-200"></i>
-                                <span>FPV</span>
-                            </button>
-                            <ul id="fpvDropdown" class="ml-6 mt-2 space-y-1 hidden text-sm text-gray-600">
-                                <li><a href="#" class="hover:text-indigo-500">DJI Avata</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">BetaFPV Pavo30</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">iFlight Nazgul</a></li>
-                            </ul>
-                        </li>
-                        <li>
-                            <button onclick="toggleDropdown('droneAccessoriesDropdown', this)"
-                                class="flex items-center gap-2 text-gray-800 focus:outline-none">
-                                <i class="fas fa-chevron-right text-xs transition-transform duration-200"></i>
-                                <span>Accessories</span>
-                            </button>
-                            <ul id="droneAccessoriesDropdown" class="ml-6 mt-2 space-y-1 hidden text-sm text-gray-600">
-                                <li><a href="#" class="hover:text-indigo-500">Extra Batteries</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">Carrying Cases</a></li>
-                                <li><a href="#" class="hover:text-indigo-500">Propeller Guards</a></li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
-
+                    <% } else { %>
+                        <p>No products in this category.</p>
+                        <% } %>
             </div>
-        </div>
+            <% }) %>
+                <%- include('component/bottom-navbar.ejs') %>
 
-        <%- include('component/bottom-navbar.ejs') %>
-
-            <script>
-                function toggleDropdown(id, btn) {
-                    const el = document.getElementById(id);
-                    el.classList.toggle('hidden');
-                    const icon = btn.querySelector('i');
-                    icon.classList.toggle('rotate-90');
-                }
-            </script>
-    <script src="/script/profile-dropdown.js"></script>
+                    <script>
+                        function toggleDropdown(id, btn) {
+                            const el = document.getElementById(id);
+                            el.classList.toggle('hidden');
+                            const icon = btn.querySelector('i');
+                            icon.classList.toggle('rotate-90');
+                        }
+                    </script>
+                    <script src="/script/profile-dropdown.js"></script>
 </body>
 
 </html>

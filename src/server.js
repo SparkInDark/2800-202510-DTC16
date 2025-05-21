@@ -545,8 +545,30 @@ app.post('/profile/edit', (req, res) => {
 
 
 // category route
-app.get('/category', (req, res) => {
-    res.render('category.ejs');
+app.get('/category', async (req, res) => {
+    try {
+        // Step 1: Fetch all categories from the database
+        const categories = await categoriesModel.find({});
+
+        // Step 2: For each category, fetch the products that belong to it
+        const categoriesWithProducts = await Promise.all(
+            categories.map(async (category) => {
+                const products = await productsModel.find({ category_slug: category.slug });
+
+                return {
+                    ...category.toObject(), // Convert Mongoose document to plain JavaScript object
+                    products, // Attach the list of products under this category
+                };
+            })
+        );
+
+        // Step 3: Render the EJS view and pass the data
+        res.render('category', { categories: categoriesWithProducts });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Server error");
+    }
 })
 
 // product route
