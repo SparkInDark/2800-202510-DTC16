@@ -546,7 +546,7 @@ app.get('/product/:slug', async (req, res) => {
         const slug = req.params.slug;
 
         // Find product by slug
-        const product = await Product.findOne({ slug });
+        const product = await productsModel.findOne({ slug });
 
         if (!product) {
             return res.status(404).send('Product not found');

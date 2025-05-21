@@ -2,70 +2,129 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>
-        <%= item %>
+        <%= product.name %> - Rating Rebels
     </title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/style/style.css" />
 </head>
 
-<body>
+<body class="bg-gray-100 text-gray-900">
+    <!-- Top Navbar -->
     <%- include('component/top-navbar.ejs') %>
 
-        <div class="mt-24 px-6 sm:px-20">
-            <% if (item==='iphone-16-pro-max' ) { %>
-                <div class="flex justify-between items-center bg-gray-300 p-4 rounded mb-4">
-                    <span class="font-semibold text-lg">iPhone 16 Pro Max</span>
-                    <div class="flex items-center gap-2 text-xl">
-                        <span class="border-2 border-purple-500 px-1 rounded">☆</span>
-                        <span>☆</span>
-                        <span>☆</span>
-                        <span>&gt;</span>
+        <!-- Main Content -->
+        <main class="pt-32 max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- LEFT COLUMN: Image Gallery -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow p-4">
+                    <img src="<%= product.images[0] || '/img/placeholder.png' %>" alt="<%= product.name %>"
+                        class="rounded w-full object-cover mb-4">
+                    <div class="grid grid-cols-4 gap-2">
+                        <% product.images.forEach(img=> { %>
+                            <img src="<%= img %>" alt="thumb" class="rounded border hover:scale-105 transition">
+                            <% }) %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Product Info -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h1 class="text-2xl font-bold mb-2">
+                        <%= product.name %>
+                    </h1>
+                    <p class="text-gray-600">
+                        <%= product.specs?.summary || "No summary available." %>
+                    </p>
+
+                    <!-- SPECs Toggle -->
+                    <details class="mt-4 border rounded-lg">
+                        <summary class="cursor-pointer px-4 py-2 font-semibold bg-gray-50 hover:bg-gray-100">
+                            Specifications</summary>
+                        <div class="px-4 py-2 text-sm grid sm:grid-cols-2 gap-x-8 gap-y-2 bg-white">
+                            <% for (let key in product.specs) { if (key !=='summary' ) { %>
+                                <div>
+                                    <span class="font-medium capitalize">
+                                        <%= key.replace(/_/g, ' ' ) %>:
+                                    </span>
+                                    <%= product.specs[key] %>
+                                </div>
+                                <% }} %>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Rating Summary -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div class="text-center">
+                            <span class="text-3xl font-bold">
+                                <%= product.rating_summary?.average?.toFixed(1) || "0.0" %>
+                            </span>
+                            <div class="text-yellow-500">⭐️⭐️⭐️⭐️⭐️</div>
+                            <div class="text-sm text-gray-400">
+                                <%= product.rating_summary?.total_ratings || 0 %> ratings
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <% [5, 4, 3, 2, 1].forEach(star=> { %>
+                                <div class="flex items-center gap-2">
+                                    <span>
+                                        <%= star %>
+                                    </span>
+                                    <div class="w-full h-2 bg-gray-300 rounded">
+                                        <div class="h-full bg-green-500 rounded"
+                                            style="width: <%= product.rating_summary?.star_counts?.[star] ? (product.rating_summary.star_counts[star] / (product.rating_summary.total_ratings || 1)) * 100 : 0 %>%;">
+                                        </div>
+                                    </div>
+                                </div>
+                                <% }) %>
+                        </div>
                     </div>
                 </div>
 
-                <% } else if (item==='iphone-15-pro' ) { %>
-                    <div class="flex justify-between items-center bg-gray-300 p-4 rounded mb-4">
-                        <span class="font-semibold text-lg">iPhone 15 Pro</span>
-                        <div class="flex items-center gap-2 text-xl">
-                            <span>☆</span>
-                            <span>☆</span>
-                            <span>&gt;</span>
-                        </div>
-                    </div>
-
-                    <% } else if (item==='iphone-14' ) { %>
-                        <div class="flex justify-between items-center bg-gray-300 p-4 rounded mb-4">
-                            <span class="font-semibold text-lg">iPhone 14</span>
-                            <div class="flex items-center gap-2 text-xl">
-                                <span>☆</span>
-                                <span>&gt;</span>
-                            </div>
-                        </div>
-
-                        <% } else if (item==='iphone-13' ) { %>
-                            <div class="flex justify-between items-center bg-gray-300 p-4 rounded mb-4">
-                                <span class="font-semibold text-lg">iPhone 13</span>
-                                <div class="text-xl">&gt;</div>
-                            </div>
-
-                            <% } else if (item==='iphone-12' ) { %>
-                                <div class="flex justify-between items-center bg-gray-300 p-4 rounded mb-4">
-                                    <span class="font-semibold text-lg">iPhone 12</span>
-                                    <div class="text-xl">&gt;</div>
-                                </div>
-
-                                <% } else { %>
-                                    <div class="bg-yellow-100 text-center p-6 rounded">
-                                        <p class="text-lg font-semibold text-gray-800">No product found for: <%= item %>
-                                        </p>
+                <!-- User Reviews -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-xl font-semibold mb-4">User Reviews</h2>
+                    <% if (reviews.length===0) { %>
+                        <p class="text-gray-500">No reviews yet. Be the first to write one!</p>
+                        <% } else { %>
+                            <% reviews.forEach(review=> { %>
+                                <div class="border-b py-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-sm font-medium text-gray-700">
+                                            <%= review.user_email %>
+                                        </div>
+                                        <div class="text-sm text-gray-400">
+                                            <%= new Date(review.created_at).toLocaleDateString() %>
+                                        </div>
                                     </div>
+                                    <div class="text-yellow-500 mt-1">⭐️ × <%= review.review_rating %>
+                                    </div>
+                                    <p class="mt-2 text-gray-800">
+                                        <%= review.review_text %>
+                                    </p>
+                                    <% if (review.review_images?.length) { %>
+                                        <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                            <% review.review_images.forEach(img=> { %>
+                                                <img src="<%= img %>"
+                                                    class="rounded shadow-sm w-full h-24 object-cover">
+                                                <% }) %>
+                                        </div>
+                                        <% } %>
+                                </div>
+                                <% }) %>
                                     <% } %>
-        </div>
+                </div>
+            </div>
+        </main>
 
+        <!-- Bottom Navbar -->
         <%- include('component/bottom-navbar.ejs') %>
+        <script src="/script/profile-dropdown.js"></script>
 </body>
 
 </html>
