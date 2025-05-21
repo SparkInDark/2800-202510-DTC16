@@ -14,8 +14,18 @@
     <div class="container py-3">
         <h2>Reviews</h2>
         <div class="mb-2">
-            <input type="text" id="productFilter" placeholder="Filter by product..." class="form-control form-control-sm d-inline w-auto" />
-            <select id="ratingFilter" class="form-select form-select-sm d-inline w-auto">
+            <input
+                    type="text"
+                    id="productFilter"
+                    placeholder="Filter by product..."
+                    class="form-control form-control-sm d-inline w-auto"
+                    style="border: 1px solid #ced4da; height: 2.2em; vertical-align: middle; padding-left: 1em; margin-bottom: 0.75em;"
+            />
+            <select
+                    id="ratingFilter"
+                    class="form-select form-select-sm d-inline w-auto"
+                    style="border: 1px solid #ced4da; height: 2.2em; vertical-align: middle;"
+            >
                 <option value="">All Ratings</option>
                 <% [5,4,3,2,1].forEach(r => { %>
                     <option value="<%= r %>"><%= r %> Stars</option>
@@ -33,7 +43,7 @@
                 </thead>
                 <tbody id="reviewTableBody">
                 <% reviews.forEach(r => { %>
-                    <tr class="clickable-row" onclick="location.href='/admin/review/<%= r._id %>'">
+                    <tr class="clickable-row" onclick="location.href='/admin/review/<%= r._id %>'" data-rating="<%= r.review_rating %>">
 
                         <td>
                             <% if (r.created_at) { %>
@@ -47,7 +57,7 @@
                         <td><%= r.product_name %></td>
                         <td>
                             <% for(let i=0; i<r.review_rating; i++) { %>
-                                <span style="color:gold;">&#9733;</span>
+                                <span style="color:#c14646;">&#9733;</span>
                             <% } %>
                             <% for(let i=r.review_rating; i<5; i++) { %>
                                 <span style="color:#ccc;">&#9733;</span>
@@ -71,7 +81,7 @@
         document.getElementById('ratingFilter').addEventListener('change', function() {
             const val = this.value;
             document.querySelectorAll('#reviewTableBody tr').forEach(tr => {
-                tr.style.display = (!val || tr.children[2].textContent.includes(val)) ? '' : 'none';
+                tr.style.display = (!val || tr.getAttribute('data-rating') === val) ? '' : 'none';
             });
         });
     </script>
