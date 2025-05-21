@@ -59,7 +59,7 @@ const usersModel = mongoose.model('users', userSchema);
 
 
 const reviewSchema = new mongoose.Schema({
-    product_slug: { type: String, required: true  },
+    product_slug: { type: String, required: true },
     user_email: { type: String, required: true },
     review_rating: { type: Number, min: 1, max: 5, required: true },
     review_text: { type: String, required: true },
@@ -754,17 +754,23 @@ app.get('/admin/review', async (req, res) => {
                 from: 'ratings',
                 let: { product_slug: '$product_slug', user_email: '$user_email' },
                 pipeline: [
-                    { $match: { $expr: { $and: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
                                     { $eq: ['$product_slug', '$$product_slug'] },
                                     { $eq: ['$user_email', '$$user_email'] }
-                                ] } } }
+                                ]
+                            }
+                        }
+                    }
                 ],
                 as: 'ratingInfo'
             }
         },
         {
             $addFields: {
-                rating: { $ifNull: [ { $arrayElemAt: ['$ratingInfo.rating', 0] }, 0 ] }
+                rating: { $ifNull: [{ $arrayElemAt: ['$ratingInfo.rating', 0] }, 0] }
             }
         },
         { $project: { productInfo: 0, ratingInfo: 0 } }
@@ -1238,7 +1244,30 @@ app.post('/admin/user/:id/edit', async (req, res) => {
     }
 });
 
+app.get('/product-review', async (req, res) => {
+    const name = req.query.name;
+    if (!name) {
+        return res.status(400).send("Missing product name");
+    }
 
+    try {
+        const product = await productsModel.findOne({ name }).lean();
+        if (!product) {
+            return res.status(404).send("Product not found");
+        }
+
+        const reviews = await reviewsModel.find({ product_slug: name }).sort({ created_at: -1 }).lean(); // 如果你的 review 中用的是 name
+
+        res.render('product-review.ejs', {
+            product,
+            reviews,
+            user: req.session.user
+        });
+    } catch (err) {
+        console.error("Error loading product review page:", err);
+        res.status(500).send("Server error");
+    }
+});
 
 
 
@@ -1277,3 +1306,5 @@ connectToMongoDB().then(() => {
         console.log(`Server is running on http://localhost:${port}`);
     });
 });
+
+
