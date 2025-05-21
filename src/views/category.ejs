@@ -10,61 +10,82 @@
     <link rel="stylesheet" href="/style/style.css" />
 </head>
 
-<body class="bg-white">
+<body class="bg-gray-50 text-gray-800">
+    <!-- Top Navbar -->
     <%- include('component/top-navbar.ejs') %>
 
         <!-- Search Section -->
-        <div class="bg-[#f4f4f4] pt-24 pb-12">
-            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 text-center mb-6">What are you looking for?</h1>
-            <form action="/search" method="GET"
-                class="max-w-md mx-auto flex items-center rounded-full overflow-hidden border border-blue-300 bg-white shadow-sm">
-                <input type="text" name="q" placeholder="Search"
-                    class="flex-grow px-4 py-2 text-sm sm:text-base focus:outline-none" />
-                <button type="submit"
-                    class="h-full px-5 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold text-sm sm:text-base transition">
-                    Search
-                </button>
-            </form>
-        </div>
+        <section class="bg-white pt-32 pb-16 shadow">
+            <div class="max-w-3xl mx-auto px-4 text-center">
+                <h1 class="text-4xl font-extrabold text-gray-900 mb-4">What are you looking for?</h1>
+                <form action="/search" method="GET"
+                    class="flex items-center rounded-full overflow-hidden border border-blue-300 bg-white shadow-md">
+                    <input type="text" name="q" placeholder="Search"
+                        class="flex-grow px-6 py-3 text-lg focus:outline-none" />
+                    <button type="submit"
+                        class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg transition-colors">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                </form>
+            </div>
+        </section>
 
         <!-- Category Section -->
-        <% categories.forEach(category=> { %>
-            <div class="category-card">
-                <h2>
-                    <%= category.name %>
-                </h2>
-                <p>
-                    <%= category.description %>
-                </p>
+        <section class="max-w-6xl mx-auto px-4 py-12">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                <% categories.forEach(category=> { %>
+                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow p-6 flex flex-col">
+                        <div class="flex items-center mb-4">
+                            <i class="fas fa-tags text-blue-500 text-2xl mr-3"></i>
+                            <h2 class="text-2xl font-bold">
+                                <%= category.name %>
+                            </h2>
+                        </div>
+                        <p class="text-gray-600 mb-6 flex-grow">
+                            <%= category.description %>
+                        </p>
 
-                <% if (category.products.length> 0) { %>
-                    <ul class="product-list">
-                        <% category.products.forEach(product=> { %>
-                            <li>
-                                <strong>
-                                    <%= product.name %>
-                                </strong><br>
-                                <p>Average Rating: <%= product.rating_summary.average %>
-                                </p>
-                            </li>
-                            <% }) %>
-                    </ul>
-                    <% } else { %>
-                        <p>No products in this category.</p>
-                        <% } %>
+                        <% if (category.products.length> 0) { %>
+                            <ul class="space-y-4">
+                                <% category.products.forEach(product=> { %>
+                                    <li>
+                                        <a href="/product/<%= encodeURIComponent(product.name) %>"
+                                            class="flex items-start p-3 hover:bg-gray-100 rounded transition">
+                                            <i class="fas fa-box-open text-gray-400 text-xl mt-1 mr-3"></i>
+                                            <div>
+                                                <strong class="block text-lg text-gray-900">
+                                                    <%= product.name %>
+                                                </strong>
+                                                <p class="text-sm text-gray-600">Average Rating: <span
+                                                        class="font-semibold">
+                                                        <%= product.rating_summary.average %>
+                                                    </span></p>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <% }) %>
+                            </ul>
+                            <% } else { %>
+                                <p class="text-gray-500 italic">No products in this category.</p>
+                                <% } %>
+                    </div>
+                    <% }) %>
             </div>
-            <% }) %>
-                <%- include('component/bottom-navbar.ejs') %>
+        </section>
 
-                    <script>
-                        function toggleDropdown(id, btn) {
-                            const el = document.getElementById(id);
-                            el.classList.toggle('hidden');
-                            const icon = btn.querySelector('i');
-                            icon.classList.toggle('rotate-90');
-                        }
-                    </script>
-                    <script src="/script/profile-dropdown.js"></script>
+        <!-- Bottom Navbar -->
+        <%- include('component/bottom-navbar.ejs') %>
+
+            <!-- Scripts -->
+            <script>
+                function toggleDropdown(id, btn) {
+                    const el = document.getElementById(id);
+                    el.classList.toggle('hidden');
+                    const icon = btn.querySelector('i');
+                    icon.classList.toggle('rotate-90');
+                }
+            </script>
+            <script src="/script/profile-dropdown.js"></script>
 </body>
 
 </html>
