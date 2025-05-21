@@ -541,14 +541,29 @@ app.get('/category', (req, res) => {
 })
 
 // product route
-app.get('/product', (req, res) => {
-    res.render('product.ejs');
-})
+app.get('/product/:slug', async (req, res) => {
+    try {
+        const slug = req.params.slug;
 
-app.get('/product/:productName', (req, res) => {
-    const productName = req.params.productName;
-    res.render('productdetail.ejs', { productName });
-})
+        // Find product by slug
+        const product = await Product.findOne({ slug });
+
+        if (!product) {
+            return res.status(404).send('Product not found');
+        }
+
+        // Get approved reviews for this product
+        const reviews = await reviewsModel.find({
+            product_slug: slug,
+            'moderation.status': 'approved'
+        }).sort({ created_at: -1 }); // Optional: sort by newest first
+
+        res.render('product', { product, reviews });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).send('Internal Server Error');
+    }
+});
 
 
 // search route
