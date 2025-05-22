@@ -13,9 +13,13 @@
 
     <div class="container py-3">
         <h2>Products</h2>
-        <div class="mb-0.75 flex flex-col md:flex-row md:items-center md:gap-4">
+        <div class="mb-0.75 flex flex-row items-center flex-wrap">
             <input type="text" id="catFilter" placeholder="Filter by category..." class="form-control form-control-sm d-inline w-auto" style="width: 200px; border: 1px solid #ced4da; height: 2.2em; vertical-align: middle; padding-left: 1em; margin-bottom: 0.75em; border-radius: 0.25rem;"/>
             <input type="text" id="prodFilter" placeholder="Filter by product..." class="form-control form-control-sm d-inline w-auto" style="width: 200px; border: 1px solid #ced4da; height: 2.2em; vertical-align: middle; padding-left: 1em; margin-bottom: 0.75em; border-radius: 0.25rem;"/>
+            <a href="/admin/cat/product-detail" class="mt-2 ml-auto inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+               style="width: 125px; border: 1px solid #ced4da; height: 2.2em; vertical-align: middle; padding-left: 1em; padding-top: 0.3em; margin-bottom: 0.75em; border-radius: 0.25rem; margin-top: -0.005em;">
+                Add Product
+            </a>
         </div>
         <div class="table-responsive">
             <table class="table table-hover">
