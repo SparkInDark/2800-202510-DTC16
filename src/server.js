@@ -588,9 +588,28 @@ app.get('/product/:slug', async (req, res) => {
         const reviews = await reviewsModel.find({
             product_slug: slug,
             'moderation.status': 'approved'
-        }).sort({ created_at: -1 }); // Optional: sort by newest first
+        }).sort({ created_at: -1 });
 
-        res.render('product', { product, reviews });
+        // Get all ratings for this product
+        const ratings = await ratingsModel.find({ product_slug: slug });
+
+        // Create a map: { user_email => rating }
+        const ratingMap = {};
+        ratings.forEach(r => {
+            ratingMap[r.user_email] = r.rating;
+        });
+
+        // Merge rating into each review (if available)
+        const reviewsWithRatings = reviews.map(review => {
+            const obj = review.toObject(); // convert from Mongoose Document to plain object
+            obj.rating = ratingMap[review.user_email] || null; // attach rating if found
+            return obj;
+        });
+
+        res.render('product', {
+            product,
+            reviews: reviewsWithRatings
+        });
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send('Internal Server Error');
@@ -705,8 +724,8 @@ app.post('/write-review', (req, res) => {
 
     bb.on('finish', async () => {
         try {
-            const { product_slug, user_email, rating: rawRating, review_text } = fields;
-            const rating = Number(rawRating);
+            const { product_slug, user_email, review_rating, review_text } = fields;
+            const rating = Number(review_rating);
 
             if (!product_slug || !user_email || !rating || !review_text) {
                 return res.status(400).json({ error: 'Missing required fields' });
