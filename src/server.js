@@ -878,6 +878,53 @@ app.post('/rating', async (req, res) => {
     }
 });
 
+//upvote and downvote route
+app.post('/reviews/:id/vote', async (req, res) => {
+    const reviewId = req.params.id;
+    const { voteType } = req.body; // 'up' or 'down'
+    const userEmail = req.session.user?.email;
+
+    if (!userEmail) return res.status(401).json({ error: 'User not authenticated' });
+    if (!['up', 'down'].includes(voteType)) return res.status(400).json({ error: 'Invalid vote type' });
+
+    try {
+        const review = await reviewsModel.findById(reviewId);
+        if (!review) return res.status(404).json({ error: 'Review not found' });
+
+        const { upvotes, downvotes } = review.votes || { upvotes: [], downvotes: [] };
+
+        const hasUpvoted = upvotes.includes(userEmail);
+        const hasDownvoted = downvotes.includes(userEmail);
+
+        if (voteType === 'up') {
+            if (hasUpvoted) {
+                // Remove upvote (toggle)
+                review.votes.upvotes.pull(userEmail);
+            } else {
+                review.votes.upvotes.push(userEmail);
+                review.votes.downvotes.pull(userEmail); // Remove downvote if exists
+            }
+        } else {
+            if (hasDownvoted) {
+                // Remove downvote (toggle)
+                review.votes.downvotes.pull(userEmail);
+            } else {
+                review.votes.downvotes.push(userEmail);
+                review.votes.upvotes.pull(userEmail); // Remove upvote if exists
+            }
+        }
+
+        await review.save();
+
+        res.json({
+            success: true,
+            upvotes: review.votes.upvotes.length,
+            downvotes: review.votes.downvotes.length
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error', details: err.message });
+    }
+});
 
 /*
 This admin routes are being tested.
@@ -1399,32 +1446,6 @@ app.post('/admin/user/:id/edit', async (req, res) => {
         req.pipe(bb);
     }
 });
-
-app.get('/product-review', async (req, res) => {
-    const name = req.query.name;
-    if (!name) {
-        return res.status(400).send("Missing product name");
-    }
-
-    try {
-        const product = await productsModel.findOne({ name }).lean();
-        if (!product) {
-            return res.status(404).send("Product not found");
-        }
-
-        const reviews = await reviewsModel.find({ product_slug: name }).sort({ created_at: -1 }).lean(); // 如果你的 review 中用的是 name
-
-        res.render('product-review.ejs', {
-            product,
-            reviews,
-            user: req.session.user
-        });
-    } catch (err) {
-        console.error("Error loading product review page:", err);
-        res.status(500).send("Server error");
-    }
-});
-
 
 
 // const isAdmin = (req, res, next) => {
