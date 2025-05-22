@@ -14,21 +14,22 @@
     <div class="container py-3">
         <form method="POST" enctype="multipart/form-data" action="/admin/product/<%= product._id %>/edit">
             <div class="card mb-3">
+                <div class="mb-2">
+                    <label>Category</label>
+                    <select name="category_slug" class="form-select form-select-sm">
+                        <% categories.forEach(cat => { %>
+                            <option value="<%= cat.slug %>" <%= cat.slug === product.category_slug ? 'selected' : '' %>><%= cat.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
                 <div class="card-header d-flex justify-content-between">
                     <input name="name" value="<%= product.name %>" class="form-control form-control-sm w-50" />
-                    <button type="button" id="softDeleteBtn" class="btn btn-danger btn-sm">Delete Product</button>
+                    <button type="button" id="softDeleteBtn" class="btn btn-danger btn-sm">Delete</button>
                     <!-- Place the hidden input here -->
                     <input type="hidden" name="delete" id="deleteFlag" value="">
                 </div>
                 <div class="card-body">
-                    <div class="mb-2">
-                        <label>Category</label>
-                        <select name="category_slug" class="form-select form-select-sm">
-                            <% categories.forEach(cat => { %>
-                                <option value="<%= cat.slug %>" <%= cat.slug === product.category_slug ? 'selected' : '' %>><%= cat.name %></option>
-                            <% }) %>
-                        </select>
-                    </div>
+
                     <div class="mb-2">
                         <label>Product Pictures (max 4):</label>
                         <!-- Hidden input to track deletions -->
