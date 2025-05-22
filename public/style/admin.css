@@ -55,6 +55,7 @@ tr:last-child td {
     cursor: pointer;
     transition: background 0.18s;
 }
+
 /* Show right arrow on row hover, positioned absolutely at the right edge */
 .clickable-row:hover::after {
     content: '〉';
@@ -81,6 +82,55 @@ tr:last-child td {
     opacity: 0.7;
     pointer-events: none;
 }
+
+
+/* sort button for table */
+.sort-btn {
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    padding: 0;
+}
+
+.sort-header {
+    display: inline-flex;
+    align-items: center;      /* This vertically aligns text and arrows */
+    gap: 0.3em;               /* Space between text and arrows */
+}
+
+/* Arrow styles as before, but smaller and outline */
+.sort-arrow {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    margin-left: 0.1em;
+    height: 1em;
+    gap: 2px;
+    margin-top: 10px; /* adjust this value as needed */
+}
+.arrow-up, .arrow-down {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+}
+.arrow-up {
+    border-bottom: 4px solid #888;
+    border-top: none;
+    background: transparent;
+}
+.arrow-down {
+    border-top: 4px solid #888;
+    border-bottom: none;
+    background: transparent;
+}
+.arrow-inactive {
+    opacity: 0.3;
+}
+
+
 
 /* List Groups (for central cat page) */
 .list-group {

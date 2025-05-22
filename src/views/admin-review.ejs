@@ -36,9 +36,39 @@
             <table class="table table-hover">
                 <thead>
                 <tr>
-                    <th scope="col"><a href="?sort=date">Date</a></th>
-                    <th scope="col"><a href="?sort=product">Product</a></th>
-                    <th scope="col"><a href="?sort=rating">Rating</a></th>
+                    <th scope="col">
+                        <button type="button" class="sort-btn" data-sort="date">
+                            <span class="sort-header">
+                              Date
+                              <span class="sort-arrow">
+                                <span class="arrow-up"></span>
+                                <span class="arrow-down"></span>
+                              </span>
+                            </span>
+                        </button>
+                    </th>
+                    <th scope="col">
+                        <button type="button" class="sort-btn" data-sort="product">
+                            <span class="sort-header">
+                              Product
+                              <span class="sort-arrow">
+                                <span class="arrow-up"></span>
+                                <span class="arrow-down"></span>
+                              </span>
+                            </span>
+                        </button>
+                    </th>
+                    <th scope="col">
+                        <button type="button" class="sort-btn" data-sort="rating">
+                            <span class="sort-header">
+                              Rating
+                              <span class="sort-arrow">
+                                <span class="arrow-up"></span>
+                                <span class="arrow-down"></span>
+                              </span>
+                            </span>
+                        </button>
+                    </th>
                 </tr>
                 </thead>
                 <tbody id="reviewTableBody">
@@ -84,6 +114,67 @@
                 tr.style.display = (!val || tr.getAttribute('data-rating') === val) ? '' : 'none';
             });
         });
+
+        // Sorting with arrow indicator
+        let lastSort = { idx: null, asc: true };
+
+        function getCellValue(tr, idx) {
+            // If sorting by the Ratings column (idx === 2), use the data-rating attribute
+            if (idx === 2) {
+                return tr.getAttribute('data-rating') || "0";
+            }
+            return tr.children[idx].textContent.trim();
+        }
+
+        function compareRows(idx, type, asc) {
+            return function(a, b) {
+                let v1 = getCellValue(asc ? a : b, idx);
+                let v2 = getCellValue(asc ? b : a, idx);
+
+                if (type === "number") {
+                    v1 = parseFloat(v1) || 0;
+                    v2 = parseFloat(v2) || 0;
+                    return v1 - v2;
+                } else if (type === "date") {
+                    // Parse as YYYY/MM/DD
+                    return new Date(v1) - new Date(v2);
+                } else {
+                    return v1.localeCompare(v2);
+                }
+            }
+        }
+
+        document.querySelectorAll('.sort-btn').forEach(function(btn, idx) {
+            btn.addEventListener('click', function() {
+                const tbody = document.getElementById('reviewTableBody');
+                const rows = Array.from(tbody.querySelectorAll('tr')).filter(tr => tr.style.display !== 'none');
+                let type = "string";
+                if (btn.dataset.sort === "date") type = "date";
+                if (btn.dataset.sort === "rating") type = "number";
+
+                let asc = (lastSort.idx === idx) ? !lastSort.asc : true;
+                rows.sort(compareRows(idx, type, asc));
+                rows.forEach(row => tbody.appendChild(row));
+                lastSort = { idx, asc };
+
+                // Reset all arrows
+                document.querySelectorAll('.sort-arrow').forEach(span => {
+                    span.querySelector('.arrow-up').classList.remove('arrow-inactive');
+                    span.querySelector('.arrow-down').classList.remove('arrow-inactive');
+                });
+                // Set inactive state
+                const arrowUp = btn.querySelector('.arrow-up');
+                const arrowDown = btn.querySelector('.arrow-down');
+                if (asc) {
+                    arrowUp.classList.remove('arrow-inactive');
+                    arrowDown.classList.add('arrow-inactive');
+                } else {
+                    arrowUp.classList.add('arrow-inactive');
+                    arrowDown.classList.remove('arrow-inactive');
+                }
+            });
+        });
+
     </script>
 
     <%- include('component/bottom-navbar-admin.ejs') %>
