@@ -127,7 +127,7 @@
                 categorySelect.addEventListener('change', function() {
                     const catSlug = this.value;
                     if (!catSlug) return;
-                    window.location = `/admin/cat/product-detail?category_slug=${catSlug}`;
+                    window.location = `/admin/product/add/product-detail?category_slug=${catSlug}`;
                 });
             }
 
@@ -137,10 +137,10 @@
                     const prodSlug = this.value;
                     const catSlug = document.getElementById('categorySelect').value;
                     if (!prodSlug) {
-                        window.location = `/admin/cat/product-detail?category_slug=${catSlug}`;
+                        window.location = `/admin/product/add/product-detail?category_slug=${catSlug}`;
                         return;
                     }
-                    window.location = `/admin/cat/product-detail?product_slug=${prodSlug}`;
+                    window.location = `/admin/product/add/product-detail?product_slug=${prodSlug}`;
                 });
             }
 
@@ -155,7 +155,7 @@
                         return;
                     }
                     // Create product via API
-                    const res = await fetch('/admin/cat/create-product', {
+                    const res = await fetch('/admin/product/create-product', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({ name: nameInput.value.trim(), category_slug: catSlug })
@@ -163,7 +163,7 @@
                     const data = await res.json();
                     if (data.success) {
                         // Redirect to edit page for new product
-                        window.location = `/admin/cat/product-detail?product_slug=${data.product.slug}`;
+                        window.location = `/admin/product/add/product-detail?product_slug=${data.product.slug}`;
                     } else {
                         newProductMsg.textContent = data.message || "Error creating product.";
                     }
