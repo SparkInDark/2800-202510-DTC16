@@ -102,19 +102,30 @@
                                             <%= new Date(review.created_at).toLocaleDateString() %>
                                         </div>
                                     </div>
-                                    <div class="text-yellow-500 mt-1">⭐️ × <%= review.review_rating %>
-                                    </div>
-                                    <p class="mt-2 text-gray-800">
-                                        <%= review.review_text %>
-                                    </p>
-                                    <% if (review.review_images?.length) { %>
-                                        <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                            <% review.review_images.forEach(img=> { %>
-                                                <img src="<%= img %>"
-                                                    class="rounded shadow-sm w-full h-24 object-cover">
-                                                <% }) %>
+                                    <% if (review.rating) { %>
+                                        <div class="text-yellow-500 mt-1 flex">
+                                            <% for (let i=1; i <=5; i++) { %>
+                                                <% if (i <=review.rating) { %>
+                                                    <span>⭐️</span>
+                                                    <% } else { %>
+                                                        <span class="text-gray-300">⭐️</span>
+                                                        <% } %>
+                                                            <% } %>
                                         </div>
-                                        <% } %>
+                                        <% } else { %>
+                                            <div class="text-gray-400 mt-1 italic text-sm">No rating</div>
+                                            <% } %>
+                                                <p class="mt-2 text-gray-800">
+                                                    <%= review.review_text %>
+                                                </p>
+                                                <% if (review.review_images?.length) { %>
+                                                    <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                        <% review.review_images.forEach(img=> { %>
+                                                            <img src="<%= img %>"
+                                                                class="rounded shadow-sm w-full h-24 object-cover">
+                                                            <% }) %>
+                                                    </div>
+                                                    <% } %>
                                 </div>
                                 <% }) %>
                                     <% } %>
@@ -124,7 +135,7 @@
 
         <!-- Bottom Navbar -->
         <%- include('component/bottom-navbar.ejs') %>
-        <script src="/script/profile-dropdown.js"></script>
+            <script src="/script/profile-dropdown.js"></script>
 </body>
 
 </html>

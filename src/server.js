@@ -61,7 +61,6 @@ const usersModel = mongoose.model('users', userSchema);
 const reviewSchema = new mongoose.Schema({
     product_slug: { type: String, required: true },
     user_email: { type: String, required: true },
-    review_rating: { type: Number, min: 1, max: 5, required: true },
     review_text: { type: String, required: true },
     review_images: {
         type: [String],
@@ -90,6 +89,8 @@ const ratingSchema = new mongoose.Schema({
     user_email: { type: String, required: true },
     rating: { type: Number, min: 1, max: 5, required: true }
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
+
+ratingSchema.index({ product_slug: 1, user_email: 1 }, { unique: true }); // prevent duplicate ratings by the same user
 
 const ratingsModel = mongoose.model('ratings', ratingSchema);
 
@@ -285,13 +286,14 @@ app.get('/', (req, res) => {
 
 // Home route
 app.get('/home', async (req, res) => {
-     try {
+    try {
         console.log(req.session.user);
+        const categories = await categoriesModel.find()
         const topProducts = await productsModel.find()
             .sort({ 'rating_summary.average': -1 })
             .limit(3);
 
-        res.render('index', { topProducts });
+        res.render('index', { topProducts, categories });
     } catch (error) {
         console.error('Error fetching top products:', error);
         res.status(500).send('Internal Server Error');
@@ -587,9 +589,28 @@ app.get('/product/:slug', async (req, res) => {
         const reviews = await reviewsModel.find({
             product_slug: slug,
             'moderation.status': 'approved'
-        }).sort({ created_at: -1 }); // Optional: sort by newest first
+        }).sort({ created_at: -1 });
 
-        res.render('product', { product, reviews });
+        // Get all ratings for this product
+        const ratings = await ratingsModel.find({ product_slug: slug });
+
+        // Create a map: { user_email => rating }
+        const ratingMap = {};
+        ratings.forEach(r => {
+            ratingMap[r.user_email] = r.rating;
+        });
+
+        // Merge rating into each review (if available)
+        const reviewsWithRatings = reviews.map(review => {
+            const obj = review.toObject(); // convert from Mongoose Document to plain object
+            obj.rating = ratingMap[review.user_email] || null; // attach rating if found
+            return obj;
+        });
+
+        res.render('product', {
+            product,
+            reviews: reviewsWithRatings
+        });
     } catch (error) {
         console.error('Error:', error);
         res.status(500).send('Internal Server Error');
@@ -626,7 +647,7 @@ app.get('/search', async (req, res) => {
 
 //
 app.get('/top10products', async (req, res) => {
-     try {
+    try {
         const topProducts = await productsModel.find()
             .sort({ 'rating_summary.average': -1 })
             .limit(10);
@@ -679,16 +700,14 @@ app.get('/write-review', async (req, res) => {
 app.post('/write-review', (req, res) => {
     const bb = busboy({ headers: req.headers });
     const fields = {};
-    const files = {}; // { review_image_0: { buffer, originalname }, ... }
+    const files = {};
 
-    // Collect fields
     bb.on('field', (fieldname, val) => {
         fields[fieldname] = val;
     });
 
-    // Collect files
     bb.on('file', (fieldname, file, info) => {
-        const { filename, encoding, mimeType } = info;
+        const { filename, mimeType } = info;
         if (filename) {
             const buffers = [];
             file.on('data', data => buffers.push(data));
@@ -696,11 +715,10 @@ app.post('/write-review', (req, res) => {
                 files[fieldname] = {
                     buffer: Buffer.concat(buffers),
                     originalname: filename,
-                    mimeType: mimeType
+                    mimeType
                 };
             });
         } else {
-            // No file uploaded for this slot
             file.resume();
         }
     });
@@ -714,15 +732,13 @@ app.post('/write-review', (req, res) => {
                 return res.status(400).json({ error: 'Missing required fields' });
             }
 
-            // Build review_images array: 4 slots, matching the grid order
+            // Handle review images
             let review_images = [];
             for (let i = 0; i < 4; i++) {
-                // Check for soft-delete flag
                 if (fields[`delete_image_${i}`] === 'true') {
                     review_images[i] = null;
                     continue;
                 }
-                // If a new image was uploaded in this slot
                 const field = `review_image_${i}`;
                 const file = files[field];
                 if (file && Buffer.isBuffer(file.buffer) && file.buffer.length > 0) {
@@ -733,33 +749,66 @@ app.post('/write-review', (req, res) => {
                         return res.status(500).json({ error: 'Image upload failed', details: uploadErr.message });
                     }
                 } else {
-                    review_images[i] = null; // No image uploaded and not marked for delete
+                    review_images[i] = null;
                 }
             }
 
-            // Optionally: remove nulls if you want a compact array
-            review_images = review_images.filter(url => url);
+            review_images = review_images.filter(Boolean);
 
+            // Save review (without rating)
             const review = new reviewsModel({
                 product_slug,
                 user_email,
-                review_rating,
                 review_text,
                 review_images
             });
-
             await review.save();
+
+            // Upsert rating
+            await ratingsModel.findOneAndUpdate(
+                { product_slug, user_email },
+                { rating },
+                { upsert: true, new: true }
+            );
+
+            // Recalculate product's ratings
+            const ratings = await ratingsModel.find({ product_slug });
+
+            const starCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+            let total = 0;
+            ratings.forEach(r => {
+                starCounts[r.rating] += 1;
+                total += r.rating;
+            });
+
+            const totalRatings = ratings.length;
+            const averageRating = totalRatings > 0 ? total / totalRatings : 0;
+
+            await productsModel.findOneAndUpdate(
+                { slug: product_slug },
+                {
+                    average_rating: averageRating,
+                    total_ratings: totalRatings,
+                    star_1_count: starCounts[1],
+                    star_2_count: starCounts[2],
+                    star_3_count: starCounts[3],
+                    star_4_count: starCounts[4],
+                    star_5_count: starCounts[5]
+                }
+            );
+
             const product = await productsModel.findOne({ slug: product_slug });
             let category = null;
-            if (product && product.category_slug) {
+            if (product?.category_slug) {
                 category = await categoriesModel.findOne({ slug: product.category_slug });
             }
+
             res.status(201).json({
-                message: 'Review submitted successfully',
+                message: 'Review and rating submitted successfully',
                 review: {
                     ...review.toObject(),
-                    product_name: product ? product.name : product_slug,
-                    category_name: category ? category.name : ''
+                    product_name: product?.name || product_slug,
+                    category_name: category?.name || ''
                 }
             });
         } catch (err) {
@@ -767,16 +816,116 @@ app.post('/write-review', (req, res) => {
         }
     });
 
-    // For Firebase, use req.rawBody; for normal Express, use req.pipe(busboy)
     if (req.rawBody) {
-        bb.end(req.rawBody); // For Firebase Functions
+        bb.end(req.rawBody);
     } else {
-        req.pipe(bb);        // For normal Express (local, Render.com, etc.)
+        req.pipe(bb);
     }
 });
 
 
+//Rating Route
+app.post('/rating', async (req, res) => {
+    try {
+        const user = req.session.user;
+        if (!user) return res.status(401).json({ error: 'User not logged in' });
 
+        const { product_slug, rating } = req.body;
+        if (!product_slug || !rating) {
+            return res.status(400).json({ error: 'Missing product_slug or rating' });
+        }
+
+        const userEmail = user.email;
+
+        // Check for existing rating
+        await ratingsModel.findOneAndUpdate(
+            { product_slug, user_email: userEmail },      // Filter
+            { rating },                                   // Update
+            { upsert: true, new: true }                   // Options: create if not found, return new doc
+        );
+
+
+        // After rating is added/updated, recalculate summary
+        const ratings = await ratingsModel.find({ product_slug });
+
+        const starCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        let total = 0;
+
+        ratings.forEach(r => {
+            starCounts[r.rating] += 1;
+            total += r.rating;
+        });
+
+        const totalRatings = ratings.length;
+        const averageRating = totalRatings > 0 ? total / totalRatings : 0;
+
+        // Update product summary
+        await productsModel.findOneAndUpdate(
+            { slug: product_slug },
+            {
+                $set: {
+                    'rating_summary.average': averageRating.toFixed(2),
+                    'rating_summary.total_ratings': totalRatings,
+                    'rating_summary.star_counts': starCounts
+                }
+            }
+        );
+
+        res.status(200).json({ success: true, message: 'Rating saved and summary updated' });
+
+    } catch (err) {
+        console.error('Error handling rating:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+//upvote and downvote route
+app.post('/reviews/:id/vote', async (req, res) => {
+    const reviewId = req.params.id;
+    const { voteType } = req.body; // 'up' or 'down'
+    const userEmail = req.session.user?.email;
+
+    if (!userEmail) return res.status(401).json({ error: 'User not authenticated' });
+    if (!['up', 'down'].includes(voteType)) return res.status(400).json({ error: 'Invalid vote type' });
+
+    try {
+        const review = await reviewsModel.findById(reviewId);
+        if (!review) return res.status(404).json({ error: 'Review not found' });
+
+        const { upvotes, downvotes } = review.votes || { upvotes: [], downvotes: [] };
+
+        const hasUpvoted = upvotes.includes(userEmail);
+        const hasDownvoted = downvotes.includes(userEmail);
+
+        if (voteType === 'up') {
+            if (hasUpvoted) {
+                // Remove upvote (toggle)
+                review.votes.upvotes.pull(userEmail);
+            } else {
+                review.votes.upvotes.push(userEmail);
+                review.votes.downvotes.pull(userEmail); // Remove downvote if exists
+            }
+        } else {
+            if (hasDownvoted) {
+                // Remove downvote (toggle)
+                review.votes.downvotes.pull(userEmail);
+            } else {
+                review.votes.downvotes.push(userEmail);
+                review.votes.upvotes.pull(userEmail); // Remove upvote if exists
+            }
+        }
+
+        await review.save();
+
+        res.json({
+            success: true,
+            upvotes: review.votes.upvotes.length,
+            downvotes: review.votes.downvotes.length
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error', details: err.message });
+    }
+});
 
 /*
 This admin routes are being tested.
@@ -1298,32 +1447,6 @@ app.post('/admin/user/:id/edit', async (req, res) => {
         req.pipe(bb);
     }
 });
-
-app.get('/product-review', async (req, res) => {
-    const name = req.query.name;
-    if (!name) {
-        return res.status(400).send("Missing product name");
-    }
-
-    try {
-        const product = await productsModel.findOne({ name }).lean();
-        if (!product) {
-            return res.status(404).send("Product not found");
-        }
-
-        const reviews = await reviewsModel.find({ product_slug: name }).sort({ created_at: -1 }).lean(); // 如果你的 review 中用的是 name
-
-        res.render('product-review.ejs', {
-            product,
-            reviews,
-            user: req.session.user
-        });
-    } catch (err) {
-        console.error("Error loading product review page:", err);
-        res.status(500).send("Server error");
-    }
-});
-
 
 
 // const isAdmin = (req, res, next) => {
