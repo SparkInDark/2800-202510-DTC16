@@ -254,7 +254,7 @@ button.btn-primary:hover, .btn.btn-primary:hover {
 
 .product-image-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(4, 1fr);
     gap: 8px;
     max-width: 200px; /* Adjust as needed for mobile */
     margin: 0 auto;
