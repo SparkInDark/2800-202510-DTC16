@@ -61,7 +61,6 @@ const usersModel = mongoose.model('users', userSchema);
 const reviewSchema = new mongoose.Schema({
     product_slug: { type: String, required: true },
     user_email: { type: String, required: true },
-    review_rating: { type: Number, min: 1, max: 5, required: true },
     review_text: { type: String, required: true },
     review_images: {
         type: [String],
@@ -681,16 +680,14 @@ app.get('/write-review', async (req, res) => {
 app.post('/write-review', (req, res) => {
     const bb = busboy({ headers: req.headers });
     const fields = {};
-    const files = {}; // { review_image_0: { buffer, originalname }, ... }
+    const files = {};
 
-    // Collect fields
     bb.on('field', (fieldname, val) => {
         fields[fieldname] = val;
     });
 
-    // Collect files
     bb.on('file', (fieldname, file, info) => {
-        const { filename, encoding, mimeType } = info;
+        const { filename, mimeType } = info;
         if (filename) {
             const buffers = [];
             file.on('data', data => buffers.push(data));
@@ -698,33 +695,30 @@ app.post('/write-review', (req, res) => {
                 files[fieldname] = {
                     buffer: Buffer.concat(buffers),
                     originalname: filename,
-                    mimeType: mimeType
+                    mimeType
                 };
             });
         } else {
-            // No file uploaded for this slot
             file.resume();
         }
     });
 
     bb.on('finish', async () => {
         try {
-            const { product_slug, user_email, review_rating, review_text } = fields;
-            const rating = Number(review_rating);
+            const { product_slug, user_email, rating: rawRating, review_text } = fields;
+            const rating = Number(rawRating);
 
             if (!product_slug || !user_email || !rating || !review_text) {
                 return res.status(400).json({ error: 'Missing required fields' });
             }
 
-            // Build review_images array: 4 slots, matching the grid order
+            // Handle review images
             let review_images = [];
             for (let i = 0; i < 4; i++) {
-                // Check for soft-delete flag
                 if (fields[`delete_image_${i}`] === 'true') {
                     review_images[i] = null;
                     continue;
                 }
-                // If a new image was uploaded in this slot
                 const field = `review_image_${i}`;
                 const file = files[field];
                 if (file && Buffer.isBuffer(file.buffer) && file.buffer.length > 0) {
@@ -735,33 +729,66 @@ app.post('/write-review', (req, res) => {
                         return res.status(500).json({ error: 'Image upload failed', details: uploadErr.message });
                     }
                 } else {
-                    review_images[i] = null; // No image uploaded and not marked for delete
+                    review_images[i] = null;
                 }
             }
 
-            // Optionally: remove nulls if you want a compact array
-            review_images = review_images.filter(url => url);
+            review_images = review_images.filter(Boolean);
 
+            // Save review (without rating)
             const review = new reviewsModel({
                 product_slug,
                 user_email,
-                review_rating,
                 review_text,
                 review_images
             });
-
             await review.save();
+
+            // Upsert rating
+            await ratingsModel.findOneAndUpdate(
+                { product_slug, user_email },
+                { rating },
+                { upsert: true, new: true }
+            );
+
+            // Recalculate product's ratings
+            const ratings = await ratingsModel.find({ product_slug });
+
+            const starCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+            let total = 0;
+            ratings.forEach(r => {
+                starCounts[r.rating] += 1;
+                total += r.rating;
+            });
+
+            const totalRatings = ratings.length;
+            const averageRating = totalRatings > 0 ? total / totalRatings : 0;
+
+            await productsModel.findOneAndUpdate(
+                { slug: product_slug },
+                {
+                    average_rating: averageRating,
+                    total_ratings: totalRatings,
+                    star_1_count: starCounts[1],
+                    star_2_count: starCounts[2],
+                    star_3_count: starCounts[3],
+                    star_4_count: starCounts[4],
+                    star_5_count: starCounts[5]
+                }
+            );
+
             const product = await productsModel.findOne({ slug: product_slug });
             let category = null;
-            if (product && product.category_slug) {
+            if (product?.category_slug) {
                 category = await categoriesModel.findOne({ slug: product.category_slug });
             }
+
             res.status(201).json({
-                message: 'Review submitted successfully',
+                message: 'Review and rating submitted successfully',
                 review: {
                     ...review.toObject(),
-                    product_name: product ? product.name : product_slug,
-                    category_name: category ? category.name : ''
+                    product_name: product?.name || product_slug,
+                    category_name: category?.name || ''
                 }
             });
         } catch (err) {
@@ -769,75 +796,67 @@ app.post('/write-review', (req, res) => {
         }
     });
 
-    // For Firebase, use req.rawBody; for normal Express, use req.pipe(busboy)
     if (req.rawBody) {
-        bb.end(req.rawBody); // For Firebase Functions
+        bb.end(req.rawBody);
     } else {
-        req.pipe(bb);        // For normal Express (local, Render.com, etc.)
+        req.pipe(bb);
     }
 });
+
 
 //Rating Route
 app.post('/rating', async (req, res) => {
     try {
-    const user = req.session.user;
-    if (!user) return res.status(401).json({ error: 'User not logged in' });
+        const user = req.session.user;
+        if (!user) return res.status(401).json({ error: 'User not logged in' });
 
-    const { product_slug, rating } = req.body;
-    if (!product_slug || !rating) {
-      return res.status(400).json({ error: 'Missing product_slug or rating' });
-    }
-
-    const userEmail = user.email;
-
-    // Check for existing rating
-    const existing = await ratingsModel.findOne({ product_slug, user_email: userEmail });
-
-    if (existing) {
-      // Update old rating
-      existing.rating = rating;
-      await existing.save();
-    } else {
-      // Add new rating
-      await ratingsModel.create({
-        product_slug,
-        user_email: userEmail,
-        rating,
-      });
-    }
-
-    // After rating is added/updated, recalculate summary
-    const ratings = await ratingsModel.find({ product_slug });
-
-    const starCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    let total = 0;
-
-    ratings.forEach(r => {
-      starCounts[r.rating] += 1;
-      total += r.rating;
-    });
-
-    const totalRatings = ratings.length;
-    const averageRating = totalRatings > 0 ? total / totalRatings : 0;
-
-    // Update product summary
-    await productsModel.findOneAndUpdate(
-      { slug: product_slug },
-      {
-        $set: {
-          'rating_summary.average': averageRating.toFixed(2),
-          'rating_summary.total_ratings': totalRatings,
-          'rating_summary.star_counts': starCounts
+        const { product_slug, rating } = req.body;
+        if (!product_slug || !rating) {
+            return res.status(400).json({ error: 'Missing product_slug or rating' });
         }
-      }
-    );
 
-    res.status(200).json({ success: true, message: 'Rating saved and summary updated' });
+        const userEmail = user.email;
 
-  } catch (err) {
-    console.error('Error handling rating:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
+        // Check for existing rating
+        await ratingsModel.findOneAndUpdate(
+            { product_slug, user_email: userEmail },      // Filter
+            { rating },                                   // Update
+            { upsert: true, new: true }                   // Options: create if not found, return new doc
+        );
+
+
+        // After rating is added/updated, recalculate summary
+        const ratings = await ratingsModel.find({ product_slug });
+
+        const starCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        let total = 0;
+
+        ratings.forEach(r => {
+            starCounts[r.rating] += 1;
+            total += r.rating;
+        });
+
+        const totalRatings = ratings.length;
+        const averageRating = totalRatings > 0 ? total / totalRatings : 0;
+
+        // Update product summary
+        await productsModel.findOneAndUpdate(
+            { slug: product_slug },
+            {
+                $set: {
+                    'rating_summary.average': averageRating.toFixed(2),
+                    'rating_summary.total_ratings': totalRatings,
+                    'rating_summary.star_counts': starCounts
+                }
+            }
+        );
+
+        res.status(200).json({ success: true, message: 'Rating saved and summary updated' });
+
+    } catch (err) {
+        console.error('Error handling rating:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
 
