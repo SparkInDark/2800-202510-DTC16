@@ -30,62 +30,75 @@
             </div>
         </section>
 
-        <!-- Category Section -->
+        <!-- 手写 Accordion Grid -->
         <section class="max-w-6xl mx-auto px-4 py-12">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                <% categories.forEach(category=> { %>
-                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow p-6 flex flex-col">
-                        <div class="flex items-center mb-4">
-                            <i class="fas fa-tags text-blue-500 text-2xl mr-3"></i>
-                            <h2 class="text-2xl font-bold">
-                                <%= category.name %>
-                            </h2>
-                        </div>
-                        <p class="text-gray-600 mb-6 flex-grow">
-                            <%= category.description %>
-                        </p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+                <% categories.forEach(function(category, idx) { %>
+                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow p-6">
+                        <!-- 标题按钮 -->
+                        <button type="button" class="w-full flex items-center justify-between focus:outline-none"
+                            data-target="panel-<%= idx %>">
+                            <div class="flex items-center">
+                                <i class="fas fa-tags text-blue-500 text-2xl mr-3"></i>
+                                <span class="text-2xl font-bold">
+                                    <%= category.name %>
+                                </span>
+                            </div>
+                            <i id="icon-<%= idx %>"
+                                class="fas fa-chevron-down text-gray-400 transition-transform duration-200"></i>
+                        </button>
 
-                        <% if (category.products.length> 0) { %>
-                            <ul class="space-y-4">
-                                <% category.products.forEach(product=> { %>
-                                    <li>
-                                        <a href="/product/<%= encodeURIComponent(product.name) %>"
-                                            class="flex items-start p-3 hover:bg-gray-100 rounded transition">
-                                            <i class="fas fa-box-open text-gray-400 text-xl mt-1 mr-3"></i>
-                                            <div>
-                                                <strong class="block text-lg text-gray-900">
-                                                    <%= product.name %>
-                                                </strong>
-                                                <p class="text-sm text-gray-600">Average Rating: <span
-                                                        class="font-semibold">
-                                                        <%= product.rating_summary.average %>
-                                                    </span></p>
-                                            </div>
-                                        </a>
-                                    </li>
-                                    <% }) %>
-                            </ul>
-                            <% } else { %>
-                                <p class="text-gray-500 italic">No products in this category.</p>
-                                <% } %>
+                        <!-- 隐藏面板 -->
+                        <div id="panel-<%= idx %>" class="mt-4 hidden">
+                            <p class="text-gray-600 mb-6">
+                                <%= category.description %>
+                            </p>
+
+                            <% if (category.products.length> 0) { %>
+                                <ul class="space-y-4">
+                                    <% category.products.forEach(function(product) { %>
+                                        <li>
+                                            <a href="/product/<%= product.slug %>"
+                                                class="flex items-start p-3 hover:bg-gray-100 rounded transition">
+                                                <i class="fas fa-box-open text-gray-400 text-xl mt-1 mr-3"></i>
+                                                <div>
+                                                    <strong class="block text-lg text-gray-900">
+                                                        <%= product.name %>
+                                                    </strong>
+                                                    <p class="text-sm text-gray-600">
+                                                        Average Rating:
+                                                        <span class="font-semibold">
+                                                            <%= product.rating_summary.average %>
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                            </a>
+                                        </li>
+                                        <% }); %>
+                                </ul>
+                                <% } else { %>
+                                    <p class="text-gray-500 italic">No products in this category.</p>
+                                    <% } %>
+                        </div>
                     </div>
-                    <% }) %>
+                    <% }); %>
             </div>
         </section>
 
         <!-- Bottom Navbar -->
         <%- include('component/bottom-navbar.ejs') %>
 
-            <!-- Scripts -->
+            <!-- 切换脚本 -->
             <script>
-                function toggleDropdown(id, btn) {
-                    const el = document.getElementById(id);
-                    el.classList.toggle('hidden');
-                    const icon = btn.querySelector('i');
-                    icon.classList.toggle('rotate-90');
-                }
+                document.querySelectorAll('button[data-target]').forEach(btn => {
+                    const panel = document.getElementById(btn.dataset.target);
+                    const icon = document.getElementById('icon-' + btn.dataset.target.split('-')[1]);
+                    btn.addEventListener('click', () => {
+                        panel.classList.toggle('hidden');
+                        icon.classList.toggle('rotate-180');
+                    });
+                });
             </script>
-            <script src="/script/profile-dropdown.js"></script>
 </body>
 
 </html>
