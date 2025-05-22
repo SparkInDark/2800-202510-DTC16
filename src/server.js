@@ -99,7 +99,6 @@ const productSchema = new mongoose.Schema({
     name: { type: String, required: true },
     slug: { type: String, required: true },
     category_slug: { type: String, required: true },
-    specs: { type: mongoose.Schema.Types.Mixed, default: {} }, // flexible key-value
     images: [String], // URLs from imgbb
     rating_summary: {
         average: { type: Number, default: 0 },
@@ -112,6 +111,7 @@ const productSchema = new mongoose.Schema({
             "5": { type: Number, default: 0 }
         }
     },
+    specs: { type: mongoose.Schema.Types.Mixed, default: {} }, // flexible key-value
 });
 
 const productsModel = mongoose.model('products', productSchema);
@@ -1239,46 +1239,78 @@ app.post('/admin/cat/spec/add', async (req, res) => {
         { slug: req.body.category_slug },
         { $addToSet: { specs: req.body.spec_key } }
     );
+    // Add the new spec key to all products in this category
+    await productsModel.updateMany(
+        { category_slug: req.body.category_slug },
+        { $set: { [`specs.${req.body.spec_key}`]: "" } }
+    );
     res.redirect('/admin/cat/spec');
 });
 
 app.post('/admin/cat/spec/:slug/edit', async (req, res) => {
     const cat = await categoriesModel.findOne({ slug: req.params.slug });
     if (req.body.delete !== undefined && req.body.delete !== "") {
-        cat.specs.splice(Number(req.body.delete), 1);
-    } else if (req.body.spec_key !== undefined) {
-        // for optionally handle spec key editing - might use - keep it for now
-        cat.specs[Number(req.body.idx)] = req.body.spec_key;
+        // DELETE
+        const deleteIdx = Number(req.body.delete);
+        const deleteKey = cat.specs[deleteIdx];
+        cat.specs.splice(deleteIdx, 1);
+        await cat.save();
+        // Remove key from all products
+        await productsModel.updateMany(
+            { category_slug: req.params.slug },
+            { $unset: { [`specs.${deleteKey}`]: "" } }
+        );
+    } else if (req.body.spec_key !== undefined && req.body.old_key !== undefined) {
+        // RENAME
+        const idx = Number(req.body.idx);
+        const oldKey = req.body.old_key;
+        const newKey = req.body.spec_key;
+        cat.specs[idx] = newKey;
+        await cat.save();
+        // Rename in all products
+        const products = await productsModel.find({ category_slug: req.params.slug });
+        for (const product of products) {
+            if (product.specs && Object.prototype.hasOwnProperty.call(product.specs, oldKey)) {
+                product.specs[newKey] = product.specs[oldKey];
+                delete product.specs[oldKey];
+                await product.save();
+            }
+        }
     }
-    await cat.save();
     res.redirect('/admin/cat/spec');
 });
 
 
 // === ADMIN CAT PRODUCT DETAIL ===
 
-app.get('/admin/cat/product-detail', async (req, res) => {
+
+
+app.get('/admin/product/add/product-detail', async (req, res) => {
     const products = await productsModel.find().lean();
     const categories = await categoriesModel.find().lean();
-    let selectedProduct = products[0];
 
-    if (req.query.product_id) {
-        selectedProduct = products.find(p => p._id.toString() === req.query.product_id);
+    let selectedProduct = null;
+    let catSlug = req.query.category_slug || null;
+
+    if (req.query.product_slug) {
+        selectedProduct = products.find(p => p.slug === req.query.product_slug);
+        catSlug = selectedProduct ? selectedProduct.category_slug : catSlug;
+
+        console.log('Requested slug:', req.query.product_slug);
+        console.log('All product slugs:', products.map(p => p.slug));
+
+        if (!selectedProduct) {
+            // Only show error if a specific product_slug was requested and not found
+            return res.status(404).render('component/error-no-product-found', { message: 'Product not found' });
+        }
     }
 
-    if (!selectedProduct) {
-        // No valid product found, show error or redirect
-        return res.status(404).render('component/error-no-product-found', { message: 'Product database is empty' });
-        // Or: return res.redirect('/admin/cat/product-detail');
-    }
-
-    const cat = categories.find(c => c.slug === selectedProduct.category_slug);
-    const productSpecs = cat ? cat.specs : [];
-    res.render('admin-cat-product-detail', { products, categories, selectedProduct, productSpecs });
+    const productSpecs = (categories.find(c => c.slug === catSlug) || {}).specs || [];
+    res.render('admin-product-add', { products, categories, selectedProduct, productSpecs, catSlug });
 });
 
 
-app.post('/admin/cat/product-detail', async (req, res) => {
+app.post('/admin/product/add/product-detail', async (req, res) => {
     const bb = busboy({ headers: req.headers });
     const fields = {};
     const files = {}; // { new_image_0: { buffer, originalname }, ... }
@@ -1308,18 +1340,47 @@ app.post('/admin/cat/product-detail', async (req, res) => {
 
     bb.on('finish', async () => {
         try {
-            const product = await productsModel.findById(fields.product_id);
+            const product = await productsModel.findOne({ slug: fields.product_slug });
             if (!product) {
                 return res.status(404).send('Product not found');
             }
 
             if (fields.delete) {
                 await product.deleteOne();
-                return res.redirect('/admin/cat/product-detail');
+                return res.redirect('/admin/product/add/product-detail');
             }
 
             product.category_slug = fields.category_slug;
-            product.specs = fields.specs || {};
+
+// Parse all fields like specs[KEY]
+            const specs = {};
+            for (const key in fields) {
+                const match = key.match(/^specs\[(.+)\]$/);
+                if (match) {
+                    specs[match[1]] = fields[key];
+                }
+            }
+
+            // Get current category spec keys
+            const category = await categoriesModel.findOne({ slug: product.category_slug });
+            const specKeys = (category && Array.isArray(category.specs)) ? category.specs : [];
+
+            // Ensure all category spec keys are present in product.specs
+            for (const key of specKeys) {
+                if (!(key in specs)) {
+                    specs[key] = ""; // or null, or your preferred default
+                }
+            }
+
+            // Optionally, remove keys not in category spec
+            const cleanedSpecs = {};
+            for (const key of specKeys) {
+                cleanedSpecs[key] = specs[key];
+            }
+            product.specs = cleanedSpecs;
+
+            // Defensive: ensure images is an array
+            if (!Array.isArray(product.images)) product.images = [];
 
             // Handle multiple image deletions from images_to_delete
             if (fields.images_to_delete) {
@@ -1343,7 +1404,7 @@ app.post('/admin/cat/product-detail', async (req, res) => {
             }
 
             await product.save();
-            res.redirect(`/admin/cat/product-detail?product_id=${product._id}`);
+            res.redirect(`/admin/product/add/product-detail?product_slug=${product.slug}`);
         } catch (err) {
             console.error('Admin cat product-detail error:', err);
             res.status(500).send('Server error');
@@ -1358,6 +1419,30 @@ app.post('/admin/cat/product-detail', async (req, res) => {
         // For local Express, Render.com, etc.
         req.pipe(bb);
     }
+});
+
+
+app.post('/admin/product/create-product', express.json(), async (req, res) => {
+    const { name, category_slug } = req.body;
+    if (!name || !category_slug) {
+        return res.json({ success: false, message: "Missing name or category." });
+    }
+    const slug = slugify(name);
+    // Check for uniqueness
+    const exists = await productsModel.findOne({ slug, category_slug });
+    if (exists) {
+        return res.json({ success: false, message: "Product with this name already exists in this category." });
+    }
+    // Create new product
+    const product = await productsModel.create({
+        name,
+        slug,
+        category_slug,
+        specs: {},
+        images: [],
+        rating_summary: {}
+    });
+    res.json({ success: true, product });
 });
 
 
