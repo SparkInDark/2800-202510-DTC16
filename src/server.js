@@ -1043,7 +1043,16 @@ app.get('/admin/product/:id', async (req, res) => {
 
     const cat = categories.find(c => c.slug === product.category_slug);
     const productSpecs = cat ? cat.specs : [];
-    res.render('admin-product-detail', { product, categories, productSpecs });
+
+    // Merge product.specs with productSpecs (category spec keys)
+    const mergedSpecs = {};
+    for (const key of productSpecs) {
+        mergedSpecs[key] = (product.specs && product.specs[key] !== undefined) ? product.specs[key] : "";
+    }
+
+    // Pass mergedSpecs to EJS
+    res.render('admin-product-detail', { product, categories, productSpecs, mergedSpecs });
+
 });
 
 app.post('/admin/product/:id/edit', async (req, res) => {
@@ -1053,7 +1062,14 @@ app.post('/admin/product/:id/edit', async (req, res) => {
 
     // Collect fields
     bb.on('field', (fieldname, val) => {
-        fields[fieldname] = val;
+        // Parse nested fields like specs[KEY]
+        const specMatch = fieldname.match(/^specs\[(.+)\]$/);
+        if (specMatch) {
+            fields.specs = fields.specs || {};
+            fields.specs[specMatch[1]] = val;
+        } else {
+            fields[fieldname] = val;
+        }
     });
 
     // Collect files
@@ -1085,7 +1101,24 @@ app.post('/admin/product/:id/edit', async (req, res) => {
 
             product.name = fields.name;
             product.category_slug = fields.category_slug;
-            product.specs = fields.specs || {};
+
+            // --- THE IMPORTANT PART: Sync specs with category spec keys ---
+
+            // 1. Parse all specs from the form fields
+            const specsFromForm = fields.specs || {};
+
+            // 2. Get the latest spec keys for the product's (possibly changed) category
+            const category = await categoriesModel.findOne({ slug: fields.category_slug });
+            const specKeys = (category && Array.isArray(category.specs)) ? category.specs : [];
+
+            // 3. Build the product.specs object so it has exactly the keys from the category
+            const newSpecs = {};
+            for (const key of specKeys) {
+                newSpecs[key] = specsFromForm[key] || "";
+            }
+            product.specs = newSpecs;
+
+            // --- END IMPORTANT PART ---
 
             // Handle multiple image deletions from images_to_delete
             if (fields.images_to_delete) {
