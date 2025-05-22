@@ -13,15 +13,40 @@
 
     <div class="container py-3">
         <h2>Products</h2>
-        <div class="mb-2">
-            <input type="text" id="catFilter" placeholder="Filter by category..." class="form-control form-control-sm d-inline w-auto" />
+        <div class="mb-0.75 flex flex-row items-center flex-wrap">
+            <input type="text" id="catFilter" placeholder="Filter by category..." class="form-control form-control-sm d-inline w-auto" style="width: 200px; border: 1px solid #ced4da; height: 2.2em; vertical-align: middle; padding-left: 1em; margin-bottom: 0.75em; border-radius: 0.25rem;"/>
+            <input type="text" id="prodFilter" placeholder="Filter by product..." class="form-control form-control-sm d-inline w-auto" style="width: 200px; border: 1px solid #ced4da; height: 2.2em; vertical-align: middle; padding-left: 1em; margin-bottom: 0.75em; border-radius: 0.25rem;"/>
+            <a href="/admin/product/add/product-detail" class="mt-2 ml-auto inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+               style="width: 125px; border: 1px solid #ced4da; height: 2.2em; vertical-align: middle; padding-left: 1em; padding-top: 0.3em; margin-bottom: 0.75em; border-radius: 0.25rem; margin-top: -0.005em;">
+                Add Product
+            </a>
         </div>
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
                 <tr>
-                    <th scope="col"><a href="?sort=category">Category</a></th>
-                    <th scope="col"><a href="?sort=product">Product</a></th>
+                    <th scope="col">
+                        <button type="button" class="sort-btn" data-sort="category">
+                            <span class="sort-header">
+                                Category
+                                <span class="sort-arrow">
+                                    <span class="arrow-up"></span>
+                                    <span class="arrow-down"></span>
+                                </span>
+                            </span>
+                        </button>
+                    </th>
+                    <th scope="col">
+                        <button type="button" class="sort-btn" data-sort="product">
+                            <span class="sort-header">
+                                Product
+                                <span class="sort-arrow">
+                                    <span class="arrow-up"></span>
+                                    <span class="arrow-down"></span>
+                                </span>
+                            </span>
+                        </button>
+                    </th>
                 </tr>
                 </thead>
                 <tbody id="productTableBody">
@@ -29,7 +54,6 @@
                     <tr class="clickable-row" onclick="location.href='/admin/product/<%= p._id %>'">
                         <td><%= p.category_name %></td>
                         <td><%= p.name %></td>
-                        <td><span class="right-arrow">&#8594;</span></td>
                     </tr>
                 <% }) %>
                 </tbody>
@@ -37,14 +61,65 @@
         </div>
     </div>
     <script>
-        document.getElementById('catFilter').addEventListener('input', function() {
-            const val = this.value.toLowerCase();
+        function filterTable() {
+            const catVal = document.getElementById('catFilter').value.toLowerCase();
+            const prodVal = document.getElementById('prodFilter').value.toLowerCase();
             document.querySelectorAll('#productTableBody tr').forEach(tr => {
-                tr.style.display = tr.children[0].textContent.toLowerCase().includes(val) ? '' : 'none';
+                const catText = tr.children[0].textContent.toLowerCase();
+                const prodText = tr.children[1].textContent.toLowerCase();
+                const show = catText.includes(catVal) && prodText.includes(prodVal);
+                tr.style.display = show ? '' : 'none';
+            });
+        }
+        document.getElementById('catFilter').addEventListener('input', filterTable);
+        document.getElementById('prodFilter').addEventListener('input', filterTable);
+
+
+        // sorting
+
+        function getCellValue(tr, idx) {
+            return tr.children[idx].textContent.trim();
+        }
+
+        function compareRows(idx, asc) {
+            return function(a, b) {
+                let v1 = getCellValue(asc ? a : b, idx);
+                let v2 = getCellValue(asc ? b : a, idx);
+                return v1.localeCompare(v2);
+            }
+        }
+
+        let lastSort = { idx: null, asc: true };
+
+        document.querySelectorAll('.sort-btn').forEach(function(btn, idx) {
+            btn.addEventListener('click', function() {
+                const tbody = document.getElementById('productTableBody');
+                const rows = Array.from(tbody.querySelectorAll('tr')).filter(tr => tr.style.display !== 'none');
+
+                let asc = (lastSort.idx === idx) ? !lastSort.asc : true;
+                rows.sort(compareRows(idx, asc));
+                rows.forEach(row => tbody.appendChild(row));
+                lastSort = { idx, asc };
+
+                // Reset all arrows
+                document.querySelectorAll('.sort-arrow').forEach(span => {
+                    span.querySelector('.arrow-up').classList.remove('arrow-inactive');
+                    span.querySelector('.arrow-down').classList.remove('arrow-inactive');
+                });
+                // Set inactive state
+                const arrowUp = btn.querySelector('.arrow-up');
+                const arrowDown = btn.querySelector('.arrow-down');
+                if (asc) {
+                    arrowUp.classList.remove('arrow-inactive');
+                    arrowDown.classList.add('arrow-inactive');
+                } else {
+                    arrowUp.classList.add('arrow-inactive');
+                    arrowDown.classList.remove('arrow-inactive');
+                }
             });
         });
-    </script>
 
+    </script>
 
     <%- include('component/bottom-navbar-admin.ejs') %>
     <script src="/script/profile-dropdown.js"></script>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/style/style.css" />
+    <link rel="stylesheet" href="/style/admin.css" />
+</head>
+<body>
+    <%- include('component/top-navbar.ejs') %>
+
+    <div class="container py-3">
+        <h2>Product Management</h2>
+
+        <!-- Step 1: Select Category -->
+        <div class="mb-3">
+            <label for="categorySelect" class="form-label">Select Category</label>
+            <select id="categorySelect" class="form-select">
+                <option value="">-- Select Category --</option>
+                <% categories.forEach(cat => { %>
+                    <option value="<%= cat.slug %>" <%= catSlug === cat.slug ? 'selected' : '' %>><%= cat.name %></option>
+                <% }) %>
+            </select>
+        </div>
+
+        <!-- Step 2 & 3: Product Selection Card -->
+        <div class="card mb-3 border border-gray-300 rounded-lg shadow-sm" id="productSelectorCard" style="display:<%= catSlug ? '' : 'none' %>;">
+            <div class="card-body">
+
+                <!-- Select Existing Product -->
+                <div class="mb-3">
+                    <label for="productSelect" class="form-label fw-bold">Select Existing Product</label>
+                    <select id="productSelect" class="form-select d-inline-block w-auto">
+                        <option value="">-- Select Product --</option>
+                        <% products.filter(p => p.category_slug === catSlug).forEach(p => { %>
+                            <option value="<%= p.slug %>" <%= selectedProduct && selectedProduct.slug === p.slug ? 'selected' : '' %>><%= p.name %></option>
+                        <% }) %>
+                    </select>
+                    <% if (products.filter(p => p.category_slug === catSlug).length === 0) { %>
+                        <div class="alert alert-info mt-2">No products in this category yet.</div>
+                    <% } %>
+                </div>
+
+                <div class="text-center my-3">
+                    <span class="text-muted">OR</span>
+                </div>
+
+                <!-- Add New Product -->
+                <div class="mb-3">
+                    <label for="newProductName" class="form-label fw-bold">Add New Product</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="text" id="newProductName" class="form-control w-auto border border-gray-300 focus:border-blue-500 focus:ring-0 h-9" placeholder="Enter product name" />
+                        <button type="button" class="btn btn-primary btn-sm" id="confirmNewProductBtn">Confirm</button>
+                    </div>
+                    <div id="newProductMsg" class="text-success mt-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Product Details Form -->
+        <form id="productDetailForm" method="POST" enctype="multipart/form-data" style="display:<%= selectedProduct ? '' : 'none' %>;">
+            <input type="hidden" name="product_slug" id="editProductSlug" value="<%= selectedProduct ? selectedProduct.slug : '' %>"/>
+            <input type="hidden" name="category_slug" value="<%= selectedProduct ? selectedProduct.category_slug : '' %>">
+            <div class="mb-3">
+                <label for="productName" class="form-label">Product Name</label>
+                <input type="text" id="productName" name="name" class="w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:border-blue-500" value="<%= selectedProduct ? selectedProduct.name : '' %>" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Specs</label>
+                <div class="grid gap-2">
+                    <% productSpecs.forEach(function(specKey) { %>
+                        <div class="flex items-center gap-2">
+                            <label class="w-32 font-semibold"><%= specKey %></label>
+                            <input
+                                    type="text"
+                                    name="specs[<%= specKey %>]"
+                                    value="<%= selectedProduct && selectedProduct.specs ? selectedProduct.specs[specKey] || '' : '' %>"
+                                    class="flex-1 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
+                                    placeholder="Enter <%= specKey %>"
+                            />
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Product Images (up to 4)</label>
+                <div class="flex gap-4">
+                    <% for (let i = 0; i < 4; i++) { %>
+                        <div class="relative w-24 h-24 border-2 border-dashed border-gray-400 rounded flex items-center justify-center cursor-pointer bg-gray-50 group" onclick="triggerImageInput(<%= i %>)">
+                            <% if (selectedProduct && selectedProduct.images && selectedProduct.images[i]) { %>
+                                <img id="imgPreview<%= i %>" src="<%= selectedProduct.images[i] %>" alt="Image <%= i+1 %>" class="object-cover w-full h-full rounded" />
+                                <button type="button" class="absolute top-0 right-0 bg-white bg-opacity-80 rounded-full p-1 shadow text-red-600 hover:bg-red-100 z-10" onclick="event.stopPropagation(); softDeleteImage(<%= i %>);">
+                                    &times;
+                                </button>
+                            <% } else { %>
+                                <img id="imgPreview<%= i %>" src="" style="display:none;" class="object-cover w-full h-full rounded" />
+                                <span class="text-gray-400 group-hover:text-blue-500">+</span>
+                            <% } %>
+                            <input type="file" accept="image/*" name="new_image_<%= i %>" id="imgInput<%= i %>" class="hidden" onchange="softPreviewImage(event, <%= i %>)" />
+                        </div>
+                    <% } %>
+                </div>
+                <input type="hidden" name="images_to_delete" id="imagesToDelete" value="" />
+                <div class="text-sm text-gray-500 mt-1">Click a box to upload or replace. Click &times; to remove.</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+    </div>
+
+
+
+    <%- include('component/bottom-navbar-admin.ejs') %>
+    <script src="/script/profile-dropdown.js"></script>
+<!--    <div id="imgLightbox" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.8);z-index:9999;justify-content:center;align-items:center;">-->
+<!--        <img id="lightboxImg" src="" style="max-width:90vw;max-height:90vh;border-radius:8px;box-shadow:0 4px 24px #000;" />-->
+<!--    </div>-->
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const categorySelect = document.getElementById('categorySelect');
+            if (categorySelect) {
+                categorySelect.addEventListener('change', function() {
+                    const catSlug = this.value;
+                    if (!catSlug) return;
+                    window.location = `/admin/product/add/product-detail?category_slug=${catSlug}`;
+                });
+            }
+
+            const productSelect = document.getElementById('productSelect');
+            if (productSelect) {
+                productSelect.addEventListener('change', function() {
+                    const prodSlug = this.value;
+                    const catSlug = document.getElementById('categorySelect').value;
+                    if (!prodSlug) {
+                        window.location = `/admin/product/add/product-detail?category_slug=${catSlug}`;
+                        return;
+                    }
+                    window.location = `/admin/product/add/product-detail?product_slug=${prodSlug}`;
+                });
+            }
+
+            const confirmNewProductBtn = document.getElementById('confirmNewProductBtn');
+            if (confirmNewProductBtn) {
+                confirmNewProductBtn.addEventListener('click', async function() {
+                    const nameInput = document.getElementById('newProductName');
+                    const newProductMsg = document.getElementById('newProductMsg');
+                    const catSlug = document.getElementById('categorySelect').value;
+                    if (!nameInput.value.trim()) {
+                        newProductMsg.textContent = "Please enter a product name.";
+                        return;
+                    }
+                    // Create product via API
+                    const res = await fetch('/admin/product/create-product', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ name: nameInput.value.trim(), category_slug: catSlug })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        // Redirect to edit page for new product
+                        window.location = `/admin/product/add/product-detail?product_slug=${data.product.slug}`;
+                    } else {
+                        newProductMsg.textContent = data.message || "Error creating product.";
+                    }
+                });
+            }
+        });
+
+
+        // soft deletion
+        let imagesToDelete = [];
+
+        function triggerImageInput(idx) {
+            document.getElementById('imgInput' + idx).click();
+        }
+
+        function softPreviewImage(event, idx) {
+            const input = event.target;
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('imgPreview' + idx);
+                    img.src = e.target.result;
+                    img.style.display = '';
+                    // Remove idx from imagesToDelete if present (undo soft delete)
+                    imagesToDelete = imagesToDelete.filter(i => i !== idx);
+                    document.getElementById('imagesToDelete').value = imagesToDelete.join(',');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function softDeleteImage(idx) {
+            // Hide preview and mark for deletion
+            const img = document.getElementById('imgPreview' + idx);
+            if (img) img.style.display = 'none';
+            imagesToDelete.push(idx);
+            // Remove file input value (soft delete)
+            const fileInput = document.getElementById('imgInput' + idx);
+            if (fileInput) fileInput.value = '';
+            document.getElementById('imagesToDelete').value = imagesToDelete.join(',');
+        }
+
+    </script>
+</body>
+</html>

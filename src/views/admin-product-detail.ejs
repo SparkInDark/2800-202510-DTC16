@@ -12,64 +12,74 @@
     <%- include('component/top-navbar.ejs') %>
 
     <div class="container py-3">
-        <form method="POST" enctype="multipart/form-data" action="/admin/product/<%= product._id %>/edit">
-            <div class="card mb-3">
-                <div class="card-header d-flex justify-content-between">
-                    <input name="name" value="<%= product.name %>" class="form-control form-control-sm w-50" />
-                    <button type="button" id="softDeleteBtn" class="btn btn-danger btn-sm">Delete Product</button>
-                    <!-- Place the hidden input here -->
-                    <input type="hidden" name="delete" id="deleteFlag" value="">
-                </div>
-                <div class="card-body">
-                    <div class="mb-2">
-                        <label>Category</label>
-                        <select name="category_slug" class="form-select form-select-sm">
-                            <% categories.forEach(cat => { %>
-                                <option value="<%= cat.slug %>" <%= cat.slug === product.category_slug ? 'selected' : '' %>><%= cat.name %></option>
-                            <% }) %>
-                        </select>
-                    </div>
-                    <div class="mb-2">
-                        <label>Product Pictures (max 4):</label>
-                        <!-- Hidden input to track deletions -->
-                        <input type="hidden" name="images_to_delete" id="imagesToDelete" value="">
-                        <div class="product-image-grid mb-2">
-                            <% for(let i=0; i<4; i++) { %>
-                                <div class="image-slot" id="img-slot-<%= i %>">
-                                    <% if(product.images[i]) { %>
-                                        <div class="img-wrapper" style="position:relative;">
-                                            <img src="<%= product.images[i] %>"
-                                                 alt="Product Image <%= i+1 %>"
-                                                 class="product-img-thumb"
-                                                 onclick="enlargeImage('<%= product.images[i] %>')" />
-                                            <button type="button" class="img-delete-btn" onclick="markImageDeleted(<%= i %>)">×</button>
-                                            <div class="img-deleted-overlay" id="img-deleted-<%= i %>" style="display:none;">
-                                                <span>Deleted</span>
-                                            </div>
-                                        </div>
-                                    <% } else { %>
-                                            <label for="new_image_<%= i %>" class="no-pic clickable-upload" style="cursor:pointer;">
-                                                <span>＋<br>No Pic</span>
-                                                <img id="preview-<%= i %>" style="display:none;max-width:100%;max-height:100%;border-radius:8px;" />
-                                            </label>
-                                            <input type="file" name="new_image_<%= i %>" id="new_image_<%= i %>" accept="image/*" class="hidden-file-input" style="display:none;" />
-                                    <% } %>
-                                </div>
+        <h2 class="mb-4">Edit Product</h2>
+        <form id="productDetailForm" method="POST" enctype="multipart/form-data" action="/admin/product/<%= product._id %>/edit">
+            <!-- Category -->
+            <div class="mb-3">
+                <label for="categorySelect" class="form-label font-semibold">Category</label>
+                <select name="category_slug" id="categorySelect" class="form-select border border-gray-300 rounded focus:border-blue-500 w-full max-w-xs">
+                    <% categories.forEach(cat => { %>
+                        <option value="<%= cat.slug %>" <%= cat.slug === product.category_slug ? 'selected' : '' %>><%= cat.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <!-- Product Name -->
+            <div class="mb-3">
+                <label for="productName" class="form-label font-semibold">Product Name</label>
+                <input name="name" id="productName" value="<%= product.name %>" class="w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:border-blue-500" />
+            </div>
+
+            <!-- Soft Delete Product -->
+            <div class="mb-3 flex items-center gap-4">
+                <button type="button" id="softDeleteBtn" class="btn btn-danger btn-sm">Delete Product</button>
+                <input type="hidden" name="delete" id="deleteFlag" value="">
+                <span id="deleteMsg" class="text-warning font-semibold"></span>
+            </div>
+
+            <!-- Product Images -->
+            <div class="mb-3">
+                <label class="form-label font-semibold">Product Images (up to 4)</label>
+                <div class="flex gap-4">
+                    <% for(let i = 0; i < 4; i++) { %>
+                        <div class="relative w-24 h-24 border-2 border-dashed border-gray-400 rounded flex items-center justify-center cursor-pointer bg-gray-50 group" onclick="triggerImageInput(<%= i %>)">
+                            <% if(product.images && product.images[i]) { %>
+                                <img id="imgPreview<%= i %>" src="<%= product.images[i] %>" alt="Image <%= i+1 %>" class="object-cover w-full h-full rounded" />
+                                <button type="button" class="absolute top-0 right-0 bg-white bg-opacity-80 rounded-full p-1 shadow text-red-600 hover:bg-red-100 z-10" onclick="event.stopPropagation(); softDeleteImage(<%= i %>);">
+                                    &times;
+                                </button>
+                            <% } else { %>
+                                <img id="imgPreview<%= i %>" src="" style="display:none;" class="object-cover w-full h-full rounded" />
+                                <span class="text-gray-400 group-hover:text-blue-500">+</span>
                             <% } %>
+                            <input type="file" accept="image/*" name="new_image_<%= i %>" id="imgInput<%= i %>" class="hidden" onchange="softPreviewImage(event, <%= i %>)" />
                         </div>
-                    </div>
-                    <div class="mb-2">
-                        <label>Specs:</label>
-                        <% productSpecs.forEach(spec => { %>
-                            <div class="input-group mb-1">
-                                <span class="input-group-text"><%= spec %></span>
-                                <input name="specs[<%= spec %>]" value="<%= (product.specs || {})[spec] || '' %>" class="form-control form-control-sm" />
-                            </div>
-                        <% }) %>
-                    </div>
+                    <% } %>
+                </div>
+                <input type="hidden" name="images_to_delete" id="imagesToDelete" value="" />
+                <div class="text-sm text-gray-500 mt-1">Click a box to upload or replace. Click &times; to remove.</div>
+            </div>
+
+            <!-- Product Specs -->
+            <div class="mb-3">
+                <label class="form-label font-semibold">Specs</label>
+                <div class="grid gap-2">
+                    <% productSpecs.forEach(function(specKey) { %>
+                        <div class="flex items-center gap-2">
+                            <label class="w-32 font-semibold"><%= specKey %></label>
+                            <input
+                                    type="text"
+                                    name="specs[<%= specKey %>]"
+                                    value="<%= (product.specs || {})[specKey] || '' %>"
+                                    class="flex-1 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
+                                    placeholder="Enter <%= specKey %>"
+                            />
+                        </div>
+                    <% }) %>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary w-100">Confirm Changes</button>
+
+            <button type="submit" class="btn btn-primary w-full">Save Changes</button>
         </form>
     </div>
 
@@ -81,73 +91,57 @@
     </div>
     <script src="/script/profile-dropdown.js"></script>
     <script>
-        // Lightbox enlarge
-        function enlargeImage(url) {
-            document.getElementById('imgLightbox').style.display = 'flex';
-            document.getElementById('lightboxImg').src = url;
-        }
-        document.getElementById('imgLightbox').onclick = function() {
-            this.style.display = 'none';
-        };
 
-        // image preview for uploading before actual confirm
-        for (let i = 0; i < 4; i++) {
-            const input = document.getElementById('new_image_' + i);
-            if (input) {
-                input.addEventListener('change', function(e) {
-                    const file = e.target.files[0];
-                    if (file && file.type.startsWith('image/')) {
-                        const preview = document.getElementById('preview-' + i);
-                        preview.src = URL.createObjectURL(file);
-                        preview.style.display = 'block';
-                        // Optionally hide the "+" and "No Pic" text
-                        preview.previousElementSibling.style.display = 'none';
-                    }
-                });
-            }
-        }
-
-        // === Soft delete for images ===
         let imagesToDelete = [];
-        function markImageDeleted(idx) {
-            if (!imagesToDelete.includes(idx)) {
-                imagesToDelete.push(idx);
-                document.getElementById('img-deleted-' + idx).style.display = 'flex';
-                document.querySelector('#img-slot-' + idx + ' img').style.opacity = '0.5';
-                document.getElementById('imagesToDelete').value = imagesToDelete.join(',');
+
+        function triggerImageInput(idx) {
+            document.getElementById('imgInput' + idx).click();
+        }
+
+        function softPreviewImage(event, idx) {
+            const input = event.target;
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('imgPreview' + idx);
+                    img.src = e.target.result;
+                    img.style.display = '';
+                    // Remove idx from imagesToDelete if present (undo soft delete)
+                    imagesToDelete = imagesToDelete.filter(i => i !== idx);
+                    document.getElementById('imagesToDelete').value = imagesToDelete.join(',');
+                };
+                reader.readAsDataURL(input.files[0]);
             }
         }
 
-        // === soft delete whole product ===
-        let productPendingDelete = false;
+        function softDeleteImage(idx) {
+            const img = document.getElementById('imgPreview' + idx);
+            if (img) img.style.display = 'none';
+            imagesToDelete.push(idx);
+            const fileInput = document.getElementById('imgInput' + idx);
+            if (fileInput) fileInput.value = '';
+            document.getElementById('imagesToDelete').value = imagesToDelete.join(',');
+        }
 
+        // Soft delete for whole product
+        let productPendingDelete = false;
         document.getElementById('softDeleteBtn').addEventListener('click', function() {
-            // Mark as pending deletion
             productPendingDelete = true;
-            // Visual feedback: gray out form, disable inputs, change button text
-            document.querySelector('.card').classList.add('bg-warning-subtle', 'text-muted');
-            document.querySelectorAll('input, select, .img-delete-btn').forEach(el => {
-                el.setAttribute('readonly', true);
-                el.setAttribute('disabled', true);
+            document.getElementById('deleteFlag').value = "1";
+            document.getElementById('deleteMsg').textContent = "Product will be deleted after saving changes.";
+            // Optional: visually gray out the form or disable inputs
+            document.getElementById('productDetailForm').classList.add('opacity-60');
+            document.querySelectorAll('#productDetailForm input, #productDetailForm select, #productDetailForm button').forEach(el => {
+                if (el.id !== 'softDeleteBtn' && el.type !== 'submit') {
+                    el.setAttribute('disabled', true);
+                }
             });
             this.innerText = 'Pending Deletion';
             this.classList.remove('btn-danger');
             this.classList.add('btn-warning');
             this.disabled = true;
-            // Set hidden input so backend knows to delete on confirm
-            document.getElementById('deleteFlag').value = "1";
             // Enable the confirm button if it was disabled
             document.querySelector('button[type="submit"]').disabled = false;
-        });
-
-        // On form submit, allow deletion if flagged
-        document.querySelector('form').addEventListener('submit', function(e) {
-            if (productPendingDelete) {
-                // Allow submit to proceed with delete=1
-                return true;
-            }
-            // Normal edit: allow as usual
-            return true;
         });
 
     </script>
