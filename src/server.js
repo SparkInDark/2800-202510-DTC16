@@ -288,11 +288,12 @@ app.get('/', (req, res) => {
 app.get('/home', async (req, res) => {
     try {
         console.log(req.session.user);
+        const categories = await categoriesModel.find()
         const topProducts = await productsModel.find()
             .sort({ 'rating_summary.average': -1 })
             .limit(3);
 
-        res.render('index', { topProducts });
+        res.render('index', { topProducts, categories });
     } catch (error) {
         console.error('Error fetching top products:', error);
         res.status(500).send('Internal Server Error');
