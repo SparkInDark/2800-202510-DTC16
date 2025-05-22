@@ -13,18 +13,18 @@
 
     <div class="container py-3">
         <h2>Reviews</h2>
-        <div class="mb-0.75 flex flex-col sm:flex-row sm:items-center gap-2 items-start">
+        <div class="mb-0.75 flex flex-col md:flex-row md:items-center md:gap-4">
             <input
                     type="text"
                     id="productFilter"
                     placeholder="Filter by product..."
-                    class="form-control form-control-sm w-auto"
-                    style="border: 1px solid #ced4da; height: 2.2em; vertical-align: middle; padding-left: 1em; margin-bottom: 0.25em; border-radius: 0.25rem; color: #333333;"
+                    class="form-control form-control-sm d-inline w-auto"
+                    style="width: 200px; border: 1px solid #ced4da; height: 2.2em; vertical-align: middle; padding-left: 1em; margin-bottom: 0.75em; border-radius: 0.25rem; color: #333333;"
             />
             <select
                     id="ratingFilter"
-                    class="form-control form-control-sm w-auto"
-                    style="border: 1px solid #ced4da; height: 2.2em; vertical-align: middle; padding-top:0.4em; border-radius: 0.25rem; color: #333333;"
+                    class="form-control form-control-sm d-inline w-auto"
+                    style="width: 200px; border: 1px solid #ced4da; height: 2.2em; vertical-align: middle; padding-top:0.4em; margin-bottom: 0.75em; border-radius: 0.25rem; color: #333333;"
             >
                 <option value="">All Ratings</option>
                 <% [5,4,3,2,1].forEach(r => { %>
