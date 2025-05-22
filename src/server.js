@@ -91,6 +91,8 @@ const ratingSchema = new mongoose.Schema({
     rating: { type: Number, min: 1, max: 5, required: true }
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
+ratingSchema.index({ product_slug: 1, user_email: 1 }, { unique: true }); // prevent duplicate ratings by the same user
+
 const ratingsModel = mongoose.model('ratings', ratingSchema);
 
 
@@ -285,7 +287,7 @@ app.get('/', (req, res) => {
 
 // Home route
 app.get('/home', async (req, res) => {
-     try {
+    try {
         console.log(req.session.user);
         const topProducts = await productsModel.find()
             .sort({ 'rating_summary.average': -1 })
@@ -626,7 +628,7 @@ app.get('/search', async (req, res) => {
 
 //
 app.get('/top10products', async (req, res) => {
-     try {
+    try {
         const topProducts = await productsModel.find()
             .sort({ 'rating_summary.average': -1 })
             .limit(10);
@@ -775,7 +777,68 @@ app.post('/write-review', (req, res) => {
     }
 });
 
+//Rating Route
+app.post('/rating', async (req, res) => {
+    try {
+    const user = req.session.user;
+    if (!user) return res.status(401).json({ error: 'User not logged in' });
 
+    const { product_slug, rating } = req.body;
+    if (!product_slug || !rating) {
+      return res.status(400).json({ error: 'Missing product_slug or rating' });
+    }
+
+    const userEmail = user.email;
+
+    // Check for existing rating
+    const existing = await ratingsModel.findOne({ product_slug, user_email: userEmail });
+
+    if (existing) {
+      // Update old rating
+      existing.rating = rating;
+      await existing.save();
+    } else {
+      // Add new rating
+      await ratingsModel.create({
+        product_slug,
+        user_email: userEmail,
+        rating,
+      });
+    }
+
+    // After rating is added/updated, recalculate summary
+    const ratings = await ratingsModel.find({ product_slug });
+
+    const starCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let total = 0;
+
+    ratings.forEach(r => {
+      starCounts[r.rating] += 1;
+      total += r.rating;
+    });
+
+    const totalRatings = ratings.length;
+    const averageRating = totalRatings > 0 ? total / totalRatings : 0;
+
+    // Update product summary
+    await productsModel.findOneAndUpdate(
+      { slug: product_slug },
+      {
+        $set: {
+          'rating_summary.average': averageRating.toFixed(2),
+          'rating_summary.total_ratings': totalRatings,
+          'rating_summary.star_counts': starCounts
+        }
+      }
+    );
+
+    res.status(200).json({ success: true, message: 'Rating saved and summary updated' });
+
+  } catch (err) {
+    console.error('Error handling rating:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 
 /*
