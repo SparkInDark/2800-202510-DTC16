@@ -71,14 +71,14 @@
                                                 <%= product.brand || '' %> — <%= product.category || '' %>
                                             </p>
                                             <p class="text-sm text-blue-600 underline">
-                                                <%= product.reviews ? product.reviews.length : 0 %> reviews
+                                                <%= product.rating_summary.total_ratings %> reviews
+
                                             </p>
                                         </div>
                                     </div>
                                     <div class="text-center">
                                         <div class="text-yellow-500 font-bold text-xl">
-                                            <%= typeof product.rating==='number' ? product.rating.toFixed(1) : '0.0' %>
-                                                ★
+                                            <%= product.rating_summary.average.toFixed(1) %> ★
                                         </div>
                                     </div>
                                 </div>
