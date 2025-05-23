@@ -935,6 +935,15 @@ This admin routes are being tested.
 
 // ======= ADMIN ROUTES (dedicated) =======
 
+const isAdmin = (req, res, next) => {
+    if (req.session && req.session.user && req.session.user.role === 'admin') {
+        return next();
+    } else {
+        res.status(403).send('Access Denied');
+    }
+}
+
+app.use(isAdmin);
 
 // === ADMIN REVIEW ===
 
@@ -1567,19 +1576,6 @@ app.post('/admin/user/:id/edit', async (req, res) => {
         req.pipe(bb);
     }
 });
-
-
-// const isAdmin = (req, res, next) => {
-//     if (req.session && req.session.user && req.session.user.role === 'admin') {
-//         return next();
-//     } else {
-//         res.status(403).send('Forbidden');
-//     }
-// }
-
-// app.use(isAdmin);
-
-
 
 // Anything else should be putting above  ( before DB Connector and Start-Server)
 
