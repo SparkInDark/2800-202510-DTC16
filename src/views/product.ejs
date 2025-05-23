@@ -66,10 +66,7 @@
                                 <%= (product.rating_summary?.average ?? 0).toFixed(1) %>
                             </span>
                             <div class="flex justify-center items-center mt-1">
-                                <% 
-                                // compute average (0–5) 
-                                const avg=product.rating_summary?.average ?? 0;
-                                for (let i=1; i <=5; i++) { %>
+                                <% const avg=product.rating_summary?.average ?? 0; for (let i=1; i <=5; i++) { %>
                                     <span class="<%= i <= avg ? 'text-yellow-500' : 'text-gray-300' %>">
                                         &#9733;
                                     </span>
@@ -107,6 +104,47 @@
                     </div>
                 </div>
 
+                <div id="quick-stars" class="flex space-x-1 text-2xl">
+                    <% for (let i=1; i <=5; i++) { %>
+                        <button type="button" class="quick-star text-gray-300 hover:text-yellow-500 focus:outline-none"
+                            data-value="<%= i %>" aria-label="Rate <%= i %> stars">
+                            &#9733;
+                        </button>
+                        <% } %>
+                </div>
+
+                <script>
+                    const productSlug = '<%= product.slug %>';
+                    document.querySelectorAll('#quick-stars .quick-star').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const rating = +btn.dataset.value;
+
+                            // recolor immediately
+                            document.querySelectorAll('#quick-stars .quick-star').forEach((s, i) => {
+                                s.classList.toggle('text-yellow-500', i < rating);
+                                s.classList.toggle('text-gray-300', i >= rating);
+                            });
+
+                            // send via fetch
+                            const res = await fetch('/rating', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                credentials: 'same-origin',    // send cookies/session
+                                body: JSON.stringify({ product_slug: productSlug, rating })
+                            });
+
+                            if (!res.ok) {
+                                // handle error (e.g. show toast)
+                                console.error('Rating failed', await res.json());
+                            } else {
+                                // optionally pull down new summary data or just reload
+                                window.location.reload();
+                            }
+                        });
+                    });
+                </script>
 
                 <!-- User Reviews -->
                 <div class="bg-white rounded-lg shadow p-6">

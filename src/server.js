@@ -746,7 +746,7 @@ app.post('/write-review', (req, res) => {
 
 
 //Rating Route
-app.post('/rating', async (req, res) => {
+app.post('/rating', express.json(), async (req, res) => {
     try {
         const user = req.session.user;
         if (!user) return res.status(401).json({ error: 'User not logged in' });
