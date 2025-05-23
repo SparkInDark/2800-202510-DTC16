@@ -20,20 +20,20 @@
     <%- include('component/top-navbar.ejs') %>
 
         <!-- Search Section -->
-        <section class="bg-white pt-32 pb-16 shadow">
-            <div class="max-w-3xl mx-auto px-4 text-center">
-                <h1 class="text-4xl font-extrabold text-gray-900 mb-4">What are you looking for?</h1>
-                <form action="/search" method="GET"
-                    class="flex items-center rounded-full overflow-hidden border border-blue-300 bg-white shadow-md">
-                    <input type="text" name="q" placeholder="Search"
-                        class="flex-grow px-6 py-3 text-lg focus:outline-none" />
-                    <button type="submit"
+    <section class="bg-white pt-32 pb-16 shadow">
+        <div class="max-w-3xl mx-auto px-4 text-center">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4">What are you looking for?</h1>
+            <form action="/search" method="GET"
+                  class="flex items-center rounded-full overflow-hidden border border-blue-300 bg-white shadow-md">
+                <input type="text" name="q" placeholder="Search"
+                       class="flex-grow px-6 py-3 text-lg focus:outline-none" />
+                <button type="submit"
                         class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg transition-colors">
-                        <i class="fas fa-search mr-2"></i>Search
-                    </button>
-                </form>
-            </div>
-        </section>
+                    Search
+                </button>
+            </form>
+        </div>
+    </section>
 
         <!-- Categories Grid -->
         <section class="max-w-7xl mx-auto px-4 py-12">
@@ -44,7 +44,7 @@
                 iconColor=['text-yellow-500','text-pink-500','text-green-500','text-orange-500','text-blue-500','text-purple-500'];
                 %>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" style="padding-bottom: 4em">
                     <% categories.forEach((category, idx)=> {
                         const bg = headerBg[idx % headerBg.length];
                         const ic = iconColor[idx % iconColor.length];

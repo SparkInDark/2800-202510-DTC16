@@ -33,12 +33,18 @@
         </div>
 
         <!-- Search Section -->
-        <div class="search-container mt-8">
-            <form action="/search" method="GET" class="search-bar">
-                <input type="text" name="q" placeholder="Find company or category" class="search-input" />
-                <button type="submit" class="search-button">Search</button>
-            </form>
-        </div>
+    <div class="max-w-3xl mx-auto px-4 mt-8">
+        <form action="/search" method="GET"
+              class="flex items-center rounded-full overflow-hidden border border-blue-300 bg-white shadow-md">
+            <input type="text" name="q" placeholder="Find company or category"
+                   class="flex-grow px-6 py-3 text-lg focus:outline-none" />
+            <button type="submit"
+                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg transition-colors">
+                Search
+            </button>
+        </form>
+    </div>
+
 
 
         <!-- Featured Products Section -->
