@@ -65,16 +65,28 @@
                             <span class="text-3xl font-bold">
                                 <%= (product.rating_summary?.average ?? 0).toFixed(1) %>
                             </span>
-                            <div class="flex justify-center items-center mt-1">
-                                <% const avg=product.rating_summary?.average ?? 0; for (let i=1; i <=5; i++) { %>
-                                    <span class="<%= i <= avg ? 'text-yellow-500' : 'text-gray-300' %>">
-                                        &#9733;
-                                    </span>
-                                    <% } %>
-                            </div>
-                            <div class="text-sm text-gray-400">
-                                <%= product.rating_summary?.total_ratings ?? 0 %> ratings
-                            </div>
+                            <% 
+                            const avg=product.rating_summary?.average ??0;
+                            const fillPct=(avg / 5) * 100;
+                            %>
+
+                                <div class="flex items-center">
+                                    <!-- Star container -->
+                                    <div class="relative inline-block text-gray-300">
+                                        <!-- Gray (background) stars -->
+                                        <div class="whitespace-nowrap">
+                                            &#9733;&#9733;&#9733;&#9733;&#9733;
+                                        </div>
+                                        <!-- Yellow (foreground) stars, clipped to fillPct% width -->
+                                        <div class="absolute top-0 left-0 overflow-hidden whitespace-nowrap text-yellow-500"
+                                            style="width: <%= fillPct.toFixed(1) %>%">
+                                            &#9733;&#9733;&#9733;&#9733;&#9733;
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-400">
+                                    <%= product.rating_summary?.total_ratings ?? 0 %> ratings
+                                </div>
                         </div>
 
                         <!-- Right: per-star bar chart -->
