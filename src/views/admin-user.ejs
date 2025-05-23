@@ -13,16 +13,55 @@
 
     <div class="container py-3">
         <h2>Users</h2>
+        <div class="mb-0.75 flex flex-row items-center flex-wrap">
+            <input type="text" id="nameFilter" placeholder="Filter by name..." class="form-control form-control-sm d-inline w-auto" style="width: 200px; border: 1px solid #ced4da; height: 2.2em; vertical-align: middle; padding-left: 1em; margin-bottom: 0.75em; border-radius: 0.25rem;"/>
+            <input type="text" id="emailFilter" placeholder="Filter by email..." class="form-control form-control-sm d-inline w-auto" style="width: 200px; border: 1px solid #ced4da; height: 2.2em; vertical-align: middle; padding-left: 1em; margin-bottom: 0.75em; border-radius: 0.25rem;"/>
+            <a href="/admin/user/add" class="mt-2 ml-auto inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+               style="width: 125px; border: 1px solid #ced4da; height: 2.2em; vertical-align: middle; padding-left: 1em; padding-top: 0.3em; margin-bottom: 0.75em; border-radius: 0.25rem; margin-top: -0.005em;">
+                Add User
+            </a>
+        </div>
         <div class="table-responsive">
             <table class="table table-hover">
                 <thead>
                 <tr>
                     <th>Profile</th>
-                    <th>First Name</th>
-                    <th>Email</th>
+                    <th>
+                        <button type="button" class="sort-btn" data-sort="role">
+                <span class="sort-header">
+                    Role
+                    <span class="sort-arrow">
+                        <span class="arrow-up"></span>
+                        <span class="arrow-down"></span>
+                    </span>
+                </span>
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="sort-btn" data-sort="name">
+                <span class="sort-header">
+                    Name
+                    <span class="sort-arrow">
+                        <span class="arrow-up"></span>
+                        <span class="arrow-down"></span>
+                    </span>
+                </span>
+                        </button>
+                    </th>
+                    <th>
+                        <button type="button" class="sort-btn" data-sort="email">
+                <span class="sort-header">
+                    Email
+                    <span class="sort-arrow">
+                        <span class="arrow-up"></span>
+                        <span class="arrow-down"></span>
+                    </span>
+                </span>
+                        </button>
+                    </th>
                 </tr>
                 </thead>
-                <tbody>
+                <tbody id="userTableBody">
                 <% users.forEach(u => { %>
                     <tr class="clickable-row" onclick="location.href='/admin/user/<%= u._id %>'">
                         <td>
@@ -32,7 +71,8 @@
                                 <span style="color:#bbb;">No Pic</span>
                             <% } %>
                         </td>
-                        <<td><%= u.profile && u.profile.first_name ? u.profile.first_name : 'N/A' %></td>
+                        <td><%= u.role %></td>
+                        <td><%= u.profile && u.profile.first_name ? u.profile.first_name : 'N/A' %></td>
                         <td><%= u.email %></td>
                     </tr>
                 <% }) %>
@@ -44,5 +84,59 @@
 
     <%- include('component/bottom-navbar-admin.ejs') %>
     <script src="/script/profile-dropdown.js"></script>
+
+    <script>
+        function filterUserTable() {
+            const nameVal = document.getElementById('nameFilter').value.toLowerCase();
+            const emailVal = document.getElementById('emailFilter').value.toLowerCase();
+            document.querySelectorAll('#userTableBody tr').forEach(tr => {
+                const nameText = tr.children[2].textContent.toLowerCase();
+                const emailText = tr.children[3].textContent.toLowerCase();
+                const show = nameText.includes(nameVal) && emailText.includes(emailVal);
+                tr.style.display = show ? '' : 'none';
+            });
+        }
+        document.getElementById('nameFilter').addEventListener('input', filterUserTable);
+        document.getElementById('emailFilter').addEventListener('input', filterUserTable);
+
+        // Sorting
+        function getCellValue(tr, idx) {
+            return tr.children[idx].textContent.trim();
+        }
+        function compareRows(idx, asc) {
+            return function(a, b) {
+                let v1 = getCellValue(asc ? a : b, idx);
+                let v2 = getCellValue(asc ? b : a, idx);
+                return v1.localeCompare(v2);
+            }
+        }
+        let lastSort = { idx: null, asc: true };
+        document.querySelectorAll('.sort-btn').forEach(function(btn, idx) {
+            btn.addEventListener('click', function() {
+                const tbody = document.getElementById('userTableBody');
+                const rows = Array.from(tbody.querySelectorAll('tr')).filter(tr => tr.style.display !== 'none');
+                let asc = (lastSort.idx === idx) ? !lastSort.asc : true;
+                rows.sort(compareRows(idx + 1, asc)); // +1 because profile is first col
+                rows.forEach(row => tbody.appendChild(row));
+                lastSort = { idx, asc };
+                // Reset all arrows
+                document.querySelectorAll('.sort-arrow').forEach(span => {
+                    span.querySelector('.arrow-up').classList.remove('arrow-inactive');
+                    span.querySelector('.arrow-down').classList.remove('arrow-inactive');
+                });
+                // Set inactive state
+                const arrowUp = btn.querySelector('.arrow-up');
+                const arrowDown = btn.querySelector('.arrow-down');
+                if (asc) {
+                    arrowUp.classList.remove('arrow-inactive');
+                    arrowDown.classList.add('arrow-inactive');
+                } else {
+                    arrowUp.classList.add('arrow-inactive');
+                    arrowDown.classList.remove('arrow-inactive');
+                }
+            });
+        });
+    </script>
+
 </body>
 </html>
