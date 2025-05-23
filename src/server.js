@@ -361,7 +361,11 @@ app.post('/register', async (req, res) => {
 
 // login route
 app.get('/login', (req, res) => {
-    res.render('login.ejs');
+    if(!req.session.user){
+        res.render('login.ejs');
+    }else{
+        res.redirect('/home');
+    }
 })
 
 app.post('/login', async (req, res) => {
