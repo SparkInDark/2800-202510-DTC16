@@ -89,7 +89,9 @@
         <%- include('component/bottom-navbar.ejs') %>
 
             <!-- 切换脚本 -->
+            <script src="/script/profile-dropdown.js"></script>
             <script>
+
                 document.querySelectorAll('button[data-target]').forEach(btn => {
                     const panel = document.getElementById(btn.dataset.target);
                     const icon = document.getElementById('icon-' + btn.dataset.target.split('-')[1]);
