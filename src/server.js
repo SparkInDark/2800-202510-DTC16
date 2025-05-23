@@ -882,7 +882,7 @@ app.post('/rating', async (req, res) => {
 });
 
 //upvote and downvote route
-app.post('/reviews/:id/vote', async (req, res) => {
+app.post('/reviews/:id/vote',  express.json(), async (req, res) => {
     const reviewId = req.params.id;
     const { voteType } = req.body; // 'up' or 'down'
     const userEmail = req.session.user?.email;

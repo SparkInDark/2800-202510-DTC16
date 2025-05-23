@@ -101,7 +101,8 @@
                         <p class="text-gray-500">No reviews yet. Be the first to write one!</p>
                         <% } else { %>
                             <% reviews.forEach(review=> { %>
-                                <div class="border-b py-4">
+                                <div class="border-b py-4 relative">
+                                    <!-- 发表评论者与日期 -->
                                     <div class="flex items-center justify-between">
                                         <div class="text-sm font-medium text-gray-700">
                                             <%= review.user_email %>
@@ -110,6 +111,8 @@
                                             <%= new Date(review.created_at).toLocaleDateString() %>
                                         </div>
                                     </div>
+
+                                    <!-- 星级展示 -->
                                     <% if (review.rating) { %>
                                         <div class="text-yellow-500 mt-1 flex">
                                             <% for (let i=1; i <=5; i++) { %>
@@ -123,9 +126,13 @@
                                         <% } else { %>
                                             <div class="text-gray-400 mt-1 italic text-sm">No rating</div>
                                             <% } %>
+
+                                                <!-- 评论文本 -->
                                                 <p class="mt-2 text-gray-800">
                                                     <%= review.review_text %>
                                                 </p>
+
+                                                <!-- 评论图集（如果有） -->
                                                 <% if (review.review_images?.length) { %>
                                                     <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
                                                         <% review.review_images.forEach(img=> { %>
@@ -134,10 +141,66 @@
                                                             <% }) %>
                                                     </div>
                                                     <% } %>
+
+                                                        <!-- … 放在 </body> 前，替换掉原来的 “点赞/点踩区域” -->
+                                                        <div
+                                                            class="absolute bottom-2 right-2 flex items-center space-x-4">
+                                                            <!-- Upvote 按钮 + 数字 -->
+                                                            <button data-id="<%= review._id %>" data-type="up"
+                                                                class="upvote-btn flex items-center transition-transform duration-200">
+                                                                👍
+                                                                <span id="upvotes-<%= review._id %>"
+                                                                    class="ml-1 text-sm">
+                                                                    <%= review.votes?.upvotes?.length || 0 %>
+                                                                </span>
+                                                            </button>
+
+                                                            <!-- Downvote 按钮 + 数字 -->
+                                                            <button data-id="<%= review._id %>" data-type="down"
+                                                                class="downvote-btn flex items-center transition-transform duration-200">
+                                                                👎
+                                                                <span id="downvotes-<%= review._id %>"
+                                                                    class="ml-1 text-sm">
+                                                                    <%= review.votes?.downvotes?.length || 0 %>
+                                                                </span>
+                                                            </button>
+                                                        </div>
+
                                 </div>
                                 <% }) %>
                                     <% } %>
                 </div>
+
+                <!-- 投票脚本（放在 </body> 前） -->
+                <script>
+                    document.querySelectorAll('.upvote-btn, .downvote-btn').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const id = btn.dataset.id;
+                            const type = btn.dataset.type;
+
+                            // 添加一个小放大动画，200ms 后恢复
+                            btn.classList.add('scale-125');
+                            setTimeout(() => btn.classList.remove('scale-125'), 200);
+
+                            // 发送投票请求
+                            const res = await fetch(`/reviews/${id}/vote`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ voteType: type })
+                            });
+                            const data = await res.json();
+
+                            if (data.success) {
+                                // 分别更新 up 和 down 的数字
+                                document.getElementById(`upvotes-${id}`).textContent = data.upvotes;
+                                document.getElementById(`downvotes-${id}`).textContent = data.downvotes;
+                            }
+                        });
+                    });
+                </script>
+
+
+
             </div>
         </main>
 
