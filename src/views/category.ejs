@@ -8,6 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://kit.fontawesome.com/db57439ce1.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="/style/style.css" />
+    <style>
+        .rotate-180 {
+            transform: rotate(180deg);
+        }
+    </style>
 </head>
 
 <body class="bg-gray-50 text-gray-800">
@@ -30,76 +35,61 @@
             </div>
         </section>
 
-        <!-- 手写 Accordion Grid -->
-        <section class="max-w-6xl mx-auto px-4 py-12">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
-                <% categories.forEach(function(category, idx) { %>
-                    <div class="bg-white rounded-xl shadow hover:shadow-lg transition-shadow p-6">
-                        <!-- 标题按钮 -->
-                        <button type="button" class="w-full flex items-center justify-between focus:outline-none"
-                            data-target="panel-<%= idx %>">
-                            <div class="flex items-center">
-                                <i class="fas fa-tags text-blue-500 text-2xl mr-3"></i>
-                                <span class="text-2xl font-bold">
-                                    <%= category.name %>
-                                </span>
+        <!-- Categories Grid -->
+        <section class="max-w-7xl mx-auto px-4 py-12">
+            <h2 class="text-3xl font-bold text-gray-900 mb-8">Explore companies by category</h2>
+
+            <% const headerBg=['bg-yellow-50','bg-pink-50','bg-green-50','bg-orange-50','bg-blue-50','bg-purple-50'];
+                const
+                iconColor=['text-yellow-500','text-pink-500','text-green-500','text-orange-500','text-blue-500','text-purple-500'];
+                %>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <% categories.forEach((category, idx)=> {
+                        const bg = headerBg[idx % headerBg.length];
+                        const ic = iconColor[idx % iconColor.length];
+                        %>
+                        <div class="rounded-lg overflow-hidden shadow transition-all">
+                            <!-- Header with toggle -->
+                            <button class="flex items-center justify-between w-full p-6 <%= bg %> focus:outline-none"
+                                onclick="toggleCategory(<%= idx %>)">
+                                <div class="flex items-center">
+                                    <i class="fas fa-<%= category.icon || 'tags' %> <%= ic %> text-2xl mr-3"></i>
+                                    <h3 class="text-lg font-semibold text-gray-900">
+                                        <%= category.name %>
+                                    </h3>
+                                </div>
+                                <i id="chevron-<%= idx %>"
+                                    class="fas fa-chevron-down transition-transform duration-300"></i>
+                            </button>
+
+                            <!-- Collapsible content -->
+                            <div id="category-content-<%= idx %>" class="bg-white divide-y divide-gray-200 hidden">
+                                <% category.products.forEach(prod=> { %>
+                                    <li class="px-6 py-3 hover:bg-gray-50 list-none">
+                                        <a href="/product/<%= prod.slug %>" class="block text-gray-700">
+                                            <%= prod.name %>
+                                        </a>
+                                    </li>
+                                    <% }); %>
                             </div>
-                            <i id="icon-<%= idx %>"
-                                class="fas fa-chevron-down text-gray-400 transition-transform duration-200"></i>
-                        </button>
-
-                        <!-- 隐藏面板 -->
-                        <div id="panel-<%= idx %>" class="mt-4 hidden">
-                            <p class="text-gray-600 mb-6">
-                                <%= category.description %>
-                            </p>
-
-                            <% if (category.products.length> 0) { %>
-                                <ul class="space-y-4">
-                                    <% category.products.forEach(function(product) { %>
-                                        <li>
-                                            <a href="/product/<%= product.slug %>"
-                                                class="flex items-start p-3 hover:bg-gray-100 rounded transition">
-                                                <i class="fas fa-box-open text-gray-400 text-xl mt-1 mr-3"></i>
-                                                <div>
-                                                    <strong class="block text-lg text-gray-900">
-                                                        <%= product.name %>
-                                                    </strong>
-                                                    <p class="text-sm text-gray-600">
-                                                        Average Rating:
-                                                        <span class="font-semibold">
-                                                            <%= product.rating_summary.average %>
-                                                        </span>
-                                                    </p>
-                                                </div>
-                                            </a>
-                                        </li>
-                                        <% }); %>
-                                </ul>
-                                <% } else { %>
-                                    <p class="text-gray-500 italic">No products in this category.</p>
-                                    <% } %>
                         </div>
-                    </div>
-                    <% }); %>
-            </div>
+                        <% }); %>
+                </div>
         </section>
 
         <!-- Bottom Navbar -->
         <%- include('component/bottom-navbar.ejs') %>
-
-            <!-- 切换脚本 -->
             <script src="/script/profile-dropdown.js"></script>
+            <!-- Toggle Script -->
             <script>
+                function toggleCategory(idx) {
+                    const content = document.getElementById(`category-content-${idx}`);
+                    const chevron = document.getElementById(`chevron-${idx}`);
 
-                document.querySelectorAll('button[data-target]').forEach(btn => {
-                    const panel = document.getElementById(btn.dataset.target);
-                    const icon = document.getElementById('icon-' + btn.dataset.target.split('-')[1]);
-                    btn.addEventListener('click', () => {
-                        panel.classList.toggle('hidden');
-                        icon.classList.toggle('rotate-180');
-                    });
-                });
+                    content.classList.toggle('hidden');
+                    chevron.classList.toggle('rotate-180');
+                }
             </script>
 </body>
 

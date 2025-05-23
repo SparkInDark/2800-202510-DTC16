@@ -620,3 +620,92 @@ Keep this responsive at the bottom
 <<<<<<<<<<<<
 Keep this responsive at the bottom
  */
+
+
+ /* Accordion Category Card Enhancements */
+ .category-card-container {
+     background: white;
+     border-radius: 1.25rem;
+     padding: 1.5rem;
+     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+     transition: box-shadow 0.3s ease;
+ }
+
+ .category-card-container:hover {
+     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+ }
+
+ .category-header {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     cursor: pointer;
+     transition: color 0.2s ease;
+ }
+
+ .category-header i {
+     transition: transform 0.3s ease;
+ }
+
+ .category-header:hover .category-title {
+     color: #3b82f6;
+     /* blue-500 */
+ }
+
+ .category-title {
+     font-size: 1.25rem;
+     font-weight: 700;
+     color: #111827;
+     /* gray-900 */
+     display: flex;
+     align-items: center;
+     gap: 0.5rem;
+ }
+
+ .category-title-icon {
+     color: #facc15;
+     /* yellow-400 */
+     font-size: 1.5rem;
+ }
+
+ .product-link {
+     display: flex;
+     padding: 0.75rem;
+     gap: 0.75rem;
+     align-items: flex-start;
+     border-radius: 0.75rem;
+     border: 1px solid transparent;
+     transition: all 0.2s ease;
+ }
+
+ .product-link:hover {
+     background-color: #f3f4f6;
+     border-color: #60a5fa;
+ }
+
+ .product-link-icon {
+     color: #3b82f6;
+     font-size: 1.25rem;
+     margin-top: 0.25rem;
+ }
+
+ .product-link-content {
+     flex: 1;
+ }
+
+ .product-name {
+     font-weight: 600;
+     color: #1f2937;
+     /* gray-800 */
+ }
+
+ .product-rating {
+     font-size: 0.875rem;
+     color: #6b7280;
+ }
+
+ .product-rating span {
+     font-weight: 600;
+     color: #10b981;
+     /* green-500 */
+ }
