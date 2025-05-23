@@ -549,12 +549,36 @@ app.get('/search', async (req, res) => {
             name: { $regex: query, $options: 'i' }
         });
 
+        // below is for providing extra suggestions
+
+        // Exclude slugs already in main results
+        const excludeSlugs = results.map(p => p.slug);
+
+        // Fuzzy/rough match for suggestions (name or category_slug), but not exact matches
+        const suggestionQuery = {
+            $and: [
+                { slug: { $nin: excludeSlugs } },
+                {
+                    $or: [
+                        { name: { $regex: query.split('').join('.*'), $options: 'i' } }, // rough match
+                        { category_slug: { $regex: query, $options: 'i' } }
+                    ]
+                }
+            ]
+        };
+
+        // Limit to 4 suggestions
+        const suggestions = await productsModel.find(suggestionQuery).limit(4);
+
+        // below is for searchbox
+
         // 获取分类列表（右侧使用）
         const categories = await productsModel.distinct('category_slug');
 
         res.render('search', {
             query,
             results,
+            suggestions,  // add this line for extra suggestions
             categories: categories.map(cat => ({
                 name: cat,
                 slug: cat.toLowerCase().replace(/\s+/g, '-')
