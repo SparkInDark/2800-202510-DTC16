@@ -169,7 +169,7 @@
                 </script>
 
                 <!-- User Reviews -->
-                <div class="bg-white rounded-lg shadow p-6">
+                <div class="bg-white rounded-lg shadow p-6" style="margin-bottom: 4em; padding-bottom: 0.5em">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-xl font-semibold text-gray-800">User Reviews</h2>
                         <a href="/write-review?category_slug=<%= product.category_slug %>&product_slug=<%= product.slug %>&ref=/product/<%= product.slug %>"
@@ -182,7 +182,7 @@
                         <p class="text-gray-500">No reviews yet. Be the first to write one!</p>
                         <% } else { %>
                             <% reviews.forEach(review=> { %>
-                                <div class="border-b py-4 relative">
+                                <div class="border-b py-4 relative" style="padding-bottom: 2em">
                                     <!-- 发表评论者与日期 -->
                                     <div class="flex items-center justify-between">
                                         <div class="text-sm font-medium text-gray-700">
