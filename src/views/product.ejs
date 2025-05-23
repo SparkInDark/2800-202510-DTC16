@@ -104,13 +104,23 @@
                     </div>
                 </div>
 
-                <div id="quick-stars" class="flex space-x-1 text-2xl">
-                    <% for (let i=1; i <=5; i++) { %>
-                        <button type="button" class="quick-star text-gray-300 hover:text-yellow-500 focus:outline-none"
-                            data-value="<%= i %>" aria-label="Rate <%= i %> stars">
-                            &#9733;
-                        </button>
-                        <% } %>
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-2">Quick Rate This Product</h3>
+
+                    <form id="quick-rate-form" action="/rating" method="POST">
+                        <input type="hidden" name="product_slug" value="<%= product.slug %>">
+                        <input type="hidden" name="rating" id="quick-rating-value" value="<%= currentUserRating %>">
+
+                        <div id="quick-stars" class="flex space-x-1 text-2xl">
+                            <% for (let i=1; i <=5; i++) { %>
+                                <button type="button"
+                                    class="quick-star focus:outline-none <%= i <= currentUserRating ? 'text-yellow-500' : 'text-gray-300' %>"
+                                    data-value="<%= i %>" aria-label="Rate <%= i %> stars">
+                                    &#9733;
+                                </button>
+                                <% } %>
+                        </div>
+                    </form>
                 </div>
 
                 <script>

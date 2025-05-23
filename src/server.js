@@ -528,9 +528,14 @@ app.get('/product/:slug', async (req, res) => {
             return obj;
         });
 
+        // figure out *this* user’s rating
+        const userEmail = req.session.user?.email;
+        const currentUserRating = userEmail ? (ratingMap[userEmail] || 0) : 0;
+
         res.render('product', {
             product,
-            reviews: reviewsWithRatings
+            reviews: reviewsWithRatings,
+            currentUserRating: currentUserRating
         });
     } catch (error) {
         console.error('Error:', error);
@@ -706,16 +711,16 @@ app.post('/write-review', (req, res) => {
             const totalRatings = ratings.length;
             const averageRating = totalRatings > 0 ? total / totalRatings : 0;
 
-           await productsModel.findOneAndUpdate(
-            { slug: product_slug },
-            {
-                $set: {
-                    'rating_summary.average': averageRating.toFixed(2),
-                    'rating_summary.total_ratings': totalRatings,
-                    'rating_summary.star_counts': starCounts
+            await productsModel.findOneAndUpdate(
+                { slug: product_slug },
+                {
+                    $set: {
+                        'rating_summary.average': averageRating.toFixed(2),
+                        'rating_summary.total_ratings': totalRatings,
+                        'rating_summary.star_counts': starCounts
+                    }
                 }
-            }
-        );
+            );
 
             const product = await productsModel.findOne({ slug: product_slug });
             let category = null;
