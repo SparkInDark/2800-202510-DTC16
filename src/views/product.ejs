@@ -60,32 +60,91 @@
                 <!-- Rating Summary -->
                 <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center gap-4 mb-4">
+                        <!-- Left: average + stars + count -->
                         <div class="text-center">
                             <span class="text-3xl font-bold">
-                                <%= product.rating_summary?.average?.toFixed(1) || "0.0" %>
+                                <%= (product.rating_summary?.average ?? 0).toFixed(1) %>
                             </span>
-                            <div class="text-yellow-500">⭐️⭐️⭐️⭐️⭐️</div>
+                            <div class="flex justify-center items-center mt-1">
+                                <% const avg=product.rating_summary?.average ?? 0; for (let i=1; i <=5; i++) { %>
+                                    <span class="<%= i <= avg ? 'text-yellow-500' : 'text-gray-300' %>">
+                                        &#9733;
+                                    </span>
+                                    <% } %>
+                            </div>
                             <div class="text-sm text-gray-400">
-                                <%= product.rating_summary?.total_ratings || 0 %> ratings
+                                <%= product.rating_summary?.total_ratings ?? 0 %> ratings
                             </div>
                         </div>
+
+                        <!-- Right: per-star bar chart -->
                         <div class="flex-1">
-                            <% [5, 4, 3, 2, 1].forEach(star=> { %>
-                                <div class="flex items-center gap-2">
-                                    <span>
+                            <% const total=product.rating_summary?.total_ratings ?? 0; [5, 4, 3, 2, 1].forEach(star=> {
+                                const count = product.rating_summary?.star_counts?.[star] ?? 0;
+                                const pct = total ? (count / total) * 100 : 0;
+                                %>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <!-- star number -->
+                                    <span class="w-4 text-sm text-gray-700">
                                         <%= star %>
                                     </span>
-                                    <div class="w-full h-2 bg-gray-300 rounded">
-                                        <div class="h-full bg-green-500 rounded" style="width: <%= product.rating_summary?.star_counts?.[star]
-                      ? (product.rating_summary.star_counts[star] /
-                        (product.rating_summary.total_ratings || 1)) * 100
-                      : 0 %>%"></div>
+                                    <!-- gray track -->
+                                    <div class="flex-1 bg-gray-300 h-2 rounded overflow-hidden">
+                                        <!-- green fill -->
+                                        <div class="h-full bg-green-500 rounded" style="width: <%= pct.toFixed(1) %>%;">
+                                        </div>
                                     </div>
+                                    <!-- raw count -->
+                                    <span class="w-8 text-right text-sm text-gray-600">
+                                        <%= count %>
+                                    </span>
                                 </div>
                                 <% }) %>
                         </div>
                     </div>
                 </div>
+
+                <div id="quick-stars" class="flex space-x-1 text-2xl">
+                    <% for (let i=1; i <=5; i++) { %>
+                        <button type="button" class="quick-star text-gray-300 hover:text-yellow-500 focus:outline-none"
+                            data-value="<%= i %>" aria-label="Rate <%= i %> stars">
+                            &#9733;
+                        </button>
+                        <% } %>
+                </div>
+
+                <script>
+                    const productSlug = '<%= product.slug %>';
+                    document.querySelectorAll('#quick-stars .quick-star').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const rating = +btn.dataset.value;
+
+                            // recolor immediately
+                            document.querySelectorAll('#quick-stars .quick-star').forEach((s, i) => {
+                                s.classList.toggle('text-yellow-500', i < rating);
+                                s.classList.toggle('text-gray-300', i >= rating);
+                            });
+
+                            // send via fetch
+                            const res = await fetch('/rating', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                credentials: 'same-origin',    // send cookies/session
+                                body: JSON.stringify({ product_slug: productSlug, rating })
+                            });
+
+                            if (!res.ok) {
+                                // handle error (e.g. show toast)
+                                console.error('Rating failed', await res.json());
+                            } else {
+                                // optionally pull down new summary data or just reload
+                                window.location.reload();
+                            }
+                        });
+                    });
+                </script>
 
                 <!-- User Reviews -->
                 <div class="bg-white rounded-lg shadow p-6">
@@ -113,19 +172,17 @@
                                     </div>
 
                                     <!-- 星级展示 -->
-                                    <% if (review.rating) { %>
-                                        <div class="text-yellow-500 mt-1 flex">
+                                    <% if (review.rating> 0) { %>
+                                        <div class="mt-1 flex">
                                             <% for (let i=1; i <=5; i++) { %>
-                                                <% if (i <=review.rating) { %>
-                                                    <span>⭐️</span>
-                                                    <% } else { %>
-                                                        <span class="text-gray-300">⭐️</span>
-                                                        <% } %>
-                                                            <% } %>
+                                                <span
+                                                    class="<%= i <= review.rating ? 'text-yellow-500' : 'text-gray-300' %>">&#9733</span>
+                                                <% } %>
                                         </div>
                                         <% } else { %>
                                             <div class="text-gray-400 mt-1 italic text-sm">No rating</div>
                                             <% } %>
+
 
                                                 <!-- 评论文本 -->
                                                 <p class="mt-2 text-gray-800">

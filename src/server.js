@@ -1,3 +1,9 @@
+
+/* jshint esversion: 6 */
+/* jshint esversion: 8 */
+/* jshint esversion: 9 */
+/* jshint esversion: 11 */
+
 // ==== Section 1. Load environment variables FIRST ====
 require('dotenv').config();
 
@@ -6,7 +12,7 @@ const functions = require('firebase-functions');
 
 // ==== Section 2. Then require other modules ====
 const express = require("express");
-const session = require('express-session')
+const session = require('express-session');
 const mongoose = require('mongoose');
 const MongoStore = require('connect-mongo');
 const path = require('path');
@@ -136,7 +142,7 @@ const categoriesModel = mongoose.model('categories', categorySchema);
 
 
 // ==== Section 5. App settings (app.set, view engine and views directory) ====
-app.set('view engine', 'ejs')
+app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // ==== Section 6. Middleware (app.use) ====
@@ -163,7 +169,7 @@ app.use(session({
         sameSite: 'lax',
         maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
     }
-}))
+}));
 
 // Middleware to serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, '..', 'public')));
@@ -193,13 +199,13 @@ app.use((req, res, next) => {
 // Redirect root URL '/' to '/home'
 app.get('/', (req, res) => {
     res.redirect('/home');
-})
+});
 
 // Home route
 app.get('/home', async (req, res) => {
     try {
         console.log(req.session.user);
-        const categories = await categoriesModel.find()
+        const categories = await categoriesModel.find();
         const topProducts = await productsModel.find()
             .sort({ 'rating_summary.average': -1 })
             .limit(3);
@@ -229,7 +235,7 @@ app.get('/weather', async (req, res) => {
 // Register route
 app.get('/register', (req, res) => {
     res.render('register.ejs');
-})
+});
 
 // use { email: req.session.user.email}, but not username
 app.post('/register', async (req, res) => {
@@ -272,12 +278,12 @@ app.post('/register', async (req, res) => {
 
 // login route
 app.get('/login', (req, res) => {
-    if(!req.session.user){
+    if (!req.session.user) {
         res.render('login.ejs');
-    }else{
+    } else {
         res.redirect('/home');
     }
-})
+});
 
 app.post('/login', async (req, res) => {
     const { email, password } = req.body;
@@ -317,7 +323,7 @@ app.get('/logout', (req, res) => {
         res.clearCookie('__session'); // Learning: if not set in middleware, default name is connect.sid
         res.redirect('/home');
     });
-})
+});
 
 app.post('/logout', (req, res) => {
     const from = req.body.from || '/home';
@@ -486,7 +492,7 @@ app.get('/category', async (req, res) => {
         console.error(err);
         res.status(500).send("Server error");
     }
-})
+});
 
 // product route
 app.get('/product/:slug', async (req, res) => {
@@ -518,7 +524,7 @@ app.get('/product/:slug', async (req, res) => {
         // Merge rating into each review (if available)
         const reviewsWithRatings = reviews.map(review => {
             const obj = review.toObject(); // convert from Mongoose Document to plain object
-            obj.rating = ratingMap[review.user_email] || null; // attach rating if found
+            obj.rating = ratingMap[review.user_email] || 0; // attach rating if found
             return obj;
         });
 
@@ -665,7 +671,7 @@ app.post('/write-review', (req, res) => {
 
     bb.on('finish', async () => {
         try {
-            const { product_slug, user_email, review_rating, review_text} = fields;
+            const { product_slug, user_email, review_rating, review_text } = fields;
             const rating = Number(review_rating);
 
             if (!product_slug || !user_email || !rating || !review_text) {
@@ -724,18 +730,16 @@ app.post('/write-review', (req, res) => {
             const totalRatings = ratings.length;
             const averageRating = totalRatings > 0 ? total / totalRatings : 0;
 
-            await productsModel.findOneAndUpdate(
-                { slug: product_slug },
-                {
-                    average_rating: averageRating,
-                    total_ratings: totalRatings,
-                    star_1_count: starCounts[1],
-                    star_2_count: starCounts[2],
-                    star_3_count: starCounts[3],
-                    star_4_count: starCounts[4],
-                    star_5_count: starCounts[5]
+           await productsModel.findOneAndUpdate(
+            { slug: product_slug },
+            {
+                $set: {
+                    'rating_summary.average': averageRating.toFixed(2),
+                    'rating_summary.total_ratings': totalRatings,
+                    'rating_summary.star_counts': starCounts
                 }
-            );
+            }
+        );
 
             const product = await productsModel.findOne({ slug: product_slug });
             let category = null;
@@ -766,7 +770,7 @@ app.post('/write-review', (req, res) => {
 
 
 //Rating Route
-app.post('/rating', async (req, res) => {
+app.post('/rating', express.json(), async (req, res) => {
     try {
         const user = req.session.user;
         if (!user) return res.status(401).json({ error: 'User not logged in' });
@@ -821,7 +825,7 @@ app.post('/rating', async (req, res) => {
 });
 
 //upvote and downvote route
-app.post('/reviews/:id/vote',  express.json(), async (req, res) => {
+app.post('/reviews/:id/vote', express.json(), async (req, res) => {
     const reviewId = req.params.id;
     const { voteType } = req.body; // 'up' or 'down'
     const userEmail = req.session.user?.email;
@@ -880,7 +884,7 @@ const isAdmin = (req, res, next) => {
     } else {
         res.status(403).send('Access Denied');
     }
-}
+};
 
 app.use(isAdmin);
 
@@ -889,7 +893,7 @@ app.use(isAdmin);
 
 app.get('/admin', (req, res) => {
     res.redirect('/admin/review');
-})
+});
 
 app.get('/admin/review', async (req, res) => {
     const reviews = await reviewsModel.aggregate([
@@ -1503,7 +1507,7 @@ async function connectToMongoDB() {
         console.error('Failed to connect to MongoDB:', err);
         process.exit(1); // Exit with error code if connection fails
     }
-};
+}
 
 
 // ==== Section 10. Start the server
