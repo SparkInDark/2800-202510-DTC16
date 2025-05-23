@@ -871,7 +871,7 @@ app.use(isAdmin);
 
 app.get('/admin', (req, res) => {
     res.redirect('/admin/review');
-})
+});
 
 app.get('/admin/review', async (req, res) => {
     const reviews = await reviewsModel.aggregate([
