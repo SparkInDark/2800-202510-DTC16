@@ -680,7 +680,7 @@ app.post('/ai-welcome', express.json(), async (req, res) => {
 
 // Write-review get route
 app.get('/write-review', async (req, res) => {
-    const { category_slug, product_slug } = req.query;
+    const { category_slug, product_slug, ref } = req.query;
     const categories = await categoriesModel.find({});
     let products = [];
     if (category_slug) {
@@ -691,6 +691,7 @@ app.get('/write-review', async (req, res) => {
         products,
         category_slug,
         product_slug,
+        ref,
         user_email: req.session.user ? req.session.user.email : ''
     });
 });
@@ -725,7 +726,7 @@ app.post('/write-review', (req, res) => {
 
     bb.on('finish', async () => {
         try {
-            const { product_slug, user_email, review_rating, review_text } = fields;
+            const { product_slug, user_email, review_rating, review_text} = fields;
             const rating = Number(review_rating);
 
             if (!product_slug || !user_email || !rating || !review_text) {
@@ -805,6 +806,7 @@ app.post('/write-review', (req, res) => {
 
             res.status(201).json({
                 message: 'Review and rating submitted successfully',
+                ref: fields.ref || null,
                 review: {
                     ...review.toObject(),
                     product_name: product?.name || product_slug,
