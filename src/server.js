@@ -524,7 +524,7 @@ app.get('/product/:slug', async (req, res) => {
         // Merge rating into each review (if available)
         const reviewsWithRatings = reviews.map(review => {
             const obj = review.toObject(); // convert from Mongoose Document to plain object
-            obj.rating = ratingMap[review.user_email] || null; // attach rating if found
+            obj.rating = ratingMap[review.user_email] || 0; // attach rating if found
             return obj;
         });
 

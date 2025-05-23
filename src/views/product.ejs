@@ -64,7 +64,7 @@
                             <span class="text-3xl font-bold">
                                 <%= product.rating_summary?.average?.toFixed(1) || "0.0" %>
                             </span>
-                            <div class="text-yellow-500">⭐️⭐️⭐️⭐️⭐️</div>
+                            <div class="text-yellow-500">&#9733&#9733&#9733&#9733&#9733</div>
                             <div class="text-sm text-gray-400">
                                 <%= product.rating_summary?.total_ratings || 0 %> ratings
                             </div>
@@ -113,19 +113,17 @@
                                     </div>
 
                                     <!-- 星级展示 -->
-                                    <% if (review.rating) { %>
-                                        <div class="text-yellow-500 mt-1 flex">
+                                    <% if (review.rating> 0) { %>
+                                        <div class="mt-1 flex">
                                             <% for (let i=1; i <=5; i++) { %>
-                                                <% if (i <=review.rating) { %>
-                                                    <span>⭐️</span>
-                                                    <% } else { %>
-                                                        <span class="text-gray-300">⭐️</span>
-                                                        <% } %>
-                                                            <% } %>
+                                                <span
+                                                    class="<%= i <= review.rating ? 'text-yellow-500' : 'text-gray-300' %>">&#9733</span>
+                                                <% } %>
                                         </div>
                                         <% } else { %>
                                             <div class="text-gray-400 mt-1 italic text-sm">No rating</div>
                                             <% } %>
+
 
                                                 <!-- 评论文本 -->
                                                 <p class="mt-2 text-gray-800">
