@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Admin - Review List</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="/style/style.css" />
     <link rel="stylesheet" href="/style/admin.css" />
@@ -73,7 +73,7 @@
                 </thead>
                 <tbody id="reviewTableBody">
                 <% reviews.forEach(r => { %>
-                    <tr class="clickable-row" onclick="location.href='/admin/review/<%= r._id %>'" data-rating="<%= r.review_rating %>">
+                    <tr class="clickable-row" onclick="location.href='/admin/review/<%= r._id %>'" data-rating="<%= r.rating %>">
 
                         <td>
                             <% if (r.created_at) { %>
@@ -86,10 +86,10 @@
 
                         <td><%= r.product_name %></td>
                         <td>
-                            <% for(let i=0; i<r.review_rating; i++) { %>
+                            <% for(let i=0; i<r.rating; i++) { %>
                                 <span style="color:#c14646;">&#9733;</span>
                             <% } %>
-                            <% for(let i=r.review_rating; i<5; i++) { %>
+                            <% for(let i=r.rating; i<5; i++) { %>
                                 <span style="color:#ccc;">&#9733;</span>
                             <% } %>
                         </td>

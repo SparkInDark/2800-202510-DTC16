@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Admin - Product Details</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="/style/style.css" />
     <link rel="stylesheet" href="/style/admin.css" />
@@ -12,8 +12,22 @@
     <%- include('component/top-navbar.ejs') %>
 
     <div class="container py-3">
-        <h2 class="mb-4">Edit Product</h2>
+
         <form id="productDetailForm" method="POST" enctype="multipart/form-data" action="/admin/product/<%= product._id %>/edit">
+
+            <div class="flex items-center mb-4">
+                <div style="padding-top: 0.6em">
+                    <h2 class="mb-0">Edit Product</h2>
+                </div>
+
+                <!-- Soft Delete Product -->
+                <div class="flex items-center gap-4 ml-auto">
+                    <button type="button" id="softDeleteBtn" class="btn btn-danger btn-sm" style="height: 2.4em; padding-top:0.4em">Delete Product</button>
+                    <input type="hidden" name="delete" id="deleteFlag" value="">
+                    <span id="deleteMsg" class="text-warning font-semibold"></span>
+                </div>
+            </div>
+
             <!-- Category -->
             <div class="mb-3">
                 <label for="categorySelect" class="form-label font-semibold">Category</label>
@@ -30,12 +44,7 @@
                 <input name="name" id="productName" value="<%= product.name %>" class="w-full border border-gray-400 rounded px-3 py-2 focus:outline-none focus:border-blue-500" />
             </div>
 
-            <!-- Soft Delete Product -->
-            <div class="mb-3 flex items-center gap-4">
-                <button type="button" id="softDeleteBtn" class="btn btn-danger btn-sm">Delete Product</button>
-                <input type="hidden" name="delete" id="deleteFlag" value="">
-                <span id="deleteMsg" class="text-warning font-semibold"></span>
-            </div>
+
 
             <!-- Product Images -->
             <div class="mb-3">
@@ -128,14 +137,19 @@
         document.getElementById('softDeleteBtn').addEventListener('click', function() {
             productPendingDelete = true;
             document.getElementById('deleteFlag').value = "1";
-            document.getElementById('deleteMsg').textContent = "Product will be deleted after saving changes.";
+            document.getElementById('deleteMsg').textContent = "";
             // Optional: visually gray out the form or disable inputs
             document.getElementById('productDetailForm').classList.add('opacity-60');
-            document.querySelectorAll('#productDetailForm input, #productDetailForm select, #productDetailForm button').forEach(el => {
+            document.querySelectorAll('#productDetailForm input, #productDetailForm textarea').forEach(el => {
                 if (el.id !== 'softDeleteBtn' && el.type !== 'submit') {
-                    el.setAttribute('disabled', true);
+                    el.setAttribute('readonly', true);
                 }
             });
+            // For selects, since `readonly` doesn't work, visually gray them out but leave them enabled:
+            document.querySelectorAll('#productDetailForm select').forEach(el => {
+                el.classList.add('bg-gray-200'); // visually gray out, but do NOT disable
+            });
+
             this.innerText = 'Pending Deletion';
             this.classList.remove('btn-danger');
             this.classList.add('btn-warning');
