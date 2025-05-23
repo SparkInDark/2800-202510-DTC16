@@ -18,23 +18,24 @@
     <%- include('component/top-navbar.ejs') %>
 
         <!-- Search Bar Section -->
-        <div class="bg-gray-100 pt-32 pb-12 px-4">
-            <h2 class="text-2xl sm:text-3xl font-bold text-center mb-6">What are you looking for?</h2>
-
+    <section class="bg-white pt-32 pb-16 shadow">
+        <div class="max-w-3xl mx-auto px-4 text-center">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-4">What are you looking for?</h1>
             <form action="/search" method="GET"
-                class="max-w-md mx-auto flex rounded-full shadow-sm border border-blue-300 overflow-hidden bg-white">
+                  class="flex items-center rounded-full overflow-hidden border border-blue-300 bg-white shadow-md">
                 <input type="text" name="q" value="<%= query %>" placeholder="Search"
-                    class="flex-grow px-4 py-2 text-sm sm:text-base focus:outline-none" />
+                       class="flex-grow px-6 py-3 text-lg focus:outline-none" />
                 <button type="submit"
-                    class="bg-blue-500 hover:bg-blue-600 text-white font-semibold px-5 py-2 text-sm sm:text-base transition">
+                        class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg transition-colors">
                     Search
                 </button>
             </form>
         </div>
+    </section>
 
         <!-- Results Section -->
-        <section class="bg-[#fdfcf6] py-12 px-4">
-            <div class="max-w-screen-xl mx-auto bg-white rounded-xl shadow p-6">
+        <section class="bg-[#fdfcf6] py-4 px-4">
+            <div class="max-w-screen-xl mx-auto bg-white rounded-xl shadow p-6" style="padding-bottom: 6em; padding-top: -4em">
                 <!-- Results Title -->
                 <h1 class="text-3xl font-bold mb-6 text-center">
                     Results for "<span class="text-blue-600">
@@ -42,26 +43,17 @@
                     </span>"
                 </h1>
 
-                <!-- Filter Buttons -->
-                <div class="flex justify-center gap-3 mb-6">
-                    <button class="px-4 py-2 border rounded-full text-sm font-medium hover:bg-gray-100">All
-                        filters</button>
-                    <button class="px-4 py-2 border rounded-full text-sm font-medium hover:bg-gray-100">Rating</button>
-                    <button
-                        class="px-4 py-2 border rounded-full text-sm font-medium hover:bg-gray-100">Location</button>
-                </div>
-
                 <!-- Grid Layout -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="space-y-4">
                     <!-- Left: Product Results -->
                     <div class="lg:col-span-2 space-y-4">
                         <% if (results.length> 0) { %>
                             <% results.forEach(product=> { %>
-                                <div class="flex items-start justify-between p-4 bg-white border rounded-lg shadow-sm">
-                                    <div class="flex items-start gap-4">
-                                        <img src="<%= product.image_url %>" alt="<%= product.name %>"
-                                            class="w-16 h-16 object-cover rounded" />
-                                        <div>
+                                <div class="flex flex-col sm:flex-row items-start justify-between p-4 bg-white border rounded-lg shadow-sm">
+                                    <div class="flex items-start gap-4 w-full">
+                                        <img src="<%= product.images && product.images[0] %>" alt="<%= product.name %>"
+                                             class="w-16 h-16 object-cover rounded" />
+                                        <div class="flex-grow">
                                             <h2 class="text-lg font-semibold text-black">
                                                 <a href="/product/<%= product.slug %>" class="hover:underline">
                                                     <%= product.name %>
@@ -72,44 +64,75 @@
                                             </p>
                                             <p class="text-sm text-blue-600 underline">
                                                 <%= product.rating_summary.total_ratings %> reviews
-
                                             </p>
                                         </div>
                                     </div>
-                                    <div class="text-center">
-                                        <div class="text-yellow-500 font-bold text-xl">
-                                            <%= product.rating_summary.average.toFixed(1) %> ★
+                                    <div class="mt-2 sm:mt-0 w-full sm:w-auto">
+                                        <div class="flex items-center" style="padding-left: 4.5em">
+                                            <%
+                                                const avg = product.rating_summary.average || 0;
+                                            for (let i = 1; i <= 5; i++) {
+                                            if (avg >= i) {
+                                            %>
+                                                <!-- Full Star SVG -->
+                                                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400 inline" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.174c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.287 3.967c.3.921-.755 1.688-1.54 1.118l-3.38-2.455a1 1 0 00-1.176 0l-3.38 2.455c-.784.57-1.838-.197-1.539-1.118l1.287-3.967a1 1 0 00-.364-1.118L2.049 9.394c-.783-.57-.38-1.81.588-1.81h4.174a1 1 0 00.95-.69l1.286-3.967z"/>
+                                                </svg>
+                                            <%
+                                            } else if (avg >= i - 0.5) {
+                                            %>
+                                                <!-- Half Star SVG -->
+                                                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400 inline" viewBox="0 0 20 20">
+                                                    <defs>
+                                                        <linearGradient id="half-grad">
+                                                            <stop offset="50%" stop-color="currentColor"/>
+                                                            <stop offset="50%" stop-color="transparent"/>
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <path fill="url(#half-grad)" d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.174c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.287 3.967c.3.921-.755 1.688-1.54 1.118l-3.38-2.455a1 1 0 00-1.176 0l-3.38 2.455c-.784.57-1.838-.197-1.539-1.118l1.287-3.967a1 1 0 00-.364-1.118L2.049 9.394c-.783-.57-.38-1.81.588-1.81h4.174a1 1 0 00.95-.69l1.286-3.967z"/>
+                                                    <path fill="none" stroke="currentColor" stroke-width="1" d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.174c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.287 3.967c.3.921-.755 1.688-1.54 1.118l-3.38-2.455a1 1 0 00-1.176 0l-3.38 2.455c-.784.57-1.838-.197-1.539-1.118l1.287-3.967a1 1 0 00-.364-1.118L2.049 9.394c-.783-.57-.38-1.81.588-1.81h4.174a1 1 0 00.95-.69l1.286-3.967z"/>
+                                                </svg>
+                                            <%
+                                            } else {
+                                            %>
+                                                <!-- Empty Star SVG -->
+                                                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-300 inline" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.967a1 1 0 00.95.69h4.174c.969 0 1.371 1.24.588 1.81l-3.38 2.455a1 1 0 00-.364 1.118l1.287 3.967c.3.921-.755 1.688-1.54 1.118l-3.38-2.455a1 1 0 00-1.176 0l-3.38 2.455c-.784.57-1.838-.197-1.539-1.118l1.287-3.967a1 1 0 00-.364-1.118L2.049 9.394c-.783-.57-.38-1.81.588-1.81h4.174a1 1 0 00.95-.69l1.286-3.967z"/>
+                                                </svg>
+                                            <%
+                                            }
+                                            }
+                                            %>
+                                            <span class="ml-2 text-gray-800 text-base"><%= avg.toFixed(1) %></span>
                                         </div>
                                     </div>
                                 </div>
-                                <% }) %>
-                                    <% } else { %>
-                                        <p class="text-center text-gray-500">No results found for "<%= query %>"</p>
-                                        <% } %>
-
-                                            <!-- Suggested Companies -->
-                                            <h2 class="text-xl font-semibold mt-8">You may also like</h2>
-                                            <div class="space-y-3">
-                                                <div class="p-4 bg-white border rounded shadow-sm">
-                                                    <h3 class="text-md font-medium">GadgetCo</h3>
-                                                    <p class="text-sm text-gray-600">4.3 ★ · 320 reviews</p>
-                                                </div>
-                                                <div class="p-4 bg-white border rounded shadow-sm">
-                                                    <h3 class="text-md font-medium">TechHive</h3>
-                                                    <p class="text-sm text-gray-600">4.5 ★ · 190 reviews</p>
-                                                </div>
-                                            </div>
-                    </div>
-
-                    <!-- Right: Categories -->
-                    <div class="space-y-3">
-                        <h3 class="text-lg font-semibold mb-2">Categories</h3>
-                        <% categories.forEach(cat=> { %>
-                            <a href="/category/<%= cat.slug %>"
-                                class="block px-4 py-2 rounded-lg hover:bg-gray-100 border text-sm text-gray-700">
-                                <%= cat.name %>
-                            </a>
                             <% }) %>
+                        <% } else { %>
+                            <p class="text-center text-gray-500">No results found for "<%= query %>"</p>
+                        <% } %>
+
+                        <!-- Suggested Companies -->
+                        <h2 class="text-xl font-semibold mt-8">You may also like</h2>
+                        <div class="space-y-3">
+                            <% if (suggestions && suggestions.length > 0) { %>
+                                <% suggestions.forEach(product => { %>
+                                    <div class="p-4 bg-white border rounded shadow-sm flex items-center gap-4">
+                                        <img src="<%= product.images && product.images[0] %>" alt="<%= product.name %>" class="w-12 h-12 object-cover rounded" />
+                                        <div>
+                                            <h3 class="text-md font-medium">
+                                                <a href="/product/<%= product.slug %>" class="hover:underline"><%= product.name %></a>
+                                            </h3>
+                                            <p class="text-sm text-gray-600">
+                                                <%= product.rating_summary ? (product.rating_summary.average.toFixed(1) + ' ★ · ' + product.rating_summary.total_ratings + ' reviews') : '' %>
+                                            </p>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            <% } else { %>
+                                <div class="p-4 bg-white border rounded shadow-sm text-gray-500">No similar products found.</div>
+                            <% } %>
+                        </div>
                     </div>
                 </div>
             </div>
