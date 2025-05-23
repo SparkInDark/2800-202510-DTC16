@@ -175,17 +175,64 @@
             const confirm = document.getElementById('confirm_password');
             const errorMsg = document.getElementById('password-error');
 
+            // Add a strength message below the password field
+            let strengthMsg = document.getElementById('password-strength-error');
+            if (!strengthMsg) {
+                strengthMsg = document.createElement('p');
+                strengthMsg.id = 'password-strength-error';
+                strengthMsg.className = 'text-red-600 text-sm mt-1';
+                strengthMsg.style.display = 'none';
+                password.parentNode.appendChild(strengthMsg);
+            }
+
+            // Regex: min 8 chars, at least 1 letter, 1 number, 1 special character
+            const strongPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
+            function checkStrength() {
+                if (password.value.length === 0) {
+                    strengthMsg.style.display = "none";
+                    password.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
+                    return true;
+                }
+                if (!strongPattern.test(password.value)) {
+                    strengthMsg.textContent = "Password must be at least 8 characters, include a letter, a number, and a special character.";
+                    strengthMsg.style.display = "block";
+                    password.classList.add('border-red-500', 'ring-2', 'ring-red-300');
+                    return false;
+                } else {
+                    strengthMsg.style.display = "none";
+                    password.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
+                    return true;
+                }
+            }
+
             function checkMatch() {
                 if (confirm.value.length > 0 && password.value !== confirm.value) {
                     confirm.classList.add('border-red-500', 'ring-2', 'ring-red-300');
                     errorMsg.classList.remove('hidden');
+                    return false;
                 } else {
                     confirm.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
                     errorMsg.classList.add('hidden');
+                    return true;
                 }
             }
-            password.addEventListener('input', checkMatch);
+
+            password.addEventListener('input', function() {
+                checkStrength();
+                checkMatch();
+            });
             confirm.addEventListener('input', checkMatch);
+
+            // Prevent form submit if checks fail
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function (e) {
+                const validStrength = checkStrength();
+                const validMatch = checkMatch();
+                if (!validStrength || !validMatch) {
+                    e.preventDefault();
+                }
+            });
 
             // Avatar logic
             const picInput = document.getElementById('profile_photo');

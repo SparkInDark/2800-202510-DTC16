@@ -39,8 +39,16 @@ function isProtected(path) {
     return protectedRoutes.includes(path.split('?')[0]);
 }
 
-
-// ==== Section 4. Define schema ====
+// Auto-generate slug while adding category
+function slugify(str) {
+    return str
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/[\s_-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
 
 // ==== Section 4. Define schema ====
 const userSchema = new mongoose.Schema({
@@ -131,103 +139,6 @@ const categorySchema = new mongoose.Schema({
 });
 
 const categoriesModel = mongoose.model('categories', categorySchema);
-
-
-
-// ===  schema design review reference  (comment by jun, to be reviewed) ===
-
-// const userSchema = new mongoose.Schema({
-//     email: { type: String, required: true, unique: true },
-//     password_hash: { type: String, required: true },
-//     role: {
-//         type: String,
-//         enum: ['admin', 'user'],
-//         default: 'user'
-//     },
-//     profile: {
-//         first_name: { type: String, default: '' },
-//         last_name: { type: String, default: '' },
-//         city: { type: String, default: '' },
-//         country: { type: String, default: '' },
-//         bio: { type: String, default: '' },
-//         profile_photo_url: { type: String, default: '' }
-//     }
-// }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
-//
-// const usersModel = mongoose.model('users', userSchema);
-//
-// const reviewSchema = new mongoose.Schema({
-//     productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-//     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-//     stars: { type: Number, min: 1, max: 5, required: true },
-//     title: { type: String, required: true },
-//     pros: String,
-//     cons: String,
-//     details: { type: String, required: true },
-//     images: [String], // Store image URLs or file paths
-//     createdAt: { type: Date, default: Date.now }
-// });
-//
-// const reviewsModel = mongoose.model('reviews', reviewSchema);
-//
-// const ratingSchema = new mongoose.Schema({
-//     product_name: String,
-//     user_email: String,
-//     rating: Number
-// }, { timestamps: { createdAt: 'rated_at', updatedAt: false } }); // Only track rated_at
-//
-// const ratingsModel = mongoose.model('ratings', ratingSchema);
-//
-//
-// const productSchema = new mongoose.Schema({
-//     name: String,
-//     category_slug: String,
-//     specs: {
-//         brand: String,
-//         storage: String,
-//         ram: String,
-//         screen_size: String,
-//         processor: String
-//     },
-//     images: [String],
-//     rating_summary: {
-//         average: Number,
-//         total_ratings: Number,
-//         star_counts: {
-//             "1": Number,
-//             "2": Number,
-//             "3": Number,
-//             "4": Number,
-//             "5": Number
-//         }
-//     }
-// }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
-//
-// const productsModel = mongoose.model('products', productSchema);
-//
-//
-// const categorySchema = new mongoose.Schema({
-//     name: String,
-//     slug: String,
-//     description: String
-// });
-//
-// const categoriesModel = mongoose.model('categories', categorySchema);
-
-
-
-
-// Comment by jun, the section is to be deleted after userSchema test.
-// const user_authSchema = new mongoose.Schema({
-//     username: String,
-//     password: String,
-//     role: {
-//         type: String,
-//         enum: ['admin', 'user'],
-//         default: 'user'
-//     }
-// });
-// const userAuthModel = mongoose.model('users_auth', user_authSchema);
 
 
 // ==== Section 5. App settings (app.set, view engine and views directory) ====
@@ -957,6 +868,11 @@ app.use(isAdmin);
 
 // === ADMIN REVIEW ===
 
+
+app.get('/admin', (req, res) => {
+    res.redirect('/admin/review');
+})
+
 app.get('/admin/review', async (req, res) => {
     const reviews = await reviewsModel.aggregate([
         { $sort: { created_at: -1 } },
@@ -1024,6 +940,16 @@ app.get('/admin/review/:id', async (req, res) => {
 app.post('/admin/review/:id/delete', async (req, res) => {
     await reviewsModel.findByIdAndDelete(req.params.id);
     res.redirect('/admin/review');
+});
+
+app.post('/admin/review/:id/moderate', async (req, res) => {
+    const { status, rejection_reason } = req.body;
+    const update = {
+        'moderation.status': status,
+        'moderation.rejection_reason': status === 'rejected' ? (rejection_reason || '') : ''
+    };
+    await reviewsModel.findByIdAndUpdate(req.params.id, update);
+    res.redirect(`/admin/review/${req.params.id}`);
 });
 
 
@@ -1115,9 +1041,16 @@ app.post('/admin/product/:id/edit', async (req, res) => {
         try {
             const product = await productsModel.findById(req.params.id);
 
-            if (fields.delete) {
-                await product.deleteOne();
+            // Defensive: Only delete if explicitly requested
+            if (fields.delete && fields.delete === "1") {
+                if (product) {
+                    await product.deleteOne();
+                }
                 return res.redirect('/admin/product');
+            }
+
+            if (!product) {
+                return res.status(404).send('Product not found');
             }
 
             product.name = fields.name;
@@ -1181,163 +1114,30 @@ app.post('/admin/product/:id/edit', async (req, res) => {
 });
 
 
-// === ADMIN CATEGORY ===
+// === ADMIN Product: Add Product ===
 
-// Admin CAT Central Page
-app.get('/admin/cat', (req, res) => {
-    res.render('admin-cat');
-});
-
-app.get('/admin/cat/category', async (req, res) => {
-    const categories = await categoriesModel.aggregate([
-        {
-            $lookup: {
-                from: 'products',
-                localField: 'slug',
-                foreignField: 'category_slug',
-                as: 'products'
-            }
-        },
-        {
-            $addFields: { product_count: { $size: '$products' } }
-        }
-    ]);
-    res.render('admin-cat-category', { categories });
-});
-
-
-
-// Admin CAT CATEGORY
-
-// Auto-generate slug while adding category
-function slugify(str) {
-    return str
-        .toString()
-        .toLowerCase()
-        .trim()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/[\s_-]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-}
-
-app.post('/admin/cat/category/add', async (req, res) => {
-    const slug = slugify(req.body.name);
-    await categoriesModel.create({
-        name: req.body.name,
-        slug: slug,
-        description: req.body.description,
-        specs: []
-    });
-    res.redirect('/admin/cat/category');
-});
-
-app.post('/admin/cat/category/:id/edit', async (req, res) => {
-    if (req.body.delete === "1") {
-        // Actually delete the category from the database
-        await categoriesModel.deleteOne({ _id: req.params.id });
-        return res.redirect('/admin/cat/category');
+app.post('/admin/product/create-product', express.json(), async (req, res) => {
+    const { name, category_slug } = req.body;
+    if (!name || !category_slug) {
+        return res.json({ success: false, message: "Missing name or category." });
     }
-    // Otherwise, just update the category
-    const category = await categoriesModel.findById(req.params.id);
-    category.name = req.body.name;
-    category.slug = req.body.slug;
-    category.description = req.body.description;
-    await category.save();
-    res.redirect('/admin/cat/category');
-});
-
-
-
-// === ADMIN CAT PRODUCT ===
-
-app.get('/admin/cat/product', async (req, res) => {
-    const categories = await categoriesModel.find().lean();
-    const products = await productsModel.find().lean();
-    res.render('admin-cat-product', { categories, products });
-});
-
-app.post('/admin/cat/product/add', async (req, res) => {
-    const slug = slugify(req.body.name);
-    await productsModel.create({
-        name: req.body.name,
-        slug: slug,
-        category_slug: req.body.category_slug,
+    const slug = slugify(name);
+    // Check for uniqueness
+    const exists = await productsModel.findOne({ slug, category_slug });
+    if (exists) {
+        return res.json({ success: false, message: "Product with this name already exists in this category." });
+    }
+    // Create new product
+    const product = await productsModel.create({
+        name,
+        slug,
+        category_slug,
         specs: {},
-        images: []
+        images: [],
+        rating_summary: {}
     });
-    res.redirect('/admin/cat/product');
+    res.json({ success: true, product });
 });
-
-app.post('/admin/cat/product/:id/edit', async (req, res) => {
-    if (req.body.delete === "1") {
-        await productsModel.deleteOne({ _id: req.params.id });
-        return res.redirect('/admin/cat/product');
-    }
-    const product = await productsModel.findById(req.params.id);
-    product.name = req.body.name;
-    product.category_slug = req.body.category_slug;
-    await product.save();
-    res.redirect('/admin/cat/product');
-});
-
-
-// === ADMIN CAT SPEC ===
-
-app.get('/admin/cat/spec', async (req, res) => {
-    const categories = await categoriesModel.find().lean();
-    res.render('admin-cat-spec', { categories });
-});
-
-app.post('/admin/cat/spec/add', async (req, res) => {
-    await categoriesModel.updateOne(
-        { slug: req.body.category_slug },
-        { $addToSet: { specs: req.body.spec_key } }
-    );
-    // Add the new spec key to all products in this category
-    await productsModel.updateMany(
-        { category_slug: req.body.category_slug },
-        { $set: { [`specs.${req.body.spec_key}`]: "" } }
-    );
-    res.redirect('/admin/cat/spec');
-});
-
-app.post('/admin/cat/spec/:slug/edit', async (req, res) => {
-    const cat = await categoriesModel.findOne({ slug: req.params.slug });
-    if (req.body.delete !== undefined && req.body.delete !== "") {
-        // DELETE
-        const deleteIdx = Number(req.body.delete);
-        const deleteKey = cat.specs[deleteIdx];
-        cat.specs.splice(deleteIdx, 1);
-        await cat.save();
-        // Remove key from all products
-        await productsModel.updateMany(
-            { category_slug: req.params.slug },
-            { $unset: { [`specs.${deleteKey}`]: "" } }
-        );
-    } else if (req.body.spec_key !== undefined && req.body.old_key !== undefined) {
-        // RENAME
-        const idx = Number(req.body.idx);
-        const oldKey = req.body.old_key;
-        const newKey = req.body.spec_key;
-        cat.specs[idx] = newKey;
-        await cat.save();
-        // Rename in all products
-        const products = await productsModel.find({ category_slug: req.params.slug });
-        for (const product of products) {
-            if (product.specs && Object.prototype.hasOwnProperty.call(product.specs, oldKey)) {
-                product.specs[newKey] = product.specs[oldKey];
-                delete product.specs[oldKey];
-                await product.save();
-            }
-        }
-    }
-    res.redirect('/admin/cat/spec');
-});
-
-
-// === ADMIN CAT PRODUCT DETAIL ===
-
-
 
 app.get('/admin/product/add/product-detail', async (req, res) => {
     const products = await productsModel.find().lean();
@@ -1476,29 +1276,113 @@ app.post('/admin/product/add/product-detail', async (req, res) => {
 });
 
 
-app.post('/admin/product/create-product', express.json(), async (req, res) => {
-    const { name, category_slug } = req.body;
-    if (!name || !category_slug) {
-        return res.json({ success: false, message: "Missing name or category." });
-    }
-    const slug = slugify(name);
-    // Check for uniqueness
-    const exists = await productsModel.findOne({ slug, category_slug });
-    if (exists) {
-        return res.json({ success: false, message: "Product with this name already exists in this category." });
-    }
-    // Create new product
-    const product = await productsModel.create({
-        name,
-        slug,
-        category_slug,
-        specs: {},
-        images: [],
-        rating_summary: {}
-    });
-    res.json({ success: true, product });
+// === ADMIN CATEGORY ===
+
+// Admin CAT Central Page
+app.get('/admin/cat', (req, res) => {
+    res.render('admin-cat');
 });
 
+app.get('/admin/cat/category', async (req, res) => {
+    const categories = await categoriesModel.aggregate([
+        {
+            $lookup: {
+                from: 'products',
+                localField: 'slug',
+                foreignField: 'category_slug',
+                as: 'products'
+            }
+        },
+        {
+            $addFields: { product_count: { $size: '$products' } }
+        }
+    ]);
+    res.render('admin-cat-category', { categories });
+});
+
+
+
+// Admin CAT CATEGORY
+
+app.post('/admin/cat/category/add', async (req, res) => {
+    const slug = slugify(req.body.name);
+    await categoriesModel.create({
+        name: req.body.name,
+        slug: slug,
+        description: req.body.description,
+        specs: []
+    });
+    res.redirect('/admin/cat/category');
+});
+
+app.post('/admin/cat/category/:id/edit', async (req, res) => {
+    if (req.body.delete === "1") {
+        // Actually delete the category from the database
+        await categoriesModel.deleteOne({ _id: req.params.id });
+        return res.redirect('/admin/cat/category');
+    }
+    // Otherwise, just update the category
+    const category = await categoriesModel.findById(req.params.id);
+    category.name = req.body.name;
+    category.slug = slugify(req.body.name); // Always generate slug from name
+    category.description = req.body.description;
+    await category.save();
+    res.redirect('/admin/cat/category');
+});
+
+
+// === ADMIN CAT SPEC ===
+
+app.get('/admin/cat/spec', async (req, res) => {
+    const categories = await categoriesModel.find().lean();
+    res.render('admin-cat-spec', { categories });
+});
+
+app.post('/admin/cat/spec/add', async (req, res) => {
+    await categoriesModel.updateOne(
+        { slug: req.body.category_slug },
+        { $addToSet: { specs: req.body.spec_key } }
+    );
+    // Add the new spec key to all products in this category
+    await productsModel.updateMany(
+        { category_slug: req.body.category_slug },
+        { $set: { [`specs.${req.body.spec_key}`]: "" } }
+    );
+    res.redirect('/admin/cat/spec');
+});
+
+app.post('/admin/cat/spec/:slug/edit', async (req, res) => {
+    const cat = await categoriesModel.findOne({ slug: req.params.slug });
+    if (req.body.delete !== undefined && req.body.delete !== "") {
+        // DELETE
+        const deleteIdx = Number(req.body.delete);
+        const deleteKey = cat.specs[deleteIdx];
+        cat.specs.splice(deleteIdx, 1);
+        await cat.save();
+        // Remove key from all products
+        await productsModel.updateMany(
+            { category_slug: req.params.slug },
+            { $unset: { [`specs.${deleteKey}`]: "" } }
+        );
+    } else if (req.body.spec_key !== undefined && req.body.old_key !== undefined) {
+        // RENAME
+        const idx = Number(req.body.idx);
+        const oldKey = req.body.old_key;
+        const newKey = req.body.spec_key;
+        cat.specs[idx] = newKey;
+        await cat.save();
+        // Rename in all products
+        const products = await productsModel.find({ category_slug: req.params.slug });
+        for (const product of products) {
+            if (product.specs && Object.prototype.hasOwnProperty.call(product.specs, oldKey)) {
+                product.specs[newKey] = product.specs[oldKey];
+                delete product.specs[oldKey];
+                await product.save();
+            }
+        }
+    }
+    res.redirect('/admin/cat/spec');
+});
 
 
 // === ADMIN USER ===
@@ -1561,6 +1445,8 @@ app.post('/admin/user/:id/edit', async (req, res) => {
                 const url = await uploadImageToGCS(profilePicBuffer, profilePicName, profilePicMime);
                 user.profile.profile_photo_url = url;
             }
+            user.email = fields.email || user.email;
+            user.role = fields.role || user.role;
             user.profile.first_name = fields.first_name;
             user.profile.last_name = fields.last_name;
             user.profile.city = fields.city;

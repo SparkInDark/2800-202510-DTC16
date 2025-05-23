@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Admin - User Profile</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="/style/style.css" />
     <link rel="stylesheet" href="/style/admin.css" />
@@ -11,60 +11,202 @@
 <body>
     <%- include('component/top-navbar.ejs') %>
 
-<div class="container py-3">
-    <form method="POST" enctype="multipart/form-data" action="/admin/user/<%= user._id %>/edit">
-        <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between">
-                <span><%= user.profile && user.profile.first_name ? user.profile.first_name : 'N/A' %></span>
-                <button type="submit" name="delete" value="1" class="btn btn-danger btn-sm">Delete User</button>
+    <div class="w-full max-w-full sm:max-w-xl md:max-w-4xl mx-auto mt-12 md:mt-36 py-8 px-2 pb-10">
+        <div class="bg-white rounded-lg shadow-md p-6 pb-16">
+            <!-- Profile Header -->
+            <div class="flex items-center justify-between mb-8">
+                <h1 class="text-3xl font-bold text-gray-800">User Profile</h1>
+                <span class="px-4 py-2 bg-<%= user.role === 'admin' ? 'red' : 'blue' %>-100 text-<%= user.role === 'admin' ? 'red' : 'blue' %>-800 rounded-full text-sm capitalize">
+                <%= user.role %>
+            </span>
             </div>
-            <div class="card-body">
-                <div class="mb-2">
-                    <label>Profile Picture:</label>
-                    <% if(user.profile && user.profile.profile_photo_url) { %>
-                        <img src="<%= user.profile.profile_photo_url %>" style="width:64px;height:64px;border-radius:50%;">
-                        <button type="submit" name="delete_pic" value="1" class="btn btn-danger btn-sm ms-2">Delete</button>
-                    <% } else { %>
-                        <input type="file" name="profile_pic" accept="image/*" class="form-control form-control-sm" />
-                    <% } %>
+
+            <form method="POST" enctype="multipart/form-data" action="/admin/user/<%= user._id %>/edit" class="space-y-4">
+                <div class="grid md:grid-cols-3 gap-8">
+                    <!-- Left Column - Avatar Section -->
+                    <div class="md:col-span-1">
+                        <div class="space-y-4">
+                            <div class="w-full flex justify-center">
+                                <div class="relative inline-block">
+                                    <img
+                                            src="<%= user.profile && user.profile.profile_photo_url ? user.profile.profile_photo_url : '/default-avatar.png' %>"
+                                            alt="No Pic"
+                                            class="w-32 h-32 rounded-full object-cover shadow-lg cursor-pointer"
+                                            id="profilePicPreview"
+                                    />
+                                    <button type="submit" name="delete_pic" value="1"
+                                            class="absolute top-0 right-0 -translate-y-1/4 translate-x-1/4 w-7 h-7 flex items-center justify-center bg-white text-red-600 rounded-full shadow border border-gray-200 hover:bg-gray-100"
+                                            title="Delete photo"
+                                            style="font-size: 1.25rem; line-height: 1; z-index: 10;">
+                                        ×
+                                    </button>
+                                    <input type="file" name="profile_pic" id="profile_pic" accept="image/*" class="hidden" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column - Profile Details -->
+                    <div class="md:col-span-2">
+                        <div class="space-y-6">
+                            <!-- Account Info -->
+                            <div class="pb-4">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-2">Account Information</h3>
+                                <div>
+                                    <label class="block text-gray-700">Email</label>
+                                    <input type="email" name="email" value="<%= user.email %>" class="w-full border rounded px-3 py-2" />
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700">New Password</label>
+                                    <input type="password" id="password" name="password" placeholder="********"
+                                           class="w-full border rounded px-3 py-2" autocomplete="new-password" />
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700">Confirm New Password</label>
+                                    <input type="password" id="confirm_password" name="confirm_password" placeholder="********"
+                                           class="w-full border rounded px-3 py-2" autocomplete="new-password" />
+                                    <p id="password-error" class="text-red-600 text-sm mt-1 hidden">Passwords do not match</p>
+                                </div>
+                            </div>
+                            <!-- Role Info -->
+                            <div class="space-y-4">
+                                <h3 class="text-lg font-semibold text-gray-700">Change Role</h3>
+                                <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <select name="role"
+                                                class="w-full border rounded px-3 py-2"
+                                                style="max-width: 200px;">
+                                            <option value="user" <%= user.role === 'user' ? 'selected' : '' %>>User</option>
+                                            <option value="admin" <%= user.role === 'admin' ? 'selected' : '' %>>Admin</option>
+                                        </select>
+                                    </div>
+                                </dl>
+                            </div>
+                            <!-- Personal Info -->
+                            <div class="space-y-4">
+                                <h3 class="text-lg font-semibold text-gray-700">Personal Information</h3>
+                                <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">First Name</dt>
+                                        <input type="text" name="first_name" value="<%= user.profile.first_name || '' %>" class="w-full border rounded px-3 py-2" />
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">Last Name</dt>
+                                        <input type="text" name="last_name" value="<%= user.profile.last_name || '' %>" class="w-full border rounded px-3 py-2" />
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">City</dt>
+                                        <input type="text" name="city" value="<%= user.profile.city || '' %>" class="w-full border rounded px-3 py-2" />
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500">Country</dt>
+                                        <input type="text" name="country" value="<%= user.profile.country || '' %>" class="w-full border rounded px-3 py-2" />
+                                    </div>
+                                </dl>
+                            </div>
+                            <!-- Bio -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-700 mb-2">Bio</h3>
+                                <textarea name="bio" class="w-full border rounded px-3 py-2 mb-4" rows="3"><%= user.profile.bio || '' %></textarea>
+                            </div>
+                        </div>
+                        <div class="flex flex-row items-center justify-between mt-4">
+                            <button type="submit" name="delete" value="1" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Delete User</button>
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Save Changes</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="mb-2">
-                    <label>First Name</label>
-                    <input name="first_name" value="<%= user.profile && user.profile.first_name ? user.profile.first_name : '' %>" class="form-control form-control-sm" />
-                </div>
-                <div class="mb-2">
-                    <label>Last Name</label>
-                    <input name="last_name" value="<%= user.profile && user.profile.last_name ? user.profile.last_name : '' %>" class="form-control form-control-sm" />
-                </div>
-                <div class="mb-2">
-                    <label>Email</label>
-                    <input name="email" value="<%= user.email %>" class="form-control form-control-sm" readonly />
-                </div>
-                <div class="mb-2">
-                    <label>Password</label>
-                    <input name="password" value="****" class="form-control form-control-sm" />
-                </div>
-                <div class="mb-2">
-                    <label>City</label>
-                    <input name="city" value="<%= user.profile && user.profile.city ? user.profile.city : '' %>" class="form-control form-control-sm" />
-                </div>
-                <div class="mb-2">
-                    <label>Country</label>
-                    <input name="country" value="<%= user.profile && user.profile.country ? user.profile.country : '' %>" class="form-control form-control-sm" />
-                </div>
-                <div class="mb-2">
-                    <label>Bio</label>
-                    <textarea name="bio" class="form-control form-control-sm"><%= user.profile && user.profile.bio ? user.profile.bio : '' %></textarea>
-                </div>
-            </div>
+            </form>
         </div>
-        <button type="submit" class="btn btn-primary w-100">Confirm Changes</button>
-    </form>
-</div>
-
-
+    </div>
 
     <%- include('component/bottom-navbar-admin.ejs') %>
     <script src="/script/profile-dropdown.js"></script>
+    <script>
+
+        // password fields match check
+        document.addEventListener('DOMContentLoaded', function () {
+            const password = document.getElementById('password');
+            const confirm = document.getElementById('confirm_password');
+            const errorMsg = document.getElementById('password-error');
+            const strengthMsg = document.createElement('p');
+            strengthMsg.className = "text-red-600 text-sm mt-1";
+            strengthMsg.style.display = "none";
+            password.parentNode.appendChild(strengthMsg);
+            const form = document.querySelector('form');
+
+            // Regex: min 8 chars, at least 1 letter, 1 number, 1 special char
+            const strongPattern = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
+
+            function checkStrength() {
+                if (password.value.length === 0) {
+                    strengthMsg.style.display = "none";
+                    return true;
+                }
+                if (!strongPattern.test(password.value)) {
+                    strengthMsg.textContent = "Password must be at least 8 characters, include a letter, a number, and a special character.";
+                    strengthMsg.style.display = "block";
+                    password.classList.add('border-red-500', 'ring-2', 'ring-red-300');
+                    return false;
+                } else {
+                    strengthMsg.style.display = "none";
+                    password.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
+                    return true;
+                }
+            }
+
+            function checkMatch() {
+                if (confirm.value.length > 0 && password.value !== confirm.value) {
+                    confirm.classList.add('border-red-500', 'ring-2', 'ring-red-300');
+                    errorMsg.classList.remove('hidden');
+                    return false;
+                } else {
+                    confirm.classList.remove('border-red-500', 'ring-2', 'ring-red-300');
+                    errorMsg.classList.add('hidden');
+                    return true;
+                }
+            }
+
+            password.addEventListener('input', function() {
+                checkStrength();
+                checkMatch();
+            });
+            confirm.addEventListener('input', checkMatch);
+
+            form.addEventListener('submit', function (e) {
+                const validStrength = checkStrength();
+                const validMatch = checkMatch();
+                if (!validStrength || !validMatch) {
+                    e.preventDefault();
+                }
+            });
+
+
+
+            // picture preview while select to upload
+            const picInput = document.getElementById('profile_pic');
+            const picPreview = document.getElementById('profilePicPreview');
+
+            // Click image to open file dialog
+            picPreview.addEventListener('click', function() {
+                picInput.click();
+            });
+
+            // Preview image when selected
+            picInput.addEventListener('change', function(e) {
+                if (picInput.files && picInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        picPreview.src = evt.target.result;
+                    };
+                    reader.readAsDataURL(picInput.files[0]);
+                }
+            });
+
+        });
+
+
+
+    </script>
 </body>
 </html>
