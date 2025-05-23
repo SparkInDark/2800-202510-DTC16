@@ -706,18 +706,16 @@ app.post('/write-review', (req, res) => {
             const totalRatings = ratings.length;
             const averageRating = totalRatings > 0 ? total / totalRatings : 0;
 
-            await productsModel.findOneAndUpdate(
-                { slug: product_slug },
-                {
-                    average_rating: averageRating,
-                    total_ratings: totalRatings,
-                    star_1_count: starCounts[1],
-                    star_2_count: starCounts[2],
-                    star_3_count: starCounts[3],
-                    star_4_count: starCounts[4],
-                    star_5_count: starCounts[5]
+           await productsModel.findOneAndUpdate(
+            { slug: product_slug },
+            {
+                $set: {
+                    'rating_summary.average': averageRating.toFixed(2),
+                    'rating_summary.total_ratings': totalRatings,
+                    'rating_summary.star_counts': starCounts
                 }
-            );
+            }
+        );
 
             const product = await productsModel.findOne({ slug: product_slug });
             let category = null;
