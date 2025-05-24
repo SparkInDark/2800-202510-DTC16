@@ -3,10 +3,10 @@
 /* General Layout */
 .container {
     max-width: 900px;
-    margin: 2rem auto;
+    margin: 2rem auto 2rem auto;
     margin-top: 5em;
     background: #fff;
-    padding: 2rem 1.2rem;
+    padding: 2rem 2rem 6rem 2rem;
     border-radius: 12px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.04);
 }
@@ -55,6 +55,19 @@ tr:last-child td {
     cursor: pointer;
     transition: background 0.18s;
 }
+
+/* Show right arrow on row hover, positioned absolutely at the right edge */
+.clickable-row:hover::after {
+    content: '〉';
+    color: #888;
+    position: absolute;
+    right: 0.1em;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2em;
+    pointer-events: none;
+    transition: color 0.18s;
+}
 .clickable-row {
     position: relative;
     transition: background 0.18s;
@@ -69,6 +82,55 @@ tr:last-child td {
     opacity: 0.7;
     pointer-events: none;
 }
+
+
+/* sort button for table */
+.sort-btn {
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    padding: 0;
+}
+
+.sort-header {
+    display: inline-flex;
+    align-items: center;      /* This vertically aligns text and arrows */
+    gap: 0.3em;               /* Space between text and arrows */
+}
+
+/* Arrow styles as before, but smaller and outline */
+.sort-arrow {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    margin-left: 0.1em;
+    height: 1em;
+    gap: 2px;
+    margin-top: 10px; /* adjust this value as needed */
+}
+.arrow-up, .arrow-down {
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+}
+.arrow-up {
+    border-bottom: 4px solid #888;
+    border-top: none;
+    background: transparent;
+}
+.arrow-down {
+    border-top: 4px solid #888;
+    border-bottom: none;
+    background: transparent;
+}
+.arrow-inactive {
+    opacity: 0.3;
+}
+
+
 
 /* List Groups (for central cat page) */
 .list-group {
@@ -192,7 +254,7 @@ button.btn-primary:hover, .btn.btn-primary:hover {
 
 .product-image-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(4, 1fr);
     gap: 8px;
     max-width: 200px; /* Adjust as needed for mobile */
     margin: 0 auto;
@@ -375,7 +437,7 @@ button.btn-primary:hover, .btn.btn-primary:hover {
 @media (max-width: 600px) {
     .container {
         max-width: 100vw;
-        padding: 1rem 0.2rem;
+        padding: 1rem 0.7rem 4rem 0.7rem;
         border-radius: 0;
         box-shadow: none;
     }

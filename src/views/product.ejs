@@ -2,70 +2,290 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>
-        <%= item %>
+        <%= product.name %> - Rating Rebels
     </title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/style/style.css" />
 </head>
 
-<body>
+<body class="bg-gray-100 text-gray-900">
+    <!-- Top Navbar -->
     <%- include('component/top-navbar.ejs') %>
 
-        <div class="mt-24 px-6 sm:px-20">
-            <% if (item==='iphone-16-pro-max' ) { %>
-                <div class="flex justify-between items-center bg-gray-300 p-4 rounded mb-4">
-                    <span class="font-semibold text-lg">iPhone 16 Pro Max</span>
-                    <div class="flex items-center gap-2 text-xl">
-                        <span class="border-2 border-purple-500 px-1 rounded">☆</span>
-                        <span>☆</span>
-                        <span>☆</span>
-                        <span>&gt;</span>
+        <!-- Main Content （背景跟 body 一致）-->
+        <main class="pt-32 max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- LEFT COLUMN: Image Gallery -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow p-4">
+                    <img src="<%= product.images[0] || '/img/placeholder.png' %>" alt="<%= product.name %>"
+                        class="rounded w-full object-cover mb-4" />
+                    <div class="grid grid-cols-4 gap-2">
+                        <% product.images.forEach(img=> { %>
+                            <img src="<%= img %>" alt="" class="rounded border hover:scale-105 transition" />
+                            <% }) %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Product Info + Reviews -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Product Info -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h1 class="text-2xl font-bold mb-2">
+                        <%= product.name %>
+                    </h1>
+                    <p class="text-gray-600">
+                        <%= product.specs?.summary || "No summary available." %>
+                    </p>
+                    <details class="mt-4 border rounded-lg">
+                        <summary class="cursor-pointer px-4 py-2 font-semibold bg-gray-50 hover:bg-gray-100">
+                            Specifications
+                        </summary>
+                        <div class="px-4 py-2 text-sm grid sm:grid-cols-2 gap-x-8 gap-y-2 bg-white">
+                            <% for (let key in product.specs) { if (key !=='summary' ) { %>
+                                <div>
+                                    <span class="font-medium capitalize">
+                                        <%= key.replace(/_/g, ' ' ) %>:
+                                    </span>
+                                    <%= product.specs[key] %>
+                                </div>
+                                <% } } %>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Rating Summary -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center gap-4 mb-4">
+                        <!-- Left: average + stars + count -->
+                        <div class="text-center">
+                            <span class="text-3xl font-bold">
+                                <%= (product.rating_summary?.average ?? 0).toFixed(1) %>
+                            </span>
+                            <% 
+                            const avg=product.rating_summary?.average ??0;
+                            const fillPct=(avg / 5) * 100;
+                            %>
+
+                                <div class="flex items-center">
+                                    <!-- Star container -->
+                                    <div class="relative inline-block text-gray-300">
+                                        <!-- Gray (background) stars -->
+                                        <div class="whitespace-nowrap">
+                                            &#9733;&#9733;&#9733;&#9733;&#9733;
+                                        </div>
+                                        <!-- Yellow (foreground) stars, clipped to fillPct% width -->
+                                        <div class="absolute top-0 left-0 overflow-hidden whitespace-nowrap text-yellow-500"
+                                            style="width: <%= fillPct.toFixed(1) %>%">
+                                            &#9733;&#9733;&#9733;&#9733;&#9733;
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-sm text-gray-400">
+                                    <%= product.rating_summary?.total_ratings ?? 0 %> ratings
+                                </div>
+                        </div>
+
+                        <!-- Right: per-star bar chart -->
+                        <div class="flex-1">
+                            <% const total=product.rating_summary?.total_ratings ?? 0; [5, 4, 3, 2, 1].forEach(star=> {
+                                const count = product.rating_summary?.star_counts?.[star] ?? 0;
+                                const pct = total ? (count / total) * 100 : 0;
+                                %>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <!-- star number -->
+                                    <span class="w-4 text-sm text-gray-700">
+                                        <%= star %>
+                                    </span>
+                                    <!-- gray track -->
+                                    <div class="flex-1 bg-gray-300 h-2 rounded overflow-hidden">
+                                        <!-- green fill -->
+                                        <div class="h-full bg-green-500 rounded" style="width: <%= pct.toFixed(1) %>%;">
+                                        </div>
+                                    </div>
+                                    <!-- raw count -->
+                                    <span class="w-8 text-right text-sm text-gray-600">
+                                        <%= count %>
+                                    </span>
+                                </div>
+                                <% }) %>
+                        </div>
                     </div>
                 </div>
 
-                <% } else if (item==='iphone-15-pro' ) { %>
-                    <div class="flex justify-between items-center bg-gray-300 p-4 rounded mb-4">
-                        <span class="font-semibold text-lg">iPhone 15 Pro</span>
-                        <div class="flex items-center gap-2 text-xl">
-                            <span>☆</span>
-                            <span>☆</span>
-                            <span>&gt;</span>
+                <div class="bg-white rounded-lg shadow p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-2">Quick Rate This Product</h3>
+
+                    <form id="quick-rate-form" action="/rating" method="POST">
+                        <input type="hidden" name="product_slug" value="<%= product.slug %>">
+                        <input type="hidden" name="rating" id="quick-rating-value" value="<%= currentUserRating %>">
+
+                        <div id="quick-stars" class="flex space-x-1 text-2xl">
+                            <% for (let i=1; i <=5; i++) { %>
+                                <button type="button"
+                                    class="quick-star focus:outline-none <%= i <= currentUserRating ? 'text-yellow-500' : 'text-gray-300' %>"
+                                    data-value="<%= i %>" aria-label="Rate <%= i %> stars">
+                                    &#9733;
+                                </button>
+                                <% } %>
                         </div>
+                    </form>
+                </div>
+
+                <script>
+                    const productSlug = '<%= product.slug %>';
+                    document.querySelectorAll('#quick-stars .quick-star').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const rating = +btn.dataset.value;
+
+                            // recolor immediately
+                            document.querySelectorAll('#quick-stars .quick-star').forEach((s, i) => {
+                                s.classList.toggle('text-yellow-500', i < rating);
+                                s.classList.toggle('text-gray-300', i >= rating);
+                            });
+
+                            // send via fetch
+                            const res = await fetch('/rating', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                credentials: 'same-origin',    // send cookies/session
+                                body: JSON.stringify({ product_slug: productSlug, rating })
+                            });
+
+                            if (!res.ok) {
+                                // handle error (e.g. show toast)
+                                console.error('Rating failed', await res.json());
+                            } else {
+                                // optionally pull down new summary data or just reload
+                                window.location.reload();
+                            }
+                        });
+                    });
+                </script>
+
+                <!-- User Reviews -->
+                <div class="bg-white rounded-lg shadow p-6" style="margin-bottom: 4em; padding-bottom: 0.5em">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-semibold text-gray-800">User Reviews</h2>
+                        <a href="/write-review?category_slug=<%= product.category_slug %>&product_slug=<%= product.slug %>&ref=/product/<%= product.slug %>"
+                            class="inline-flex items-center flex-shrink-0 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm font-medium py-2 px-5 rounded-full shadow focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
+                            Write a Review
+                        </a>
                     </div>
 
-                    <% } else if (item==='iphone-14' ) { %>
-                        <div class="flex justify-between items-center bg-gray-300 p-4 rounded mb-4">
-                            <span class="font-semibold text-lg">iPhone 14</span>
-                            <div class="flex items-center gap-2 text-xl">
-                                <span>☆</span>
-                                <span>&gt;</span>
-                            </div>
-                        </div>
-
-                        <% } else if (item==='iphone-13' ) { %>
-                            <div class="flex justify-between items-center bg-gray-300 p-4 rounded mb-4">
-                                <span class="font-semibold text-lg">iPhone 13</span>
-                                <div class="text-xl">&gt;</div>
-                            </div>
-
-                            <% } else if (item==='iphone-12' ) { %>
-                                <div class="flex justify-between items-center bg-gray-300 p-4 rounded mb-4">
-                                    <span class="font-semibold text-lg">iPhone 12</span>
-                                    <div class="text-xl">&gt;</div>
-                                </div>
-
-                                <% } else { %>
-                                    <div class="bg-yellow-100 text-center p-6 rounded">
-                                        <p class="text-lg font-semibold text-gray-800">No product found for: <%= item %>
-                                        </p>
+                    <% if (reviews.length===0) { %>
+                        <p class="text-gray-500">No reviews yet. Be the first to write one!</p>
+                        <% } else { %>
+                            <% reviews.forEach(review=> { %>
+                                <div class="border-b py-4 relative" style="padding-bottom: 2em">
+                                    <!-- 发表评论者与日期 -->
+                                    <div class="flex items-center justify-between">
+                                        <div class="text-sm font-medium text-gray-700">
+                                            <%= review.user_email %>
+                                        </div>
+                                        <div class="text-sm text-gray-400">
+                                            <%= new Date(review.created_at).toLocaleDateString() %>
+                                        </div>
                                     </div>
-                                    <% } %>
-        </div>
 
+                                    <!-- 星级展示 -->
+                                    <% if (review.rating> 0) { %>
+                                        <div class="mt-1 flex">
+                                            <% for (let i=1; i <=5; i++) { %>
+                                                <span
+                                                    class="<%= i <= review.rating ? 'text-yellow-500' : 'text-gray-300' %>">&#9733</span>
+                                                <% } %>
+                                        </div>
+                                        <% } else { %>
+                                            <div class="text-gray-400 mt-1 italic text-sm">No rating</div>
+                                            <% } %>
+
+
+                                                <!-- 评论文本 -->
+                                                <p class="mt-2 text-gray-800">
+                                                    <%= review.review_text %>
+                                                </p>
+
+                                                <!-- 评论图集（如果有） -->
+                                                <% if (review.review_images?.length) { %>
+                                                    <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                        <% review.review_images.forEach(img=> { %>
+                                                            <img src="<%= img %>"
+                                                                class="rounded shadow-sm w-full h-24 object-cover" />
+                                                            <% }) %>
+                                                    </div>
+                                                    <% } %>
+
+                                                        <!-- … 放在 </body> 前，替换掉原来的 “点赞/点踩区域” -->
+                                                        <div
+                                                            class="absolute bottom-2 right-2 flex items-center space-x-4">
+                                                            <!-- Upvote 按钮 + 数字 -->
+                                                            <button data-id="<%= review._id %>" data-type="up"
+                                                                class="upvote-btn flex items-center transition-transform duration-200">
+                                                                👍
+                                                                <span id="upvotes-<%= review._id %>"
+                                                                    class="ml-1 text-sm">
+                                                                    <%= review.votes?.upvotes?.length || 0 %>
+                                                                </span>
+                                                            </button>
+
+                                                            <!-- Downvote 按钮 + 数字 -->
+                                                            <button data-id="<%= review._id %>" data-type="down"
+                                                                class="downvote-btn flex items-center transition-transform duration-200">
+                                                                👎
+                                                                <span id="downvotes-<%= review._id %>"
+                                                                    class="ml-1 text-sm">
+                                                                    <%= review.votes?.downvotes?.length || 0 %>
+                                                                </span>
+                                                            </button>
+                                                        </div>
+
+                                </div>
+                                <% }) %>
+                                    <% } %>
+                </div>
+
+                <!-- 投票脚本（放在 </body> 前） -->
+                <script>
+                    document.querySelectorAll('.upvote-btn, .downvote-btn').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const id = btn.dataset.id;
+                            const type = btn.dataset.type;
+
+                            // 添加一个小放大动画，200ms 后恢复
+                            btn.classList.add('scale-125');
+                            setTimeout(() => btn.classList.remove('scale-125'), 200);
+
+                            // 发送投票请求
+                            const res = await fetch(`/reviews/${id}/vote`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ voteType: type })
+                            });
+                            const data = await res.json();
+
+                            if (data.success) {
+                                // 分别更新 up 和 down 的数字
+                                document.getElementById(`upvotes-${id}`).textContent = data.upvotes;
+                                document.getElementById(`downvotes-${id}`).textContent = data.downvotes;
+                            }
+                        });
+                    });
+                </script>
+
+
+
+            </div>
+        </main>
+
+        <!-- Bottom Navbar -->
         <%- include('component/bottom-navbar.ejs') %>
+            <script src="/script/profile-dropdown.js"></script>
 </body>
 
 </html>

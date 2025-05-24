@@ -12,74 +12,370 @@
 <body class="bg-gray-100 text-gray-800">
     <%- include('component/top-navbar.ejs') %>
 
-        <!-- 表单区域 -->
-        <form action="/submit-review" method="POST" enctype="multipart/form-data"
-            class="bg-white p-6 mt-24 mx-auto max-w-2xl rounded-lg shadow space-y-5">
 
-            <!-- 星级评分 -->
-            <div class="flex items-center space-x-1 text-2xl text-gray-300" id="star-rating">
-                <% for (let i=1; i <=5; i++) { %>
-                    <button type="button" data-rating="<%= i %>" class="star hover:scale-110 transition">
-                        ★
-                    </button>
+
+        <form id="review-form" action="/write-review" method="POST" enctype="multipart/form-data"
+            class="bg-white p-14 mt-20 mx-auto w-full max-w-full sm:max-w-lg md:max-w-xl lg:max-w-3xl xl:max-w-4xl pt-12 rounded-lg shadow space-y-5"
+            style="padding-bottom: 140px;">
+
+            <!-- Category Selection -->
+            <div>
+                <label for="category-select" class="font-semibold">Select Category</label>
+                <select id="category-select" name="category_slug" class="w-full p-2 border rounded"
+                    onchange="onCategoryChange()">
+                    <option value="">-- Choose a category --</option>
+                    <% categories.forEach(cat=> { %>
+                        <option value="<%= cat.slug %>" <%=category_slug===cat.slug ? 'selected' : '' %>><%= cat.name %>
+                        </option>
+                        <% }) %>
+                </select>
+            </div>
+
+            <!-- Product Selection -->
+            <div>
+                <label for="product-select" class="font-semibold">Select Product</label>
+                <select id="product-select" name="product_slug" class="w-full p-2 border rounded" <%=!category_slug
+                    ? 'disabled' : '' %>
+                    onchange="onProductChange()">
+                    <option value="">-- Choose a product --</option>
+                    <% products.forEach(prod=> { %>
+                        <option value="<%= prod.slug %>" <%=product_slug===prod.slug ? 'selected' : '' %>><%= prod.name
+                                %>
+                        </option>
+                        <% }) %>
+                </select>
+            </div>
+
+
+            <!-- Only show the rest of the form if product is selected -->
+            <% if (product_slug) { %>
+                <!--Hidden ref-->
+                <% if (ref) { %>
+                    <input type="hidden" name="ref" value="<%= ref %>">
                     <% } %>
-            </div>
-            <input type="hidden" name="rating" id="rating-value" value="0" />
+                        <!-- Hidden user_email -->
+                        <input type="hidden" name="user_email" value="<%= user_email %>">
 
-            <!-- Title -->
-            <input type="text" name="title" placeholder="Add a title for your review"
-                class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-400" />
+                        <!-- 星级评分 -->
+                        <div id="rating-alert" class="hidden mb-4">
+                            <!-- Alert will be injected here -->
+                        </div>
+                        <div class="review-star-rating" id="review-star-rating">
+                            <button type="button" class="review-star" aria-label="1 star">★</button>
+                            <button type="button" class="review-star" aria-label="2 stars">★</button>
+                            <button type="button" class="review-star" aria-label="3 stars">★</button>
+                            <button type="button" class="review-star" aria-label="4 stars">★</button>
+                            <button type="button" class="review-star" aria-label="5 stars">★</button>
+                        </div>
+                        <input type="hidden" name="review_rating" id="review-rating-value" value="0" />
 
-            <!-- Pros -->
-            <input type="text" name="pros" placeholder="Pros"
-                class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-300" />
 
-            <!-- Cons -->
-            <input type="text" name="cons" placeholder="Cons"
-                class="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-300" />
 
-            <!-- Detailed Review -->
-            <textarea name="detailedReview" rows="5" placeholder="Write your detailed review here..."
-                class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+                        <!-- Review Text -->
+                        <textarea name="review_text" rows="5" placeholder="Write your review here..."
+                            class="w-full p-3 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            required></textarea>
 
-            <!-- 上传图片 -->
-            <div class="space-y-2">
-                <label class="block font-medium">Upload Photos</label>
-                <input type="file" name="reviewImages" multiple
-                    class="w-full border border-dashed border-gray-400 rounded p-3 text-sm bg-gray-50 cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100" />
-                <p class="text-sm text-gray-500">You can select multiple images (jpg, png).</p>
-            </div>
 
-            <!-- Submit -->
-            <button type="submit"
-                class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded transition duration-200">
-                Submit Review
-            </button>
+
+                        <!-- 上传图片 (up to 4) -->
+                        <div class="reviewimg-upload-section">
+                            <label class="reviewimg-label">Upload Photos (Up to 4)</label>
+                            <div id="reviewimg-grid" class="reviewimg-grid">
+                                <% for (let i=0; i < 4; i++) { %>
+                                    <div class="reviewimg-slot" onclick="reviewimgOpenFileDialog(<%= i %>)"
+                                        id="reviewimg-slot-<%= i %>">
+                                        <!-- Image preview or placeholder -->
+                                        <img src="" alt="Preview" class="reviewimg-img-preview reviewimg-hidden"
+                                            id="reviewimg-img-preview-<%= i %>"
+                                            onclick="enlargePreviewImage(<%= i %>, event)" />
+                                        <span class="reviewimg-placeholder" id="reviewimg-placeholder-<%= i %>">+</span>
+                                        <!-- X button for soft-delete -->
+                                        <button type="button"
+                                            onclick="event.stopPropagation(); reviewimgMarkForDelete(<%= i %>);"
+                                            class="reviewimg-delete-btn reviewimg-hidden"
+                                            id="reviewimg-delete-<%= i %>">
+                                            &times;
+                                        </button>
+                                        <!-- Pending overlay -->
+                                        <div class="reviewimg-pending-overlay reviewimg-hidden"
+                                            id="reviewimg-pending-<%= i %>">Pending…</div>
+                                        <!-- Hidden file input for each slot -->
+                                        <input type="file" name="review_image_<%= i %>"
+                                            id="reviewimg-file-input-<%= i %>" class="reviewimg-file-input" />
+                                        <!-- Hidden soft-delete flag -->
+                                        <input type="hidden" name="delete_image_<%= i %>"
+                                            id="reviewimg-delete-flag-<%= i %>" value="false" />
+                                    </div>
+                                    <% } %>
+                            </div>
+                            <p class="reviewimg-help-text">Click + to add a photo. Click × to remove.</p>
+                        </div>
+
+
+
+                        <!-- Submit -->
+                        <button type="submit"
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded transition duration-200">
+                            Submit Review
+                        </button>
+                        <div id="review-error" style="display:none; color:red; font-weight:bold; margin-top:1em;"></div>
+
+
+                        <% } %>
         </form>
 
+        <div id="review-success"
+            style=" display:none; color:green; font-size:20px; font-weight:bold; margin-top:10em; margin-bottom:10em;">
+        </div>
+
+        <!-- Modal for enlarged image preview -->
+        <div id="img-enlarge-modal"
+            style="display:none; position:fixed; z-index:10000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); align-items:center; justify-content:center;">
+            <img id="img-enlarge-modal-img" src=""
+                style="max-width:90vw; max-height:90vh; border-radius:10px; box-shadow:0 2px 20px #000;" />
+        </div>
+
         <%- include('component/bottom-navbar.ejs') %>
-    <script src="/script/profile-dropdown.js"></script>
+            <script src="/script/profile-dropdown.js"></script>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    // Wrap js insdie a DOM to fix issue
+                    //  - use addEventListener (or access .addEventListener on an element) before the DOM has created those elements.
+
+                    // error handling function - success or failed
+                    const reviewError = document.getElementById('review-error');
+
+                    function showError(message) {
+                        if (reviewError) {
+                            reviewError.textContent = message;
+                            reviewError.style.display = 'block';
+                        }
+                        // Optionally hide the success message if also showing an error
+                        if (reviewSuccess) {
+                            reviewSuccess.style.display = 'none';
+                        }
+                    }
+
+                    // Dynamic selection category and product
+                    window.onCategoryChange = function () {
+                        const cat = document.getElementById('category-select').value;
+                        window.location.href = '/write-review?category_slug=' + encodeURIComponent(cat);
+                    }
+                    window.onProductChange = function () {
+                        const cat = document.getElementById('category-select').value;
+                        const prod = document.getElementById('product-select').value;
+                        window.location.href = '/write-review?category_slug=' + encodeURIComponent(cat) + '&product_slug=' + encodeURIComponent(prod);
+                    }
+
+
+                    window.reviewimgOpenFileDialog = function (idx) {
+                        if (document.getElementById('reviewimg-pending-' + idx).classList.contains('reviewimg-flex')) return;
+                        document.getElementById('reviewimg-file-input-' + idx).click();
+                    }
+                    window.reviewimgMarkForDelete = function (idx) {
+                        document.getElementById('reviewimg-pending-' + idx).classList.remove('reviewimg-hidden');
+                        document.getElementById('reviewimg-pending-' + idx).classList.add('reviewimg-flex');
+                        document.getElementById('reviewimg-img-preview-' + idx).classList.add('reviewimg-hidden');
+                        document.getElementById('reviewimg-delete-' + idx).classList.add('reviewimg-hidden');
+                        document.getElementById('reviewimg-delete-flag-' + idx).value = 'true';
+                    }
+
+
+                    // Handle image related behavior in review table
+
+                    const reviewimgMaxImages = 4;
+
+                    for (let i = 0; i < reviewimgMaxImages; i++) {
+                        const input = document.getElementById('reviewimg-file-input-' + i);
+                        if (input) {
+                            input.addEventListener('change', function (e) {
+                                const file = e.target.files[0];
+                                if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = function (evt) {
+                                        document.getElementById('reviewimg-img-preview-' + i).src = evt.target.result;
+                                        document.getElementById('reviewimg-img-preview-' + i).classList.remove('reviewimg-hidden');
+                                        document.getElementById('reviewimg-placeholder-' + i).classList.add('reviewimg-hidden');
+                                        document.getElementById('reviewimg-delete-' + i).classList.remove('reviewimg-hidden');
+                                        document.getElementById('reviewimg-pending-' + i).classList.add('reviewimg-hidden');
+                                        document.getElementById('reviewimg-delete-flag-' + i).value = 'false';
+                                    };
+                                    reader.readAsDataURL(file);
+                                }
+                            });
+                        }
+                    }
+
+                    // Enlarge preview image in modal
+                    window.enlargePreviewImage = function (idx, event) {
+                        if (event) event.stopPropagation();
+                        const img = document.getElementById('reviewimg-img-preview-' + idx);
+                        if (img && img.src && !img.classList.contains('reviewimg-hidden')) {
+                            const modal = document.getElementById('img-enlarge-modal');
+                            const modalImg = document.getElementById('img-enlarge-modal-img');
+                            modalImg.src = img.src;
+                            modal.style.display = 'flex';
+                        }
+                    };
+
+                    // Hide modal on click anywhere
+                    const modal = document.getElementById('img-enlarge-modal');
+                    if (modal) {
+                        modal.addEventListener('click', function (event) {
+                            modal.style.display = 'none';
+                            document.getElementById('img-enlarge-modal-img').src = '';
+                        });
+                    }
+
+                    // Star rating logic
+                    const ratingInput = document.getElementById('review-rating-value');
+                    const stars = document.querySelectorAll('#review-star-rating .review-star');
+
+                    let currentRating = 0;
+                    if (ratingInput) {
+                        currentRating = parseInt(ratingInput.value, 10) || 0;
+
+                        function updateStars(rating) {
+                            stars.forEach((star, i) => {
+                                star.classList.toggle('selected', i < rating);
+                                star.classList.toggle('active', i < rating);
+                            });
+                        }
+
+                        stars.forEach((star, idx) => {
+                            // Click to select rating
+                            star.addEventListener('click', function () {
+                                currentRating = idx + 1;
+                                ratingInput.value = currentRating;
+                                updateStars(currentRating);
+                            });
+                            // Hover effect
+                            star.addEventListener('mouseenter', function () {
+                                updateStars(idx + 1);
+                                star.classList.add('hovered');
+                            });
+                            // Remove hover effect
+                            star.addEventListener('mouseleave', function () {
+                                updateStars(currentRating);
+                                star.classList.remove('hovered');
+                            });
+                        });
+
+                        // Initialize on load
+                        updateStars(currentRating);
+                    }
+
+
+
+                    const reviewForm = document.getElementById('review-form');
+                    const reviewSuccess = document.getElementById('review-success');
+
+                    if (reviewForm && reviewSuccess) {
+                        reviewForm.addEventListener('submit', function (e) {
+                            e.preventDefault()
+                            // Check for rating before submitting
+                            const reviewRating = reviewForm.querySelector('[name="review_rating"]').value;
+                            const ratingAlert = document.getElementById('rating-alert');
+                            if (!reviewRating || parseInt(reviewRating) < 1) {
+                                e.preventDefault();
+                                ratingAlert.innerHTML = `
+                        <div class="flex items-center p-4 mb-4 text-sm text-yellow-800 rounded-lg bg-yellow-50" role="alert">
+                            <svg class="flex-shrink-0 inline w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 13a1 1 0 01-1 1H3a1 1 0 01-1-1V7a1 1 0 011-1h14a1 1 0 011 1v6zm-8-3a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg>
+                            <span class="font-medium">Please select a rating before submitting your review.</span>
+                        </div>
+                    `;
+                                ratingAlert.style.display = 'block';
+                                ratingAlert.classList.remove('hidden');
+                                ratingAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                return false;
+                            } else {
+                                ratingAlert.style.display = 'none';
+                                ratingAlert.classList.add('hidden');
+                            }
+                            // Image soft-delete logic
+                            for (let i = 0; i < reviewimgMaxImages; i++) {
+                                const deleteFlag = document.getElementById('reviewimg-delete-flag-' + i);
+                                const fileInput = document.getElementById('reviewimg-file-input-' + i);
+                                if (deleteFlag && fileInput && deleteFlag.value === 'true') {
+                                    fileInput.value = '';
+                                }
+                            }
+
+                            // Gather the submitted data before resetting the form
+                            const reviewText = reviewForm.querySelector('[name="review_text"]').value;
+
+                            const reviewImages = [];
+                            for (let i = 0; i < reviewimgMaxImages; i++) {
+                                const fileInput = document.getElementById('reviewimg-file-input-' + i);
+                                if (fileInput && fileInput.files && fileInput.files[0]) {
+                                    // Use FileReader to get the image preview
+                                    reviewImages.push(URL.createObjectURL(fileInput.files[0]));
+                                }
+                            }
+
+                            const formData = new FormData(reviewForm);
+                            fetch('/write-review', {
+                                method: 'POST',
+                                body: formData
+                            })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.message) {
+                                        reviewForm.style.display = 'none';
+
+                                        // Get info from response or form
+                                        const productName = data.review.product_name || reviewForm.querySelector('#product-select option:checked')?.textContent || data.review.product_slug;
+                                        const categoryName = data.review.category_name || reviewForm.querySelector('#category-select option:checked')?.textContent || '';
+                                        const reviewDate = data.review.created_at ? new Date(data.review.created_at) : new Date();
+                                        const userEmail = data.review.user_email;
+
+                                        // Format date
+                                        const dateString = reviewDate.toLocaleString();
+
+                                        // Build pretty summary
+                                        let summaryHtml = `
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:4em 1.5em;max-width:450px;margin:0 auto;margin-top:0.5em;margin-bottom:6em;box-shadow:0 2px 12px #e0ffe0;">
+      <div style="font-size:1.2em;color:#22c55e;font-weight:bold;margin-bottom:0.5em;">
+        <span style="font-size:1.6em;vertical-align:-3px;"> </span> ${data.message}
+      </div>
+      <div style="color:#374151;font-size:1.1em;margin-bottom:1em;">
+        <div><strong>Product:</strong> ${productName}</div>
+        ${categoryName ? `<div><strong>Category:</strong> ${categoryName}</div>` : ''}
+        <div><strong>Reviewed by:</strong> ${userEmail}</div>
+        <div><strong>Time:</strong> ${dateString}</div>
+      </div>
+      <div style="margin:1em 0;">
+        <strong>Your Review:</strong>
+        <div style="margin:0.5em 0;">
+          <span style="color:#c14646; font-size:1.5em; letter-spacing:1px;">
+            ${'★'.repeat(reviewRating)}${'☆'.repeat(5 - reviewRating)}
+          </span>
+        </div>
+        <div style="margin-bottom:2em;white-space:pre-line;">${reviewText.replace(/\n/g, '<br>')}</div>
+      </div>
+    </div>
+    `;
+                                        reviewSuccess.innerHTML = summaryHtml;
+                                        reviewSuccess.style.display = 'block';
+                                        if (data.ref) {
+                                            setTimeout(() => {
+                                                window.location.href = data.ref;
+                                            }, 2000);
+                                        }
+                                        if (reviewError) reviewError.style.display = 'none';
+                                    } else if (data.error) {
+                                        showError(data.error + (data.details ? ': ' + data.details : ''));
+                                    }
+                                })
+                                .catch(err => showError('Submission failed. Please try again.'));
+                        });
+                    }
+
+
+                });
+            </script>
+
 </body>
 
 </html>
-
-<script>
-    const stars = document.querySelectorAll('.star');
-    const ratingInput = document.getElementById('rating-value');
-    let selectedRating = 0;
-
-    stars.forEach((star, index) => {
-        star.addEventListener('mouseover', () => highlightStars(index + 1));
-        star.addEventListener('mouseout', () => highlightStars(selectedRating));
-        star.addEventListener('click', () => {
-            selectedRating = index + 1;
-            ratingInput.value = selectedRating;
-        });
-    });
-
-    function highlightStars(rating) {
-        stars.forEach((star, index) => {
-            star.style.color = index < rating ? '#22c55e' : '#d1d5db';
-        });
-    }
-</script>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Admin - Review Details</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="/style/style.css" />
     <link rel="stylesheet" href="/style/admin.css" />
@@ -11,29 +11,108 @@
 <body>
     <%- include('component/top-navbar.ejs') %>
 
-    <div class="container py-3">
-        <div class="card mb-3">
-            <div class="card-header d-flex justify-content-between">
-                <span><%= review.product_name %></span>
-                <form method="POST" action="/admin/review/<%= review._id %>/delete" style="display:inline;">
-                    <button type="submit" class="btn btn-danger btn-sm">Delete Review</button>
+    <div class="w-full max-w-2xl mx-auto mt-12 py-8 px-2">
+        <div class="bg-white rounded-lg shadow-md p-6 space-y-8">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-800"><%= review.product_name %></h2>
+                <form method="POST" action="/admin/review/<%= review._id %>/delete">
+                    <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 text-sm" style="height: 2.4em">Delete</button>
                 </form>
             </div>
-            <div class="card-body">
-                <p><strong>Reviewer:</strong> <%= review.user_first_name %> <%= review.user_last_name %></p>
-                <p><strong>Date:</strong> <%= review.created_at.toISOString().slice(0,10) %></p>
-                <p>
-                    <strong>Rating:</strong>
-                    <% for(let i=0; i<review.rating; i++) { %>
-                        <span style="color:gold;">&#9733;</span>
-                    <% } %>
-                    <% for(let i=review.rating; i<5; i++) { %>
-                        <span style="color:#ccc;">&#9733;</span>
-                    <% } %>
-                </p>
-                <p><strong>Pros:</strong> <%= review.pros.join(', ') %></p>
-                <p><strong>Cons:</strong> <%= review.cons.join(', ') %></p>
+
+            <!-- Main Info Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+                <!-- Reviewer & Email -->
+                <div class="flex items-center">
+                    <span class="font-semibold w-24 inline-block">Reviewer:</span>
+                    <span>
+          <%= review.user_first_name %> <%= review.user_last_name %>
+          <span class="text-gray-500">&lt;<%= review.user_email %>&gt;</span>
+        </span>
+                </div>
+                <!-- Date -->
+                <div class="flex items-center">
+                    <span class="font-semibold w-16 inline-block">Date:</span>
+                    <div style="padding-left: 2em">
+                        <span>
+                            <% if (review.created_at) { %>
+                                <%= new Date(review.created_at).toISOString().slice(0,10) %>
+                            <% } else { %>
+                                N/A
+                            <% } %>
+                        </span>
+                    </div>
+                </div>
+                <!-- Rating -->
+                <div class="flex items-center">
+                    <span class="font-semibold w-24 inline-block">Rating:</span>
+                    <span>
+                        <% for(let i=0; i<review.rating; i++) { %>
+                            <span class="text-yellow-500">&#9733;</span>
+                        <% } %>
+                        <% for(let i=review.rating; i<5; i++) { %>
+                            <span class="text-gray-300">&#9733;</span>
+                        <% } %>
+                        <span class="ml-2 text-gray-500 text-sm"><%= review.rating %>/5</span>
+        </span>
+                </div>
+                <!-- Votes -->
+                <div class="flex items-center">
+                    <span class="font-semibold w-16 inline-block">Votes:</span>
+                    <span class="flex items-center gap-4">
+          <span class="flex items-center gap-1 text-green-600 font-semibold">
+            👍 <%= review.votes?.upvotes?.length || 0 %>
+          </span>
+          <span class="flex items-center gap-1 text-red-600 font-semibold">
+            👎 <%= review.votes?.downvotes?.length || 0 %>
+          </span>
+        </span>
+                </div>
             </div>
+
+            <!-- Review Images -->
+            <% if (review.review_images && review.review_images.length > 0) { %>
+                <div>
+                    <span class="font-semibold text-gray-700 block mb-2">Review Images:</span>
+                    <div class="flex flex-wrap gap-3">
+                        <% review.review_images.forEach(img => { %>
+                            <img src="<%= img %>" alt="Review Image" class="w-24 h-24 object-cover rounded shadow border" />
+                        <% }) %>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- Review Text -->
+            <div>
+                <span class="font-semibold text-gray-700 block mb-1">Review:</span>
+                <p class="text-gray-800 bg-gray-50 rounded p-3"><%= review.review_text %></p>
+            </div>
+
+            <!-- Moderation Status -->
+            <form method="POST" action="/admin/review/<%= review._id %>/moderate" class="mt-6">
+                <div class="flex flex-wrap items-center gap-6">
+                    <label class="flex items-center gap-2">
+                        <input type="radio" name="status" value="approved" <%= review.moderation?.status === 'approved' ? 'checked' : '' %> />
+                        <span class="text-green-700 font-semibold">Approved</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="radio" name="status" value="flagged" <%= review.moderation?.status === 'flagged' ? 'checked' : '' %> />
+                        <span class="text-yellow-600 font-semibold">Flagged</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="radio" name="status" value="rejected" <%= review.moderation?.status === 'rejected' ? 'checked' : '' %> />
+                        <span class="text-red-700 font-semibold">Rejected</span>
+                    </label>
+                    <% if (review.moderation?.status === 'rejected') { %>
+                        <input type="text" name="rejection_reason" value="<%= review.moderation?.rejection_reason || '' %>"
+                               placeholder="Reason for rejection"
+                               class="border rounded px-2 py-1 text-sm w-64" />
+                    <% } %>
+                    <!-- Save button aligned right -->
+                    <button type="submit" class="ml-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" style="height: 2.2em; padding-top: 0.3em">Save</button>
+                </div>
+            </form>
         </div>
     </div>
 
